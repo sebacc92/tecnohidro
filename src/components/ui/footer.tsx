@@ -29,7 +29,7 @@ export const Footer = component$(() => {
               </a>
             </div>
           </div>
-          
+
           <div>
             <h3 class="text-white font-semibold mb-4">Enlaces Rápidos</h3>
             <ul class="space-y-2 text-sm text-slate-400">
@@ -45,11 +45,11 @@ export const Footer = component$(() => {
             <ul class="space-y-3 text-sm text-slate-400">
               <li class="flex items-start gap-3">
                 <LuMapPin class="h-5 w-5 text-primary-400 shrink-0" />
-                <span>Av. Ejemplo 1234, CABA, Argentina</span>
+                <span>Av. 72 e/14 y 15 nº 970, B1900 La Plata, Buenos Aires</span>
               </li>
               <li class="flex items-center gap-3">
                 <LuPhone class="h-5 w-5 text-primary-400 shrink-0" />
-                <span>+54 11 1234-5678</span>
+                <span>+54 221 453-2144</span>
               </li>
               <li class="flex items-center gap-3">
                 <LuMail class="h-5 w-5 text-primary-400 shrink-0" />
@@ -58,13 +58,20 @@ export const Footer = component$(() => {
             </ul>
           </div>
         </div>
-        
+
         <div class="border-t border-slate-800 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between text-sm text-slate-500">
           <p>&copy; {currentYear} Tecnohidro. Todos los derechos reservados.</p>
-          <div class="flex gap-4 mt-4 md:mt-0">
-            <Link href="/terminos" class="hover:text-white transition-colors">Términos y Condiciones</Link>
-            <Link href="/privacidad" class="hover:text-white transition-colors">Privacidad</Link>
-          </div>
+          <p class="mt-4 md:mt-0">
+            Desarrollado por{' '}
+            <a
+              href="https://indesign.ar"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="font-semibold text-primary-400 hover:text-primary-300 underline decoration-primary-400/50 underline-offset-2 transition-colors"
+            >
+              indesign
+            </a>
+          </p>
         </div>
       </div>
     </footer>
