@@ -1,12 +1,13 @@
 import { component$ } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$ } from '@builder.io/qwik-city';
-import { db } from '../../db';
+import { getDb } from '~/db/client';
 import { products, categories } from '../../db/schema';
 import { count, eq } from 'drizzle-orm';
 import { LuPackage, LuTag, LuShoppingCart, LuAlertCircle } from '@qwikest/icons/lucide';
 
-export const useDashboardStats = routeLoader$(async () => {
+export const useDashboardStats = routeLoader$(async ({ env }) => {
   try {
+    const db = getDb(env);
     const totalProductsResult = await db.select({ count: count() }).from(products);
     const meliProductsResult = await db.select({ count: count() }).from(products).where(eq(products.source, 'meli'));
     const cmsProductsResult = await db.select({ count: count() }).from(products).where(eq(products.source, 'cms'));

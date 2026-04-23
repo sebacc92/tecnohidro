@@ -1,13 +1,14 @@
 import { component$ } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, Link } from '@builder.io/qwik-city';
-import { db } from '../db';
+import { getDb } from '../db/client';
 import { products, categories, siteContent } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { ContactButton } from '../components/ContactButton';
 import { buttonVariants } from '../components/ui/button/button';
 
-export const useHomeData = routeLoader$(async () => {
+export const useHomeData = routeLoader$(async ({ env }) => {
   try {
+    const db = getDb(env);
     const contentData = await db.select().from(siteContent);
     const contentMap = contentData.reduce((acc, curr) => {
       acc[curr.key] = curr.value;

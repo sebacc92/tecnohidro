@@ -1,6 +1,6 @@
 import { component$ } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, Link } from '@builder.io/qwik-city';
-import { db } from '../../db';
+import { getDb } from '../../db/client';
 import { products, categories } from '../../db/schema';
 import { eq, like, or, and } from 'drizzle-orm';
 import { ContactButton } from '../../components/ContactButton';
@@ -12,6 +12,7 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
   const searchQ = url.searchParams.get('q');
 
   try {
+    const db = getDb(requestEvent.env);
     const allCategories = await db.select().from(categories);
 
     const conditions = [eq(products.status, 'active')];
