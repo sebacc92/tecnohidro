@@ -58,6 +58,7 @@
   "nx": {},
   "dependencies": {
     "@libsql/client": "^0.17.3",
+    "@vercel/blob": "^2.3.3",
     "cssnano": "^7.1.7",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2"

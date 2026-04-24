@@ -54,7 +54,7 @@ export default component$(() => {
           title="Total Productos"
           value={stats.value.totalProducts}
           icon={LuPackage}
-          color="bg-primary-500"
+          color="bg-cyan-500"
         />
         <StatCard
           title="Productos Propios (CMS)"
@@ -79,11 +79,11 @@ export default component$(() => {
       <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
         <h2 class="text-lg font-semibold text-slate-900 mb-4">Acciones Rápidas</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a href="/admin/productos" class="p-4 border border-slate-200 rounded-lg hover:border-primary-500 hover:shadow-sm transition-all flex flex-col gap-2">
+          <a href="/admin/productos" class="p-4 border border-slate-200 rounded-lg hover:border-cyan-500 hover:shadow-sm transition-all flex flex-col gap-2">
             <span class="font-medium text-slate-900">Gestionar Productos</span>
             <span class="text-sm text-slate-500">Agregar, editar o eliminar productos del catálogo propio.</span>
           </a>
-          <a href="/admin/contenido" class="p-4 border border-slate-200 rounded-lg hover:border-primary-500 hover:shadow-sm transition-all flex flex-col gap-2">
+          <a href="/admin/contenido" class="p-4 border border-slate-200 rounded-lg hover:border-cyan-500 hover:shadow-sm transition-all flex flex-col gap-2">
             <span class="font-medium text-slate-900">Editar Home</span>
             <span class="text-sm text-slate-500">Modificar los textos del Hero de la página principal.</span>
           </a>
@@ -100,7 +100,7 @@ export default component$(() => {
   );
 });
 
-const StatCard = component$<{ title: string; value: number; icon: any; color: string }>(({ title, value, icon: Icon, color }) => {
+const StatCard = ({ title, value, icon: Icon, color }: { title: string; value: number; icon: any; color: string }) => {
   return (
     <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
       <div class={`w-12 h-12 rounded-lg flex items-center justify-center text-white shrink-0 ${color}`}>
@@ -112,7 +112,7 @@ const StatCard = component$<{ title: string; value: number; icon: any; color: st
       </div>
     </div>
   );
-});
+};
 
 // Import this here for the icon in StatCard
 import { LuLayoutDashboard } from '@qwikest/icons/lucide';

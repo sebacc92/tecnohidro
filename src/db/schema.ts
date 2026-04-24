@@ -36,3 +36,10 @@ export const authTokens = sqliteTable('auth_tokens', {
   refresh_token: text('refresh_token'),
   expires_at: integer('expires_at', { mode: 'timestamp' }),
 });
+
+export const brands = sqliteTable('brands', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  category: text('category', { enum: ['infraestructura', 'domiciliaria', 'herramientas'] }).notNull(),
+  imageUrl: text('image_url').notNull(),
+});

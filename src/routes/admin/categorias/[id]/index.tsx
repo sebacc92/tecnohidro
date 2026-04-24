@@ -1,0 +1,127 @@
+import { component$ } from '@builder.io/qwik';
+import { type DocumentHead, routeLoader$, routeAction$, Form, z, zod$, Link } from '@builder.io/qwik-city';
+import { getDb } from '~/db/client';
+import { categories } from '~/db/schema';
+import { eq } from 'drizzle-orm';
+import { LuArrowLeft, LuSave } from '@qwikest/icons/lucide';
+
+export const useCategory = routeLoader$(async (requestEvent) => {
+  const db = getDb(requestEvent.env);
+  const { id } = requestEvent.params;
+  
+  const data = await db.select().from(categories).where(eq(categories.id, id));
+  if (data.length === 0) {
+    throw requestEvent.redirect(302, '/admin/categorias');
+  }
+  return data[0];
+});
+
+export const useEditCategory = routeAction$(
+  async (data, { env, redirect }) => {
+    try {
+      const db = getDb(env);
+      const newSlug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      
+      await db.update(categories)
+        .set({
+          name: data.name,
+          slug: newSlug,
+          description: data.description,
+          image: data.image || null,
+        })
+        .where(eq(categories.id, data.id));
+
+    } catch (error) {
+      console.error('Error updating category:', error);
+      return { success: false, error: 'Hubo un error al actualizar la categoría.' };
+    }
+    
+    throw redirect(302, '/admin/categorias/');
+  },
+  zod$({
+    id: z.string(),
+    name: z.string().min(1, 'El nombre es obligatorio'),
+    description: z.string().optional(),
+    image: z.string().url('Debe ser una URL válida').optional().or(z.literal('')),
+  })
+);
+
+export default component$(() => {
+  const cat = useCategory();
+  const editAction = useEditCategory();
+
+  return (
+    <div class="max-w-2xl mx-auto">
+      <div class="mb-6 flex items-center gap-4">
+        <Link href="/admin/categorias" class="p-2 bg-white rounded-lg border border-slate-200 text-slate-500 hover:text-slate-900 transition-colors">
+          <LuArrowLeft class="w-5 h-5" />
+        </Link>
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900">Editar Categoría</h1>
+          <p class="text-slate-500">Modifica los datos del rubro.</p>
+        </div>
+      </div>
+
+      {editAction.value?.error && (
+        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {editAction.value.error}
+        </div>
+      )}
+
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <Form action={editAction} class="p-6 space-y-4">
+          <input type="hidden" name="id" value={cat.value.id} />
+          <div class="space-y-1.5">
+            <label for="name" class="text-sm font-medium text-slate-700">Nombre</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              required
+              value={cat.value.name}
+              class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none"
+              placeholder="Ej: Cañerías"
+            />
+          </div>
+          <div class="space-y-1.5">
+            <label for="description" class="text-sm font-medium text-slate-700">Descripción (Opcional)</label>
+            <textarea
+              id="description"
+              name="description"
+              rows={3}
+              class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none resize-none"
+              placeholder="Breve descripción..."
+            >{cat.value.description || ''}</textarea>
+          </div>
+          <div class="space-y-1.5">
+            <label for="image" class="text-sm font-medium text-slate-700">URL de Imagen (Opcional)</label>
+            <input
+              type="url"
+              id="image"
+              name="image"
+              value={cat.value.image || ''}
+              class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none"
+              placeholder="https://ejemplo.com/imagen.jpg"
+            />
+          </div>
+          <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+            <Link href="/admin/categorias" class="px-4 py-2 rounded-lg font-medium text-slate-700 hover:bg-slate-50 border border-slate-200 transition-colors">
+              Cancelar
+            </Link>
+            <button
+              type="submit"
+              class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+              disabled={editAction.isRunning}
+            >
+              {editAction.isRunning ? 'Guardando...' : <><LuSave class="h-4 w-4" /> Guardar Cambios</>}
+            </button>
+          </div>
+        </Form>
+      </div>
+    </div>
+  );
+});
+
+export const head: DocumentHead = {
+  title: 'Editar Categoría - Admin',
+};

@@ -15,23 +15,21 @@ export const Header = component$(() => {
 
   return (
     <header class="sticky top-0 z-50 w-full border-b bg-white">
-      <div class="container mx-auto flex h-16 items-center justify-between px-4 md:px-8">
+      <div class="container mx-auto flex h-20 items-center justify-between px-4 md:px-8">
         <Link href="/" class="flex items-center gap-2">
-          <LuDroplets class="h-6 w-6 text-primary-600" />
-          <span class="text-xl font-bold tracking-tight text-slate-900">Tecnohidro</span>
+          <img src="/logo-tecno-hidro.webp" alt="Tecnohidro" width={200} height={60} class="h-12 w-auto object-contain" />
         </Link>
 
         {/* Desktop Navigation */}
-        <nav class="hidden md:flex gap-6">
+        <nav class="hidden md:flex gap-8">
           {navLinks.map((link) => {
             const isActive = loc.url.pathname === link.href || (link.href !== '/' && loc.url.pathname.startsWith(link.href));
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                class={`text-sm font-medium transition-colors ${
-                  isActive ? 'text-primary-600' : 'text-slate-600 hover:text-primary-600'
-                }`}
+                class={`text-base font-semibold transition-colors ${isActive ? 'text-primary-600' : 'text-slate-600 hover:text-primary-600'
+                  }`}
               >
                 {link.label}
               </Link>
@@ -39,38 +37,35 @@ export const Header = component$(() => {
           })}
         </nav>
 
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-6">
           <div class="relative hidden sm:block">
-            <LuSearch class="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+            <LuSearch class="absolute left-3 top-3 h-5 w-5 text-slate-400" />
             <input
               type="search"
               placeholder="Buscar productos..."
-              class="h-9 w-64 rounded-md border border-slate-200 bg-slate-50 pl-9 pr-4 text-sm outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all"
+              class="h-11 w-72 md:w-80 rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 text-base outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all shadow-sm"
             />
           </div>
-          <Link href="/admin/" class="hidden md:block text-xs font-medium text-slate-400 hover:text-primary-600 transition-colors mr-2">
-            Admin
-          </Link>
 
-          <div class="hidden lg:flex items-center gap-3 border-l pl-4 border-slate-200">
+          <div class="hidden lg:flex items-center gap-4 border-l pl-6 border-slate-200">
             <a href="https://www.facebook.com/tecnohidrosa/" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-[#1877F2] transition-colors" aria-label="Facebook">
-              <LuFacebook class="h-5 w-5" />
+              <LuFacebook class="h-6 w-6" />
             </a>
             <a href="https://www.instagram.com/tecnohidrosa/" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-[#E4405F] transition-colors" aria-label="Instagram">
-              <LuInstagram class="h-5 w-5" />
+              <LuInstagram class="h-6 w-6" />
             </a>
             <a href="https://www.linkedin.com/company/tecnohidro-s.a." target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-[#0A66C2] transition-colors" aria-label="LinkedIn">
-              <LuLinkedin class="h-5 w-5" />
+              <LuLinkedin class="h-6 w-6" />
             </a>
           </div>
-          
+
           {/* Mobile Menu Toggle Button */}
           <button
             class="md:hidden p-2 text-slate-600 hover:text-primary-600 transition-colors"
             onClick$={() => (isMenuOpen.value = !isMenuOpen.value)}
             aria-label="Toggle menu"
           >
-            {isMenuOpen.value ? <LuX class="h-6 w-6" /> : <LuMenu class="h-6 w-6" />}
+            {isMenuOpen.value ? <LuX class="h-7 w-7" /> : <LuMenu class="h-7 w-7" />}
           </button>
         </div>
       </div>
@@ -85,9 +80,8 @@ export const Header = component$(() => {
                 <Link
                   key={link.href}
                   href={link.href}
-                  class={`text-base font-medium py-2 transition-colors ${
-                    isActive ? 'text-primary-600' : 'text-slate-600 hover:text-primary-600'
-                  }`}
+                  class={`text-base font-medium py-2 transition-colors ${isActive ? 'text-primary-600' : 'text-slate-600 hover:text-primary-600'
+                    }`}
                   onClick$={() => (isMenuOpen.value = false)}
                 >
                   {link.label}
@@ -106,13 +100,6 @@ export const Header = component$(() => {
                   <LuLinkedin class="h-6 w-6" />
                 </a>
               </div>
-              <Link 
-                href="/admin/" 
-                class="text-sm font-medium text-slate-500 hover:text-primary-600"
-                onClick$={() => (isMenuOpen.value = false)}
-              >
-                Panel de Administración
-              </Link>
             </div>
           </nav>
         </div>

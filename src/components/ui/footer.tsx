@@ -35,8 +35,8 @@ export const Footer = component$(() => {
             <ul class="space-y-2 text-sm text-slate-400">
               <li><Link href="/" class="hover:text-primary-400 transition-colors">Inicio</Link></li>
               <li><Link href="/productos" class="hover:text-primary-400 transition-colors">Catálogo Completo</Link></li>
-              <li><Link href="/contacto" class="hover:text-primary-400 transition-colors">Contacto</Link></li>
               <li><Link href="/nosotros" class="hover:text-primary-400 transition-colors">Sobre Nosotros</Link></li>
+              <li><Link href="/contacto" class="hover:text-primary-400 transition-colors">Contacto</Link></li>
             </ul>
           </div>
 

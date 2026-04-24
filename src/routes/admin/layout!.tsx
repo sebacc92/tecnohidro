@@ -1,6 +1,6 @@
 import { component$, Slot } from '@builder.io/qwik';
 import { Link, useLocation } from '@builder.io/qwik-city';
-import { LuLayoutDashboard, LuPackage, LuSettings, LuLogOut, LuDroplets } from '@qwikest/icons/lucide';
+import { LuLayoutDashboard, LuPackage, LuSettings, LuLogOut, LuDroplets, LuTags, LuImage } from '@qwikest/icons/lucide';
 
 export default component$(() => {
   const loc = useLocation();
@@ -8,6 +8,8 @@ export default component$(() => {
   const navItems = [
     { name: 'Dashboard', href: '/admin/', icon: LuLayoutDashboard },
     { name: 'Productos', href: '/admin/productos/', icon: LuPackage },
+    { name: 'Categorías', href: '/admin/categorias/', icon: LuTags },
+    { name: 'Marcas', href: '/admin/marcas/', icon: LuImage },
     { name: 'Contenido Web', href: '/admin/contenido/', icon: LuSettings },
   ];
 
@@ -17,7 +19,7 @@ export default component$(() => {
       <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col hidden md:flex shrink-0">
         <div class="h-16 flex items-center px-6 bg-slate-950 border-b border-slate-800">
           <Link href="/" class="flex items-center gap-2 text-white">
-            <LuDroplets class="h-5 w-5 text-primary-500" />
+            <LuDroplets class="h-5 w-5 text-cyan-500" />
             <span class="font-bold tracking-tight">Tecnohidro Admin</span>
           </Link>
         </div>
@@ -32,11 +34,11 @@ export default component$(() => {
                 href={item.href}
                 class={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
                   isActive 
-                    ? 'bg-primary-600 text-white' 
+                    ? 'bg-cyan-600 text-white' 
                     : 'hover:bg-slate-800 hover:text-white'
                 }`}
               >
-                <Icon class={`h-5 w-5 ${isActive ? 'text-primary-200' : 'text-slate-400'}`} />
+                <Icon class={`h-5 w-5 ${isActive ? 'text-cyan-200' : 'text-slate-400'}`} />
                 {item.name}
               </Link>
             );
