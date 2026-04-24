@@ -1,6 +1,6 @@
 import { component$, useSignal } from '@builder.io/qwik';
 import { Link, useLocation } from '@builder.io/qwik-city';
-import { LuSearch, LuDroplets, LuMenu, LuX, LuFacebook, LuInstagram, LuLinkedin } from '@qwikest/icons/lucide';
+import { LuSearch, LuMenu, LuX, LuFacebook, LuInstagram, LuLinkedin } from '@qwikest/icons/lucide';
 
 export const Header = component$(() => {
   const isMenuOpen = useSignal(false);
