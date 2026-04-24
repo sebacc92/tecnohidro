@@ -15,8 +15,8 @@ export const useBrand = routeLoader$(async ({ params, env, error }) => {
 
 export const useEditBrand = routeAction$(async (data, { params, env, redirect }) => {
   const name = data.name as string;
-  const category = data.category as string;
-  const file = data.image as File | undefined;
+  const category = data.category as 'infraestructura' | 'domiciliaria' | 'herramientas';
+  const file = data.image as unknown as File | undefined;
   
   if (!name || !category) {
     return { success: false, error: 'El nombre y la categoría son obligatorios.' };

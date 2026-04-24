@@ -7,8 +7,8 @@ import { put } from '@vercel/blob';
 
 export const useAddBrand = routeAction$(async (data, { env, redirect }) => {
   const name = data.name as string;
-  const category = data.category as string;
-  const file = data.image as File;
+  const category = data.category as 'infraestructura' | 'domiciliaria' | 'herramientas';
+  const file = data.image as unknown as File;
 
   if (!name || !category) {
     return { success: false, error: 'El nombre y la categoría son obligatorios.' };
@@ -84,7 +84,7 @@ export default component$(() => {
       )}
 
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <Form action={addAction} encType="multipart/form-data" class="p-6 space-y-6">
+        <Form action={addAction} enctype="multipart/form-data" class="p-6 space-y-6">
 
           <div class="space-y-4">
             <div class="space-y-1.5">
@@ -105,7 +105,7 @@ export default component$(() => {
             <div class="space-y-1.5 pt-2">
               <label for="image" class="text-sm font-medium text-slate-700">Logo de la Marca *</label>
               <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-md bg-slate-50 relative overflow-hidden group">
-                
+
                 {imagePreview.value && (
                   <div class="absolute inset-0 bg-white flex items-center justify-center p-4 z-10">
                     <img src={imagePreview.value} alt="Preview" class="max-h-full max-w-full object-contain" />
@@ -128,14 +128,14 @@ export default component$(() => {
                   <div class="flex text-sm text-slate-600 justify-center">
                     <label for="image" class="relative cursor-pointer bg-white rounded-md font-medium text-cyan-600 hover:text-cyan-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-cyan-500">
                       <span>Sube un archivo</span>
-                      <input 
+                      <input
                         ref={fileInputRef}
-                        id="image" 
-                        name="image" 
-                        type="file" 
-                        accept="image/*" 
-                        class="sr-only" 
-                        required 
+                        id="image"
+                        name="image"
+                        type="file"
+                        accept="image/*"
+                        class="sr-only"
+                        required
                         onChange$={handleImageChange}
                       />
                     </label>
