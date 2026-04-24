@@ -7,10 +7,10 @@ export default component$(() => {
   return (
     <div class="bg-slate-50 min-h-screen">
       {/* Header Section */}
-      <div class="bg-primary-900 text-white py-16 md:py-24 text-center">
+      <div class="bg-slate-100 py-16 md:py-24 text-center">
         <div class="container mx-auto px-4">
-          <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">Conéctate con nosotros</h1>
-          <p class="text-lg md:text-xl text-primary-200 max-w-2xl mx-auto">
+          <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-slate-900">Conéctate con nosotros</h1>
+          <p class="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto">
             Estamos aquí para ayudarte. Envíanos tu consulta o visítanos en nuestro local.
           </p>
         </div>
