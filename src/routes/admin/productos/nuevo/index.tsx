@@ -6,14 +6,25 @@ import { LuArrowLeft, LuSave } from '@qwikest/icons/lucide';
 
 export const useCategoriesForSelect = routeLoader$(async ({ env }) => {
   const db = getDb(env);
-  return await db.select({ id: categories.id, name: categories.name }).from(categories);
+  const cats = await db.select().from(categories);
+  return cats.sort((a, b) => {
+    if (!a.parent_id && b.parent_id) return -1;
+    if (a.parent_id && !b.parent_id) return 1;
+    return a.name.localeCompare(b.name);
+  }).map(cat => {
+    const parent = cat.parent_id ? cats.find(c => c.id === cat.parent_id) : null;
+    return {
+      id: cat.id,
+      name: parent ? `${parent.name} > ${cat.name}` : cat.name
+    };
+  }).sort((a, b) => a.name.localeCompare(b.name));
 });
 
 export const useAddProduct = routeAction$(
   async (data, { env, redirect }) => {
     try {
       const db = getDb(env);
-      const newSlug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      const newSlug = data.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
       const id = 'prod-' + newSlug + '-' + Math.random().toString(36).substring(2, 6);
       
       const imagesArray = data.imageUrl ? [data.imageUrl] : [];

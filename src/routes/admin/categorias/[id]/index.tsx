@@ -5,22 +5,24 @@ import { categories } from '~/db/schema';
 import { eq } from 'drizzle-orm';
 import { LuArrowLeft, LuSave } from '@qwikest/icons/lucide';
 
-export const useCategory = routeLoader$(async (requestEvent) => {
+export const useCategoryAndAll = routeLoader$(async (requestEvent) => {
   const db = getDb(requestEvent.env);
   const { id } = requestEvent.params;
   
-  const data = await db.select().from(categories).where(eq(categories.id, id));
-  if (data.length === 0) {
+  const allCats = await db.select().from(categories);
+  const cat = allCats.find(c => c.id === id);
+  
+  if (!cat) {
     throw requestEvent.redirect(302, '/admin/categorias');
   }
-  return data[0];
+  return { cat, allCats };
 });
 
 export const useEditCategory = routeAction$(
   async (data, { env, redirect }) => {
     try {
       const db = getDb(env);
-      const newSlug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      const newSlug = data.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
       
       await db.update(categories)
         .set({
@@ -28,6 +30,7 @@ export const useEditCategory = routeAction$(
           slug: newSlug,
           description: data.description,
           image: data.image || null,
+          parent_id: data.parentId || null,
         })
         .where(eq(categories.id, data.id));
 
@@ -43,11 +46,14 @@ export const useEditCategory = routeAction$(
     name: z.string().min(1, 'El nombre es obligatorio'),
     description: z.string().optional(),
     image: z.string().url('Debe ser una URL válida').optional().or(z.literal('')),
+    parentId: z.string().optional().or(z.literal('')),
   })
 );
 
 export default component$(() => {
-  const cat = useCategory();
+  const data = useCategoryAndAll();
+  const cat = data.value.cat;
+  const cats = data.value.allCats;
   const editAction = useEditCategory();
 
   return (
@@ -70,7 +76,7 @@ export default component$(() => {
 
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <Form action={editAction} class="p-6 space-y-4">
-          <input type="hidden" name="id" value={cat.value.id} />
+          <input type="hidden" name="id" value={cat.id} />
           <div class="space-y-1.5">
             <label for="name" class="text-sm font-medium text-slate-700">Nombre</label>
             <input
@@ -78,7 +84,7 @@ export default component$(() => {
               id="name"
               name="name"
               required
-              value={cat.value.name}
+              value={cat.name}
               class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none"
               placeholder="Ej: Cañerías"
             />
@@ -91,7 +97,20 @@ export default component$(() => {
               rows={3}
               class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none resize-none"
               placeholder="Breve descripción..."
-            >{cat.value.description || ''}</textarea>
+            >{cat.description || ''}</textarea>
+          </div>
+          <div class="space-y-1.5">
+            <label for="parentId" class="text-sm font-medium text-slate-700">Categoría Padre (Opcional)</label>
+            <select
+              id="parentId"
+              name="parentId"
+              class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none bg-white"
+            >
+              <option value="" selected={!cat.parent_id}>Ninguna (Categoría Principal)</option>
+              {cats.filter(c => c.id !== cat.id).map(c => (
+                <option key={c.id} value={c.id} selected={cat.parent_id === c.id}>{c.name}</option>
+              ))}
+            </select>
           </div>
           <div class="space-y-1.5">
             <label for="image" class="text-sm font-medium text-slate-700">URL de Imagen (Opcional)</label>
@@ -99,7 +118,7 @@ export default component$(() => {
               type="url"
               id="image"
               name="image"
-              value={cat.value.image || ''}
+              value={cat.image || ''}
               class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none"
               placeholder="https://ejemplo.com/imagen.jpg"
             />

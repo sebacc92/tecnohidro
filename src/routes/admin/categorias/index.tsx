@@ -15,7 +15,7 @@ export const useAddCategory = routeAction$(
   async (data, { env }) => {
     try {
       const db = getDb(env);
-      const newSlug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      const newSlug = data.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
       const id = 'cat-' + newSlug + '-' + Math.random().toString(36).substring(2, 6);
 
       await db.insert(categories).values({
@@ -24,6 +24,7 @@ export const useAddCategory = routeAction$(
         slug: newSlug,
         description: data.description,
         image: data.image || null,
+        parent_id: data.parentId || null,
       });
 
       return { success: true };
@@ -36,6 +37,7 @@ export const useAddCategory = routeAction$(
     name: z.string().min(1, 'El nombre es obligatorio'),
     description: z.string().optional(),
     image: z.string().url('Debe ser una URL válida').optional().or(z.literal('')),
+    parentId: z.string().optional().or(z.literal('')),
   })
 );
 
@@ -105,6 +107,19 @@ export default component$(() => {
                 ></textarea>
               </div>
               <div class="space-y-1.5">
+                <label for="parentId" class="text-sm font-medium text-slate-700">Categoría Padre (Opcional)</label>
+                <select
+                  id="parentId"
+                  name="parentId"
+                  class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none bg-white"
+                >
+                  <option value="">Ninguna (Categoría Principal)</option>
+                  {cats.value.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div class="space-y-1.5">
                 <label for="image" class="text-sm font-medium text-slate-700">URL de Imagen (Opcional)</label>
                 <input
                   type="url"
@@ -145,44 +160,59 @@ export default component$(() => {
                       </td>
                     </tr>
                   ) : (
-                    cats.value.map((cat) => (
-                      <tr key={cat.id} class="hover:bg-slate-50/50">
-                        <td class="px-6 py-3">
-                          <div class="w-10 h-10 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
-                            {cat.image ? (
-                              <img src={cat.image} alt={cat.name} class="w-full h-full object-cover" />
-                            ) : (
-                              <LuImage class="h-4 w-4 text-slate-400" />
-                            )}
-                          </div>
-                        </td>
-                        <td class="px-6 py-3">
-                          <p class="font-medium text-slate-900">{cat.name}</p>
-                          <p class="text-xs text-slate-500">/{cat.slug}</p>
-                        </td>
-                        <td class="px-6 py-3 text-right">
-                          <div class="flex items-center justify-end gap-2">
-                            <a
-                              href={`/admin/categorias/${cat.id}/`}
-                              class="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-md transition-colors inline-block"
-                              title="Editar"
-                            >
-                              <LuClipboardEdit class="h-4 w-4" />
-                            </a>
-                            <Form action={deleteAction} class="inline-block" onSubmit$={(e) => { if (!window.confirm('¿Seguro que deseas eliminar esta categoría? Esto podría fallar si tiene productos asociados.')) e.preventDefault(); }}>
-                              <input type="hidden" name="id" value={cat.id} />
-                              <button
-                                type="submit"
-                                class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-md transition-colors"
-                                title="Eliminar"
-                              >
-                                <LuTrash2 class="h-4 w-4" />
-                              </button>
-                            </Form>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                    cats.value
+                      .sort((a, b) => {
+                        // Put root categories first, then sort by name
+                        if (!a.parent_id && b.parent_id) return -1;
+                        if (a.parent_id && !b.parent_id) return 1;
+                        return a.name.localeCompare(b.name);
+                      })
+                      .map((cat) => {
+                        const parent = cat.parent_id ? cats.value.find(c => c.id === cat.parent_id) : null;
+                        return (
+                          <tr key={cat.id} class="hover:bg-slate-50/50">
+                            <td class="px-6 py-3">
+                              <div class="w-10 h-10 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                                {cat.image ? (
+                                  <img src={cat.image} alt={cat.name} class="w-full h-full object-cover" />
+                                ) : (
+                                  <LuImage class="h-4 w-4 text-slate-400" />
+                                )}
+                              </div>
+                            </td>
+                            <td class="px-6 py-3">
+                              <div class="flex items-center gap-2">
+                                {parent && (
+                                  <span class="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{parent.name}</span>
+                                )}
+                                <p class="font-medium text-slate-900">{cat.name}</p>
+                              </div>
+                              <p class="text-xs text-slate-500">/{cat.slug}</p>
+                            </td>
+                            <td class="px-6 py-3 text-right">
+                              <div class="flex items-center justify-end gap-2">
+                                <a
+                                  href={`/admin/categorias/${cat.id}/`}
+                                  class="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-md transition-colors inline-block"
+                                  title="Editar"
+                                >
+                                  <LuClipboardEdit class="h-4 w-4" />
+                                </a>
+                                <Form action={deleteAction} class="inline-block" onSubmit$={(e) => { if (!window.confirm('¿Seguro que deseas eliminar esta categoría? Esto podría fallar si tiene productos o subcategorías asociados.')) e.preventDefault(); }}>
+                                  <input type="hidden" name="id" value={cat.id} />
+                                  <button
+                                    type="submit"
+                                    class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-md transition-colors"
+                                    title="Eliminar"
+                                  >
+                                    <LuTrash2 class="h-4 w-4" />
+                                  </button>
+                                </Form>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                    })
                   )}
                 </tbody>
               </table>

@@ -1,11 +1,14 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 
+import { AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
+
 export const categories = sqliteTable('categories', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
   description: text('description'),
   image: text('image'),
+  parent_id: text('parent_id').references((): AnySQLiteColumn => categories.id),
 });
 
 export const products = sqliteTable('products', {

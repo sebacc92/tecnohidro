@@ -2,7 +2,7 @@ import { component$ } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, Link } from '@builder.io/qwik-city';
 import { getDb } from '../db/client';
 import { products, categories, siteContent, brands } from '../db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, isNull } from 'drizzle-orm';
 import { ContactButton } from '../components/ContactButton';
 import { buttonVariants } from '../components/ui/button/button';
 
@@ -15,7 +15,7 @@ export const useHomeData = routeLoader$(async ({ env }) => {
       return acc;
     }, {} as Record<string, string>);
 
-    const featuredCategories = await db.select().from(categories).limit(4);
+    const featuredCategories = await db.select().from(categories).where(isNull(categories.parent_id)).limit(4);
 
     const featuredProducts = await db.select({
       id: products.id,

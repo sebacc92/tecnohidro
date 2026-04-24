@@ -2,9 +2,9 @@ import { component$ } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, Link } from '@builder.io/qwik-city';
 import { getDb } from '../../db/client';
 import { products, categories } from '../../db/schema';
-import { eq, like, or, and } from 'drizzle-orm';
+import { eq, like, or, and, inArray } from 'drizzle-orm';
 import { ContactButton } from '../../components/ContactButton';
-import { LuFilter, LuTag } from '@qwikest/icons/lucide';
+import { LuFilter, LuTag, LuChevronDown } from '@qwikest/icons/lucide';
 
 export const useCatalogData = routeLoader$(async (requestEvent) => {
   const url = requestEvent.url;
@@ -21,7 +21,10 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
       // Find category id first to filter reliably
       const cat = allCategories.find(c => c.slug === categorySlug);
       if (cat) {
-        conditions.push(eq(products.category_id, cat.id));
+        // Find all direct subcategories (assuming 2 levels deep for simple catalog)
+        const subCats = allCategories.filter(c => c.parent_id === cat.id);
+        const allIdsToMatch = [cat.id, ...subCats.map(c => c.id)];
+        conditions.push(inArray(products.category_id, allIdsToMatch));
       }
     }
 
@@ -66,6 +69,9 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
 
 export default component$(() => {
   const data = useCatalogData();
+  
+  const rootCategories = data.value.categories.filter(c => !c.parent_id);
+  const getSubcategories = (parentId: string) => data.value.categories.filter(c => c.parent_id === parentId);
 
   return (
     <div class="container mx-auto px-4 md:px-8 py-12">
@@ -96,16 +102,58 @@ export default component$(() => {
                   Todas las categorías
                 </Link>
               </li>
-              {data.value.categories.map((cat) => (
-                <li key={cat.id}>
-                  <Link 
-                    href={`/productos?category=${cat.slug}${data.value.searchQuery ? `&q=${data.value.searchQuery}` : ''}`}
-                    class={`block py-1.5 px-3 rounded-md transition-colors text-sm ${data.value.currentCategory === cat.slug ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}
-                  >
-                    {cat.name}
-                  </Link>
-                </li>
-              ))}
+              {rootCategories.map((cat) => {
+                const subcats = getSubcategories(cat.id);
+                const isExpanded = data.value.currentCategory === cat.slug || subcats.some(s => s.slug === data.value.currentCategory);
+                const isCatActive = data.value.currentCategory === cat.slug;
+
+                if (subcats.length > 0) {
+                  return (
+                    <li key={cat.id} class="mb-1">
+                      <details class="group" open={isExpanded}>
+                        <summary class={`flex justify-between items-center cursor-pointer py-1.5 px-3 rounded-md transition-colors text-sm list-none select-none ${isCatActive ? 'text-primary-700 font-semibold' : 'text-slate-700 font-medium hover:bg-slate-50'}`}>
+                          <span>{cat.name}</span>
+                          <LuChevronDown class="h-4 w-4 transition-transform group-open:rotate-180 text-slate-400" />
+                        </summary>
+                        <ul class="pl-4 mt-1 border-l-2 border-slate-100 ml-4 space-y-1 mb-2">
+                          <li>
+                            <Link 
+                              href={`/productos?category=${cat.slug}${data.value.searchQuery ? `&q=${data.value.searchQuery}` : ''}`}
+                              class={`block py-1 px-2 rounded text-xs transition-colors ${isCatActive ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-500 hover:bg-slate-50'}`}
+                            >
+                              Todo {cat.name}
+                            </Link>
+                          </li>
+                          {subcats.map((sub) => {
+                            const isSubActive = data.value.currentCategory === sub.slug;
+                            return (
+                              <li key={sub.id}>
+                                <Link 
+                                  href={`/productos?category=${sub.slug}${data.value.searchQuery ? `&q=${data.value.searchQuery}` : ''}`}
+                                  class={`block py-1 px-2 rounded text-xs transition-colors ${isSubActive ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-500 hover:bg-slate-50'}`}
+                                >
+                                  {sub.name}
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </details>
+                    </li>
+                  );
+                }
+
+                return (
+                  <li key={cat.id} class="mb-1">
+                    <Link 
+                      href={`/productos?category=${cat.slug}${data.value.searchQuery ? `&q=${data.value.searchQuery}` : ''}`}
+                      class={`block py-1.5 px-3 rounded-md transition-colors text-sm ${isCatActive ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-700 font-medium hover:bg-slate-50'}`}
+                    >
+                      {cat.name}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </aside>
