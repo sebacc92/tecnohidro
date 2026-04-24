@@ -17,7 +17,7 @@ export const useEditBrand = routeAction$(async (data, { params, env, redirect })
   const name = data.name as string;
   const category = data.category as 'infraestructura' | 'domiciliaria' | 'herramientas';
   const file = data.image as unknown as File | undefined;
-  
+
   if (!name || !category) {
     return { success: false, error: 'El nombre y la categoría son obligatorios.' };
   }
@@ -29,8 +29,8 @@ export const useEditBrand = routeAction$(async (data, { params, env, redirect })
     if (file && file instanceof File && file.size > 0) {
       const token = env.get('BLOB_READ_WRITE_TOKEN');
       if (!token) {
-         console.error('BLOB_READ_WRITE_TOKEN is missing from env');
-         return { success: false, error: 'Error de configuración del servidor (Vercel Blob token).' };
+        console.error('BLOB_READ_WRITE_TOKEN is missing from env');
+        return { success: false, error: 'Error de configuración del servidor (Vercel Blob token).' };
       }
 
       // Subir nueva imagen a Vercel Blob
@@ -54,14 +54,14 @@ export const useEditBrand = routeAction$(async (data, { params, env, redirect })
     console.error('Error updating brand:', error);
     return { success: false, error: 'Hubo un error al actualizar la marca.' };
   }
-  
+
   throw redirect(302, '/admin/marcas/');
 });
 
 export default component$(() => {
   const brand = useBrand();
   const editAction = useEditBrand();
-  
+
   // Initialize with current image URL
   const imagePreview = useSignal<string | null>(brand.value.imageUrl);
   const fileInputRef = useSignal<HTMLInputElement>();
@@ -96,8 +96,8 @@ export default component$(() => {
       )}
 
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <Form action={editAction} encType="multipart/form-data" class="p-6 space-y-6">
-          
+        <Form action={editAction} enctype="multipart/form-data" class="p-6 space-y-6">
+
           <div class="space-y-4">
             <div class="space-y-1.5">
               <label for="name" class="text-sm font-medium text-slate-700">Nombre de la Marca *</label>
@@ -116,7 +116,7 @@ export default component$(() => {
             <div class="space-y-1.5 pt-2">
               <label for="image" class="text-sm font-medium text-slate-700">Logo de la Marca (Opcional si no se cambia)</label>
               <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-md bg-slate-50 relative overflow-hidden group">
-                
+
                 {imagePreview.value && (
                   <div class="absolute inset-0 bg-white flex items-center justify-center p-4 z-10">
                     <img src={imagePreview.value} alt="Preview" class="max-h-full max-w-full object-contain" />
@@ -139,13 +139,13 @@ export default component$(() => {
                   <div class="flex text-sm text-slate-600 justify-center">
                     <label for="image" class="relative cursor-pointer bg-white rounded-md font-medium text-cyan-600 hover:text-cyan-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-cyan-500">
                       <span>Subir nueva imagen</span>
-                      <input 
+                      <input
                         ref={fileInputRef}
-                        id="image" 
-                        name="image" 
-                        type="file" 
-                        accept="image/*" 
-                        class="sr-only" 
+                        id="image"
+                        name="image"
+                        type="file"
+                        accept="image/*"
+                        class="sr-only"
                         onChange$={handleImageChange}
                       />
                     </label>
