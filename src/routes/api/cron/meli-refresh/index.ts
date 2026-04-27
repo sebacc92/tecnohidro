@@ -19,7 +19,7 @@ export const onGet: RequestHandler = async ({ env, json }) => {
     
     for (const integration of integrations) {
       try {
-        await refreshMeliToken(env, integration.user_id, integration.refresh_token);
+        await refreshMeliToken(env, integration.user_id);
         results.push({ userId: integration.user_id, status: 'success' });
       } catch (err: any) {
         console.error(`Error refreshing token for user ${integration.user_id}:`, err);

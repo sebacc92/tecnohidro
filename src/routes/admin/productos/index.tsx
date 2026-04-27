@@ -109,7 +109,7 @@ export const useSyncMeliProducts = routeAction$(
 
       let allIds: string[] = [];
       let offset = 0;
-      let limit = 50;
+      const limit = 50;
       let total = 0;
 
       do {
