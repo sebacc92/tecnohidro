@@ -8,7 +8,7 @@ export const onPost: RequestHandler = async ({ request, env, json }) => {
     const jsonResponse = await handleUpload({
       body,
       request,
-      onBeforeGenerateToken: async (pathname) => {
+      onBeforeGenerateToken: async () => {
         // En un entorno real, aquí validarías que el usuario sea administrador
         // para prevenir subidas públicas sin autorización.
         return {
@@ -18,7 +18,7 @@ export const onPost: RequestHandler = async ({ request, env, json }) => {
           }),
         };
       },
-      onUploadCompleted: async ({ blob, tokenPayload }) => {
+      onUploadCompleted: async ({ blob }) => {
         // Aquí podrías guardar la URL en una tabla de registros o auditoría
         console.log('Upload completado', blob.url);
       },
