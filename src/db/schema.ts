@@ -24,6 +24,7 @@ export const products = sqliteTable('products', {
   images: text('images', { mode: 'json' }).$type<string[]>(), // JSON array of image URLs
   category_id: text('category_id').references(() => categories.id),
   status: text('status', { enum: ['active', 'draft'] }).notNull().default('active'),
+  is_featured: integer('is_featured', { mode: 'boolean' }).default(false),
 });
 
 export const siteContent = sqliteTable('site_content', {

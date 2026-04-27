@@ -52,7 +52,8 @@ export const useEditProduct = routeAction$(
           price: data.price,
           stock: data.stock,
           category_id: data.categoryId,
-          status: data.status,
+          status: data.status === 'active' ? 'active' : 'draft',
+          is_featured: data.is_featured === 'true',
           images: imagesArray,
         })
         .where(eq(products.id, data.id));
@@ -71,7 +72,8 @@ export const useEditProduct = routeAction$(
     price: z.coerce.number().min(0, 'El precio debe ser 0 o mayor'),
     stock: z.coerce.number().int().min(0, 'El stock debe ser 0 o mayor'),
     categoryId: z.string().min(1, 'Debe seleccionar una categoría'),
-    status: z.enum(['active', 'draft']),
+    status: z.string().optional(),
+    is_featured: z.string().optional(),
     imageUrlsJson: z.string().optional(),
   })
 );
@@ -250,12 +252,28 @@ export default component$(() => {
                 {editAction.value?.fieldErrors?.stock && <p class="text-xs text-red-600">{editAction.value.fieldErrors.stock[0]}</p>}
               </div>
 
-              <div class="space-y-1.5">
-                <label for="status" class="text-sm font-medium text-slate-700">Estado *</label>
-                <select id="status" name="status" required class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none bg-white">
-                  <option value="active" selected={product.status === 'active'}>Activo (Visible)</option>
-                  <option value="draft" selected={product.status === 'draft'}>Borrador (Oculto)</option>
-                </select>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between p-3 border border-slate-200 rounded-md bg-slate-50">
+                  <div class="flex flex-col">
+                    <label for="status" class="text-sm font-medium text-slate-800">Producto Activo</label>
+                    <span class="text-xs text-slate-500">Visible en el catálogo</span>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="status" name="status" value="active" class="sr-only peer" checked={product.status === 'active'} />
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600"></div>
+                  </label>
+                </div>
+
+                <div class="flex items-center justify-between p-3 border border-slate-200 rounded-md bg-slate-50">
+                  <div class="flex flex-col">
+                    <label for="is_featured" class="text-sm font-medium text-slate-800">Producto Destacado</label>
+                    <span class="text-xs text-slate-500">Aparecerá con una estrella</span>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="is_featured" name="is_featured" value="true" class="sr-only peer" checked={product.is_featured === true || product.is_featured === 1} />
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
+                  </label>
+                </div>
               </div>
             </div>
           </div>

@@ -3,7 +3,7 @@ import { type DocumentHead, routeLoader$, routeAction$, Link, Form, z, zod$, use
 import { getDb } from '~/db/client';
 import { products, categories } from '~/db/schema';
 import { eq, desc } from 'drizzle-orm';
-import { LuPlus, LuTrash2, LuImage, LuTag, LuShoppingCart, LuClipboardEdit, LuRefreshCw } from '@qwikest/icons/lucide';
+import { LuPlus, LuTrash2, LuImage, LuTag, LuShoppingCart, LuClipboardEdit, LuRefreshCw, LuStar } from '@qwikest/icons/lucide';
 import { getValidMeliToken } from '~/services/meli';
 
 
@@ -26,6 +26,7 @@ export const useProducts = routeLoader$(async (requestEvent) => {
       stock: products.stock,
       source: products.source,
       status: products.status,
+      is_featured: products.is_featured,
       categoryName: categories.name,
       images: products.images,
     })
@@ -77,6 +78,23 @@ export const useToggleStatus = routeAction$(
   })
 );
 
+export const useToggleFeatured = routeAction$(
+  async (data, { env }) => {
+    try {
+      const db = getDb(env);
+      await db.update(products).set({ is_featured: data.is_featured === 'true' }).where(eq(products.id, data.id as string));
+      return { success: true };
+    } catch (error) {
+      console.error('Error toggling featured:', error);
+      return { success: false };
+    }
+  },
+  zod$({
+    id: z.string(),
+    is_featured: z.string(),
+  })
+);
+
 export const useSyncMeliProducts = routeAction$(
   async (_, { env }) => {
     try {
@@ -89,66 +107,84 @@ export const useSyncMeliProducts = routeAction$(
         return { success: false, error: error.message || 'Error al obtener token de Mercado Libre' };
       }
 
-      const searchRes = await fetch(`https://api.mercadolibre.com/users/${userId}/items/search`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
+      let allIds: string[] = [];
+      let offset = 0;
+      let limit = 50;
+      let total = 0;
 
-      if (!searchRes.ok) throw new Error('Error searching items');
-      const searchData = await searchRes.json();
-      if (!searchData.results || searchData.results.length === 0) return { success: true, count: 0 };
+      do {
+        const searchRes = await fetch(`https://api.mercadolibre.com/users/${userId}/items/search?offset=${offset}&limit=${limit}`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
 
-      // Solo sincronizamos los primeros 20 para el ejemplo
-      const ids = searchData.results.slice(0, 20).join(',');
-      const itemsRes = await fetch(`https://api.mercadolibre.com/items?ids=${ids}`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      if (!itemsRes.ok) throw new Error('Error fetching items detail');
-      const itemsData = await itemsRes.json();
+        if (!searchRes.ok) throw new Error('Error searching items');
+        const searchData = await searchRes.json();
+        
+        if (searchData.results && searchData.results.length > 0) {
+          allIds = allIds.concat(searchData.results);
+        }
+        
+        total = searchData.paging.total;
+        offset += limit;
+      } while (offset < total);
+
+      if (allIds.length === 0) return { success: true, count: 0 };
 
       const db = getDb(env);
       let syncCount = 0;
 
-      for (const result of itemsData) {
-        if (result.code !== 200) continue;
-        const item = result.body;
+      const chunkSize = 20;
+      for (let i = 0; i < allIds.length; i += chunkSize) {
+        const chunkIds = allIds.slice(i, i + chunkSize).join(',');
+        const itemsRes = await fetch(`https://api.mercadolibre.com/items?ids=${chunkIds}`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        if (!itemsRes.ok) throw new Error('Error fetching items detail');
+        const itemsData = await itemsRes.json();
 
-        const meliId = item.id;
-        const name = item.title;
-        const price = item.price;
-        const stock = item.available_quantity;
-        const externalLink = item.permalink;
-        const imageUrl = item.pictures && item.pictures.length > 0 
-          ? item.pictures[0].secure_url 
-          : item.thumbnail?.replace('http://', 'https://');
-        const images = imageUrl ? [imageUrl] : [];
-        const slugBase = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+        for (const result of itemsData) {
+          if (result.code !== 200) continue;
+          const item = result.body;
 
-        const existing = await db.select().from(products).where(eq(products.meli_id, meliId));
-        
-        if (existing.length > 0) {
-          await db.update(products).set({
-            name,
-            price,
-            stock,
-            images,
-            external_link: externalLink,
-          }).where(eq(products.id, existing[0].id));
-        } else {
-          const newId = 'prod-meli-' + Math.random().toString(36).substring(2, 6);
-          await db.insert(products).values({
-            id: newId,
-            name,
-            slug: slugBase + '-' + newId.slice(-4), // slug simple unico
-            price,
-            stock,
-            source: 'meli',
-            meli_id: meliId,
-            external_link: externalLink,
-            images,
-            status: 'active',
-          });
+          const meliId = item.id;
+          const name = item.title;
+          const price = item.price;
+          const stock = item.available_quantity;
+          const externalLink = item.permalink;
+          const imageUrl = item.pictures && item.pictures.length > 0 
+            ? item.pictures[0].secure_url 
+            : item.thumbnail?.replace('http://', 'https://');
+          const images = imageUrl ? [imageUrl] : [];
+          const slugBase = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+
+          const existing = await db.select().from(products).where(eq(products.meli_id, meliId));
+          
+          if (existing.length > 0) {
+            await db.update(products).set({
+              name,
+              price,
+              stock,
+              images,
+              external_link: externalLink,
+            }).where(eq(products.id, existing[0].id));
+          } else {
+            const newId = 'prod-meli-' + Math.random().toString(36).substring(2, 6);
+            await db.insert(products).values({
+              id: newId,
+              name,
+              slug: slugBase + '-' + newId.slice(-4),
+              price,
+              stock,
+              source: 'meli',
+              meli_id: meliId,
+              external_link: externalLink,
+              images,
+              status: 'active',
+              is_featured: false,
+            });
+          }
+          syncCount++;
         }
-        syncCount++;
       }
 
       return { success: true, count: syncCount };
@@ -166,6 +202,7 @@ export default component$(() => {
   
   const deleteAction = useDeleteProduct();
   const toggleStatusAction = useToggleStatus();
+  const toggleFeaturedAction = useToggleFeatured();
   const syncAction = useSyncMeliProducts();
   const nav = useNavigate();
 
@@ -251,7 +288,8 @@ export default component$(() => {
                 <th class="px-6 py-3 font-medium">Precio</th>
                 <th class="px-6 py-3 font-medium">Stock</th>
                 <th class="px-6 py-3 font-medium">Fuente</th>
-                <th class="px-6 py-3 font-medium">Estado</th>
+                <th class="px-6 py-3 font-medium text-center">Destacado</th>
+                <th class="px-6 py-3 font-medium text-center">Activo</th>
                 <th class="px-6 py-3 font-medium text-right">Acciones</th>
               </tr>
             </thead>
@@ -300,7 +338,20 @@ export default component$(() => {
                           {product.source.toUpperCase()}
                         </span>
                       </td>
-                      <td class="px-6 py-3">
+                      <td class="px-6 py-3 text-center">
+                        <Form action={toggleFeaturedAction} spaReset={false}>
+                          <input type="hidden" name="id" value={product.id} />
+                          <input type="hidden" name="is_featured" value={product.is_featured ? 'false' : 'true'} />
+                          <button 
+                            type="submit"
+                            title={product.is_featured ? 'Quitar destacado' : 'Destacar'}
+                            class="focus:outline-none transition-transform hover:scale-110"
+                          >
+                            <LuStar class={`w-5 h-5 ${product.is_featured ? 'fill-yellow-400 text-yellow-500' : 'text-slate-300'}`} />
+                          </button>
+                        </Form>
+                      </td>
+                      <td class="px-6 py-3 text-center">
                         <Form action={toggleStatusAction} spaReset={false}>
                           <input type="hidden" name="id" value={product.id} />
                           <input type="hidden" name="status" value={product.status === 'active' ? 'draft' : 'active'} />

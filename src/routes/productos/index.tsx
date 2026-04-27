@@ -4,7 +4,7 @@ import { getDb } from '../../db/client';
 import { products, categories } from '../../db/schema';
 import { eq, like, or, and, inArray } from 'drizzle-orm';
 import { ContactButton } from '../../components/ContactButton';
-import { LuFilter, LuTag, LuChevronDown } from '@qwikest/icons/lucide';
+import { LuFilter, LuTag, LuChevronDown, LuExternalLink } from '@qwikest/icons/lucide';
 import { ProductImageCarousel } from '../../components/ProductImageCarousel';
 import { ShareButton } from '../../components/ui/share-button';
 
@@ -47,6 +47,7 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
       price: products.price,
       images: products.images,
       source: products.source,
+      external_link: products.external_link,
       categoryName: categories.name,
     })
     .from(products)
@@ -202,9 +203,22 @@ export default component$(() => {
                         </h3>
                       </Link>
                       
-                      <div class="mt-auto pt-4 flex items-center gap-2">
-                        <ContactButton productName={product.name} look="primary" size="sm" class="flex-1" />
-                        <ShareButton product={{ id: product.id, name: product.name }} />
+                      <div class="mt-auto pt-4 flex flex-col gap-2">
+                        <div class="flex items-center gap-2">
+                          <ContactButton productName={product.name} look="primary" size="sm" class="flex-1" />
+                          <ShareButton product={{ id: product.id, name: product.name }} />
+                        </div>
+                        {product.source === 'meli' && product.external_link && (
+                          <a 
+                            href={product.external_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 disabled:pointer-events-none disabled:opacity-50 border border-slate-200 bg-transparent hover:bg-slate-100 hover:text-slate-900 h-9 px-4 py-2 w-full"
+                          >
+                            <LuExternalLink class="mr-2 h-4 w-4" />
+                            Ver en MercadoLibre
+                          </a>
+                        )}
                       </div>
                     </div>
                   </div>
