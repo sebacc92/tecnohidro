@@ -79,7 +79,7 @@ export const SocialFeed = component$<SocialFeedProps>(({ posts }) => {
         </header>
 
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {safePosts.slice(0, 6).map((post) => (
+          {safePosts.map((post) => (
             <a
               key={post.id}
               href={post.permalink}

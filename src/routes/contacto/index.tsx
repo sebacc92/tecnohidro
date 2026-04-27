@@ -1,9 +1,136 @@
-import { component$ } from '@builder.io/qwik';
-import { type DocumentHead } from '@builder.io/qwik-city';
-import { LuMapPin, LuPhone, LuMail, LuFacebook, LuInstagram, LuLinkedin, LuSend } from '@qwikest/icons/lucide';
+import { component$, useSignal, useVisibleTask$ } from '@builder.io/qwik';
+import { type DocumentHead, Form, routeAction$, zod$, z } from '@builder.io/qwik-city';
+import { LuMapPin, LuPhone, LuMail, LuFacebook, LuInstagram, LuLinkedin, LuSend, LuCheckCircle } from '@qwikest/icons/lucide';
 import { buttonVariants } from '../../components/ui/button/button';
 
+declare global {
+  interface Window {
+    turnstile: any;
+  }
+}
+
+export const useSendContactEmail = routeAction$(async (datos, requestEvent) => {
+  const { env, fail, request } = requestEvent;
+  const token = (datos as any)['cf-turnstile-response'];
+
+  if (!token) {
+    return fail(400, { message: 'Por favor, completa la verificación de seguridad.' });
+  }
+
+  const secretKey = env.get('TURNSTILE_SECRET_KEY');
+  if (!secretKey) {
+    console.error('Falta TURNSTILE_SECRET_KEY en .env.local');
+    return fail(500, { message: 'Error de configuración del servidor' });
+  }
+
+  const formData = new FormData();
+  formData.append('secret', secretKey);
+  formData.append('response', token);
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('cf-connecting-ip');
+  if (ip) formData.append('remoteip', ip);
+
+  const verifyResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST',
+    body: formData,
+  });
+
+  const verifyResult = await verifyResponse.json();
+  if (!verifyResult.success) {
+    console.error('Turnstile verification failed:', verifyResult);
+    return fail(400, { message: 'Verificación de seguridad fallida. Intenta nuevamente.' });
+  }
+
+  const apiKey = env.get('RESEND_API_KEY');
+  if (!apiKey) {
+    console.error('Falta la API Key de Resend en .env.local');
+    return fail(500, { message: 'Error de configuración del servidor' });
+  }
+
+  const targetEmail = env.get('CONTACT_EMAIL') || 'info@tecnohidro.com.ar';
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        from: 'onboarding@resend.dev',
+        to: targetEmail,
+        subject: `Nuevo contacto web de: ${datos.name} - ${datos.subject}`,
+        html: `
+          <h1>Nuevo mensaje desde TECNOHIDRO</h1>
+          <p><strong>Nombre:</strong> ${datos.name}</p>
+          <p><strong>Email del cliente:</strong> ${datos.email}</p>
+          <p><strong>Asunto:</strong> ${datos.subject}</p>
+          <p><strong>Mensaje:</strong></p>
+          <blockquote style="background: #f9f9f9; padding: 10px; border-left: 5px solid #ccc; color: #333;">
+            ${String(datos.message).replace(/\n/g, '<br/>')}
+          </blockquote>
+        `,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Error Resend API:', errorData);
+      return fail(500, { message: 'No se pudo enviar el correo, por favor intenta más tarde.' });
+    }
+
+    return { success: true };
+
+  } catch (error) {
+    console.error('Error interno conectando a Resend:', error);
+    return fail(500, { message: 'Ocurrió un error inesperado.' });
+  }
+}, zod$({
+  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
+  email: z.string().email('Ingresa un email válido'),
+  subject: z.string().min(2, 'El asunto es requerido'),
+  message: z.string().min(10, 'El mensaje debe tener al menos 10 caracteres'),
+  'cf-turnstile-response': z.string().optional()
+}));
+
 export default component$(() => {
+  const action = useSendContactEmail();
+  const containerRef = useSignal<HTMLElement>();
+  const turnstileToken = useSignal("");
+
+  // eslint-disable-next-line qwik/no-use-visible-task
+  useVisibleTask$(({ track }) => {
+    track(() => containerRef.value);
+
+    if (typeof window === "undefined" || !containerRef.value) return;
+
+    const renderWidget = () => {
+      if (window.turnstile) {
+        window.turnstile.render(containerRef.value, {
+          sitekey: import.meta.env.PUBLIC_TURNSTILE_SITE_KEY,
+          theme: "light",
+          callback: function (token: string) {
+            turnstileToken.value = token;
+          },
+          "expired-callback": function () {
+            turnstileToken.value = "";
+          },
+        });
+      }
+    };
+
+    if (!document.getElementById("turnstile-script")) {
+      const script = document.createElement("script");
+      script.id = "turnstile-script";
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      script.async = true;
+      script.defer = true;
+      script.onload = renderWidget;
+      document.head.appendChild(script);
+    } else {
+      renderWidget();
+    }
+  });
+
   return (
     <div class="bg-slate-50 min-h-screen">
       {/* Header Section */}
@@ -20,30 +147,74 @@ export default component$(() => {
         {/* Form Section */}
         <div class="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 md:p-12 max-w-4xl mx-auto mb-16 relative z-10">
           <h2 class="text-2xl font-bold text-slate-800 mb-6">Envíanos un mensaje</h2>
-          <form class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="space-y-2">
-                <label for="name" class="text-sm font-medium text-slate-700">Nombre completo</label>
-                <input type="text" id="name" class="w-full rounded-md border border-slate-300 px-4 py-2.5 focus:border-primary-500 focus:ring-primary-500 outline-none transition-colors" placeholder="Juan Pérez" />
+          {action.value?.success ? (
+            <div class="py-12 flex flex-col items-center justify-center text-center">
+              <LuCheckCircle class="w-16 h-16 text-green-500 mb-4" />
+              <h3 class="text-2xl font-bold text-slate-800 mb-2">¡Mensaje enviado con éxito!</h3>
+              <p class="text-slate-600">
+                Gracias por contactarte con Tecnohidro. Nos comunicaremos contigo a la brevedad.
+              </p>
+            </div>
+          ) : (
+            <Form action={action} class="space-y-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                  <label for="name" class="text-sm font-medium text-slate-700">Nombre completo</label>
+                  <input type="text" id="name" name="name" class="w-full rounded-md border border-slate-300 px-4 py-2.5 focus:border-primary-500 focus:ring-primary-500 outline-none transition-colors" placeholder="Juan Pérez" />
+                  {action.value?.fieldErrors?.name && (
+                    <p class="mt-1 text-sm text-red-500">{action.value.fieldErrors.name}</p>
+                  )}
+                </div>
+                <div class="space-y-2">
+                  <label for="email" class="text-sm font-medium text-slate-700">Correo electrónico</label>
+                  <input type="email" id="email" name="email" class="w-full rounded-md border border-slate-300 px-4 py-2.5 focus:border-primary-500 focus:ring-primary-500 outline-none transition-colors" placeholder="juan@ejemplo.com" />
+                  {action.value?.fieldErrors?.email && (
+                    <p class="mt-1 text-sm text-red-500">{action.value.fieldErrors.email}</p>
+                  )}
+                </div>
               </div>
               <div class="space-y-2">
-                <label for="email" class="text-sm font-medium text-slate-700">Correo electrónico</label>
-                <input type="email" id="email" class="w-full rounded-md border border-slate-300 px-4 py-2.5 focus:border-primary-500 focus:ring-primary-500 outline-none transition-colors" placeholder="juan@ejemplo.com" />
+                <label for="subject" class="text-sm font-medium text-slate-700">Asunto</label>
+                <input type="text" id="subject" name="subject" class="w-full rounded-md border border-slate-300 px-4 py-2.5 focus:border-primary-500 focus:ring-primary-500 outline-none transition-colors" placeholder="Consulta sobre presupuesto" />
+                {action.value?.fieldErrors?.subject && (
+                  <p class="mt-1 text-sm text-red-500">{action.value.fieldErrors.subject}</p>
+                )}
               </div>
-            </div>
-            <div class="space-y-2">
-              <label for="subject" class="text-sm font-medium text-slate-700">Asunto</label>
-              <input type="text" id="subject" class="w-full rounded-md border border-slate-300 px-4 py-2.5 focus:border-primary-500 focus:ring-primary-500 outline-none transition-colors" placeholder="Consulta sobre presupuesto" />
-            </div>
-            <div class="space-y-2">
-              <label for="message" class="text-sm font-medium text-slate-700">Mensaje</label>
-              <textarea id="message" rows={5} class="w-full rounded-md border border-slate-300 px-4 py-2.5 focus:border-primary-500 focus:ring-primary-500 outline-none transition-colors resize-none" placeholder="Escribe tu mensaje aquí..."></textarea>
-            </div>
-            <button type="button" class={buttonVariants({ look: 'primary', size: 'lg', class: 'w-full md:w-auto flex items-center justify-center gap-2' })}>
-              <LuSend class="w-5 h-5" />
-              Enviar Mensaje
-            </button>
-          </form>
+              <div class="space-y-2">
+                <label for="message" class="text-sm font-medium text-slate-700">Mensaje</label>
+                <textarea id="message" name="message" rows={5} class="w-full rounded-md border border-slate-300 px-4 py-2.5 focus:border-primary-500 focus:ring-primary-500 outline-none transition-colors resize-none" placeholder="Escribe tu mensaje aquí..."></textarea>
+                {action.value?.fieldErrors?.message && (
+                  <p class="mt-1 text-sm text-red-500">{action.value.fieldErrors.message}</p>
+                )}
+              </div>
+              
+              {action.value?.failed && (
+                <p class="rounded-md bg-red-50 p-4 text-sm font-medium text-red-600 border border-red-200">
+                  {action.value.message}
+                </p>
+              )}
+
+              <div class="min-h-[65px]">
+                <div ref={containerRef}></div>
+              </div>
+              <input type="hidden" name="cf-turnstile-response" value={turnstileToken.value} />
+
+              <button 
+                type="submit" 
+                disabled={action.isRunning || !turnstileToken.value}
+                class={buttonVariants({ look: 'primary', size: 'lg', class: 'w-full md:w-auto flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed' })}
+              >
+                {action.isRunning ? (
+                  "Enviando..."
+                ) : (
+                  <>
+                    <LuSend class="w-5 h-5" />
+                    Enviar Mensaje
+                  </>
+                )}
+              </button>
+            </Form>
+          )}
         </div>
 
         {/* 4 Items Grid */}
