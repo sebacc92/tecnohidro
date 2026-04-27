@@ -17,9 +17,19 @@ interface MeliAuditResult {
   error?: string;
 }
 
-export const useMeliAudit = routeLoader$<MeliAuditResult>(async () => {
-  const accessToken = 'APP_USR-2109184180485265-042711-1413df3a8da275c2dd83ac7c215df64c-132935350';
-  const userId = '132935350';
+import { getValidMeliToken } from '~/services/meli';
+
+export const useMeliAudit = routeLoader$<MeliAuditResult>(async (requestEvent) => {
+  const userId = '191214085';
+  let accessToken: string;
+  try {
+    accessToken = await getValidMeliToken(requestEvent.env, userId);
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.message || 'Error al obtener token de Mercado Libre. ¿Falta autorizar la aplicación?'
+    };
+  }
 
   try {
     const searchRes = await fetch(`https://api.mercadolibre.com/users/${userId}/items/search`, {

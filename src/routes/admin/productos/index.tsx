@@ -4,6 +4,7 @@ import { getDb } from '~/db/client';
 import { products, categories } from '~/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { LuPlus, LuTrash2, LuImage, LuTag, LuShoppingCart, LuClipboardEdit, LuRefreshCw } from '@qwikest/icons/lucide';
+import { getValidMeliToken } from '~/services/meli';
 
 
 export const useProducts = routeLoader$(async (requestEvent) => {
@@ -79,9 +80,14 @@ export const useToggleStatus = routeAction$(
 export const useSyncMeliProducts = routeAction$(
   async (_, { env }) => {
     try {
-      // Usando tokens directamente de la demo por ahora
-      const accessToken = 'APP_USR-2109184180485265-042711-1413df3a8da275c2dd83ac7c215df64c-132935350';
-      const userId = '132935350';
+      const userId = '191214085';
+      
+      let accessToken: string;
+      try {
+        accessToken = await getValidMeliToken(env, userId);
+      } catch (error: any) {
+        return { success: false, error: error.message || 'Error al obtener token de Mercado Libre' };
+      }
 
       const searchRes = await fetch(`https://api.mercadolibre.com/users/${userId}/items/search`, {
         headers: { Authorization: `Bearer ${accessToken}` }

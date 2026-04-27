@@ -32,12 +32,12 @@ export const siteContent = sqliteTable('site_content', {
   section: text('section'),
 });
 
-export const authTokens = sqliteTable('auth_tokens', {
-  id: text('id').primaryKey(),
-  service_name: text('service_name', { enum: ['meli'] }).notNull().unique(),
+export const meliIntegrations = sqliteTable('meli_integrations', {
+  user_id: text('user_id').primaryKey(),
   access_token: text('access_token').notNull(),
-  refresh_token: text('refresh_token'),
-  expires_at: integer('expires_at', { mode: 'timestamp' }),
+  refresh_token: text('refresh_token').notNull(),
+  expires_at: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  updated_at: integer('updated_at', { mode: 'timestamp' }).notNull(),
 });
 
 export const brands = sqliteTable('brands', {
