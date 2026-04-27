@@ -1,6 +1,6 @@
 import { component$ } from '@builder.io/qwik';
 import { Link } from '@builder.io/qwik-city';
-import { LuMapPin, LuPhone, LuMail, LuDroplets, LuFacebook, LuInstagram, LuLinkedin } from '@qwikest/icons/lucide';
+import { LuMapPin, LuPhone, LuMail, LuFacebook, LuInstagram, LuLinkedin } from '@qwikest/icons/lucide';
 
 export const Footer = component$(() => {
   const currentYear = new Date().getFullYear();
@@ -10,10 +10,9 @@ export const Footer = component$(() => {
       <div class="container mx-auto px-4 py-12 md:px-8">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <div class="flex items-center gap-2 mb-4">
-              <LuDroplets class="h-6 w-6 text-primary-400" />
-              <span class="text-xl font-bold tracking-tight text-white">Tecnohidro</span>
-            </div>
+            <Link href="/" class="inline-flex items-center mb-4">
+              <img src="/tecnohidro.png" alt="Tecnohidro" width={280} height={84} class="h-16 w-auto object-contain" />
+            </Link>
             <p class="text-slate-400 text-sm max-w-xs mb-6">
               Distribuidora líder en insumos de agua, gas y cloacas para profesionales e industrias.
             </p>

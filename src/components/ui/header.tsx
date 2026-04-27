@@ -1,6 +1,7 @@
 import { component$, useSignal } from '@builder.io/qwik';
 import { Link, useLocation } from '@builder.io/qwik-city';
 import { LuSearch, LuMenu, LuX, LuFacebook, LuInstagram, LuLinkedin } from '@qwikest/icons/lucide';
+import Logo from '~/media/tecnohidro.png?jsx';
 
 export const Header = component$(() => {
   const isMenuOpen = useSignal(false);
@@ -15,9 +16,9 @@ export const Header = component$(() => {
 
   return (
     <header class="sticky top-0 z-50 w-full border-b bg-white">
-      <div class="container mx-auto flex h-20 items-center justify-between px-4 md:px-8">
+      <div class="container mx-auto flex h-24 items-center justify-between px-4 md:px-8">
         <Link href="/" class="flex items-center gap-2">
-          <img src="/logo-tecno-hidro.webp" alt="Tecnohidro" width={200} height={60} class="h-12 w-auto object-contain" />
+          <Logo />
         </Link>
 
         {/* Desktop Navigation */}
