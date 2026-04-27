@@ -7,6 +7,31 @@ import { ContactButton } from '../components/ContactButton';
 import { buttonVariants } from '../components/ui/button/button';
 import { SocialFeed } from '../components/SocialFeed';
 
+const BRAND_LINKS: Record<string, string> = {
+  'genebre': 'https://www.genebre.es/',
+  'tigre': 'https://www.tigre.com.ar/',
+  'juntamas': 'https://www.juntamas.com.ar/',
+  'latyn': 'https://www.latyn.net/',
+  'pluvius': 'https://pluvius.com.ar/',
+  'wavin': 'https://www.wavin.com/es-ar',
+  'saladillo': 'https://www.saladillo.com.ar/',
+  'waterplast': 'https://www.waterplast.com.ar/',
+  'bosch': 'https://www.bosch-pt.com.ar/ar/es/',
+  'irimo': 'https://www.irimo.com/',
+  'barovo': 'https://www.barovo.com.ar/',
+  'kushiro': 'https://kushiro.com.ar/',
+};
+
+function getBrandLink(brandName: string): string {
+  const normalizedName = brandName.toLowerCase().trim();
+  for (const [key, url] of Object.entries(BRAND_LINKS)) {
+    if (normalizedName.includes(key)) {
+      return url;
+    }
+  }
+  return `https://www.google.com/search?q=${encodeURIComponent(brandName)}`;
+}
+
 export const useHomeData = routeLoader$(async ({ env }) => {
   try {
     const db = getDb(env);
@@ -236,48 +261,48 @@ export default component$(() => {
           <div class="space-y-16">
             {/* Infraestructura */}
             <div>
-              <h3 class="text-xl font-semibold text-slate-800 mb-6 border-b border-slate-100 pb-2">Línea Infraestructura</h3>
-              <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+              <h3 class="text-xl font-semibold text-slate-800 mb-8 border-b border-slate-100 pb-2 text-center">Línea Infraestructura</h3>
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8 md:gap-12 items-center justify-items-center mx-auto max-w-5xl">
                 {data.value.brands.filter(b => b.category === 'infraestructura').length > 0 ? (
                   data.value.brands.filter(b => b.category === 'infraestructura').map(brand => (
-                    <div key={brand.id} class="bg-slate-50 rounded-xl p-4 flex items-center justify-center border border-slate-100 hover:shadow-md transition-shadow aspect-[3/2] group">
-                       <img src={brand.imageUrl} alt={brand.name} class="max-h-full max-w-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300 opacity-70 group-hover:opacity-100" loading="lazy" />
-                    </div>
+                    <a key={brand.id} href={getBrandLink(brand.name)} target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-full aspect-[3/2] p-4 hover:scale-110 transition-transform duration-300">
+                       <img src={brand.imageUrl} alt={brand.name} class="max-h-full max-w-full object-contain mix-blend-multiply" loading="lazy" />
+                    </a>
                   ))
                 ) : (
-                  <p class="text-slate-400 text-sm italic col-span-full">Próximamente marcas de infraestructura.</p>
+                  <p class="text-slate-400 text-sm italic col-span-full text-center">Próximamente marcas de infraestructura.</p>
                 )}
               </div>
             </div>
 
             {/* Domiciliaria */}
             <div>
-              <h3 class="text-xl font-semibold text-slate-800 mb-6 border-b border-slate-100 pb-2">Línea Domiciliaria</h3>
-              <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+              <h3 class="text-xl font-semibold text-slate-800 mb-8 border-b border-slate-100 pb-2 text-center">Línea Domiciliaria</h3>
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8 md:gap-12 items-center justify-items-center mx-auto max-w-5xl">
                 {data.value.brands.filter(b => b.category === 'domiciliaria').length > 0 ? (
                   data.value.brands.filter(b => b.category === 'domiciliaria').map(brand => (
-                    <div key={brand.id} class="bg-slate-50 rounded-xl p-4 flex items-center justify-center border border-slate-100 hover:shadow-md transition-shadow aspect-[3/2] group">
-                       <img src={brand.imageUrl} alt={brand.name} class="max-h-full max-w-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300 opacity-70 group-hover:opacity-100" loading="lazy" />
-                    </div>
+                    <a key={brand.id} href={getBrandLink(brand.name)} target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-full aspect-[3/2] p-4 hover:scale-110 transition-transform duration-300">
+                       <img src={brand.imageUrl} alt={brand.name} class="max-h-full max-w-full object-contain mix-blend-multiply" loading="lazy" />
+                    </a>
                   ))
                 ) : (
-                  <p class="text-slate-400 text-sm italic col-span-full">Próximamente marcas domiciliarias.</p>
+                  <p class="text-slate-400 text-sm italic col-span-full text-center">Próximamente marcas domiciliarias.</p>
                 )}
               </div>
             </div>
 
             {/* Herramientas */}
             <div>
-              <h3 class="text-xl font-semibold text-slate-800 mb-6 border-b border-slate-100 pb-2">Línea Herramientas</h3>
-              <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+              <h3 class="text-xl font-semibold text-slate-800 mb-8 border-b border-slate-100 pb-2 text-center">Línea Herramientas</h3>
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8 md:gap-12 items-center justify-items-center mx-auto max-w-5xl">
                 {data.value.brands.filter(b => b.category === 'herramientas').length > 0 ? (
                   data.value.brands.filter(b => b.category === 'herramientas').map(brand => (
-                    <div key={brand.id} class="bg-slate-50 rounded-xl p-4 flex items-center justify-center border border-slate-100 hover:shadow-md transition-shadow aspect-[3/2] group">
-                       <img src={brand.imageUrl} alt={brand.name} class="max-h-full max-w-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300 opacity-70 group-hover:opacity-100" loading="lazy" />
-                    </div>
+                    <a key={brand.id} href={getBrandLink(brand.name)} target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-full aspect-[3/2] p-4 hover:scale-110 transition-transform duration-300">
+                       <img src={brand.imageUrl} alt={brand.name} class="max-h-full max-w-full object-contain mix-blend-multiply" loading="lazy" />
+                    </a>
                   ))
                 ) : (
-                  <p class="text-slate-400 text-sm italic col-span-full">Próximamente herramientas.</p>
+                  <p class="text-slate-400 text-sm italic col-span-full text-center">Próximamente herramientas.</p>
                 )}
               </div>
             </div>

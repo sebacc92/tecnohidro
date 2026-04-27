@@ -5,6 +5,9 @@ import { products, categories } from '../../db/schema';
 import { eq, like, or, and, inArray } from 'drizzle-orm';
 import { ContactButton } from '../../components/ContactButton';
 import { LuFilter, LuTag, LuChevronDown } from '@qwikest/icons/lucide';
+import { ProductImageCarousel } from '../../components/ProductImageCarousel';
+import { ShareButton } from '../../components/ui/share-button';
+
 
 export const useCatalogData = routeLoader$(async (requestEvent) => {
   const url = requestEvent.url;
@@ -167,39 +170,41 @@ export default component$(() => {
           {data.value.products.length > 0 ? (
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {data.value.products.map((product) => {
-                const imageUrl = product.images && product.images.length > 0 
-                  ? product.images[0] 
-                  : 'https://placehold.co/400x400/e2e8f0/475569?text=Sin+Imagen';
+                const images = (product.images && Array.isArray(product.images)) ? product.images as string[] : [];
 
                 return (
                   <div key={product.id} class="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow flex flex-col group">
-                    <Link href={`/productos/${product.slug}`} class="block aspect-square overflow-hidden bg-slate-100 relative">
-                      <img
-                        src={imageUrl}
-                        alt={product.name}
-                        width={400}
-                        height={400}
-                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
+                    <div class="block aspect-square overflow-hidden bg-slate-100 relative">
                       {product.source === 'meli' && (
-                        <div class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-1 rounded-sm flex items-center gap-1 shadow-sm">
+                        <div class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-1 rounded-sm flex items-center gap-1 shadow-sm z-20">
                           <LuTag class="w-3 h-3" /> MercadoLibre
                         </div>
                       )}
-                    </Link>
+                      {images.length > 1 && (
+                        <span class="absolute top-2 left-2 bg-black/50 text-white px-2 py-0.5 rounded text-[10px] font-medium backdrop-blur-sm w-fit z-20">
+                          {images.length} fotos
+                        </span>
+                      )}
+                      
+                      <ProductImageCarousel
+                        images={images}
+                        productName={product.name}
+                      />
+                    </div>
+                    
                     <div class="p-5 flex flex-col flex-1">
-                      <span class="text-xs font-medium text-primary-600 mb-1 block">
+                      <span class="text-xs font-medium text-cyan-700 mb-1 block">
                         {product.categoryName || 'General'}
                       </span>
-                      <Link href={`/productos/${product.slug}`} class="hover:underline">
+                      <Link href={`/producto/${product.id}/`} class="hover:underline block">
                         <h3 class="font-semibold text-slate-800 text-lg leading-tight mb-2 line-clamp-2">
                           {product.name}
                         </h3>
                       </Link>
                       
-                      <div class="mt-auto pt-4">
-                        <ContactButton productName={product.name} look="primary" size="sm" class="w-full" />
+                      <div class="mt-auto pt-4 flex items-center gap-2">
+                        <ContactButton productName={product.name} look="primary" size="sm" class="flex-1" />
+                        <ShareButton product={{ id: product.id, name: product.name }} />
                       </div>
                     </div>
                   </div>

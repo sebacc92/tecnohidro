@@ -1,8 +1,11 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useSignal, $ } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, routeAction$, Form, z, zod$, Link } from '@builder.io/qwik-city';
 import { getDb } from '~/db/client';
 import { products, categories } from '~/db/schema';
 import { LuArrowLeft, LuSave } from '@qwikest/icons/lucide';
+import { upload } from '@vercel/blob/client';
+import imageCompression from 'browser-image-compression';
+
 
 export const useCategoriesForSelect = routeLoader$(async ({ env }) => {
   const db = getDb(env);
@@ -27,7 +30,7 @@ export const useAddProduct = routeAction$(
       const newSlug = data.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
       const id = 'prod-' + newSlug + '-' + Math.random().toString(36).substring(2, 6);
       
-      const imagesArray = data.imageUrl ? [data.imageUrl] : [];
+      const imagesArray: string[] = data.imageUrlsJson ? JSON.parse(data.imageUrlsJson) : [];
 
       await db.insert(products).values({
         id,
@@ -57,13 +60,86 @@ export const useAddProduct = routeAction$(
     stock: z.coerce.number().int().min(0, 'El stock debe ser 0 o mayor'),
     categoryId: z.string().min(1, 'Debe seleccionar una categoría'),
     status: z.enum(['active', 'draft']),
-    imageUrl: z.string().url('Debe ser una URL válida').optional().or(z.literal('')),
+    imageUrlsJson: z.string().optional(),
   })
 );
 
 export default component$(() => {
   const cats = useCategoriesForSelect();
   const addAction = useAddProduct();
+  const isCompressing = useSignal(false);
+  const previewUrls = useSignal<string[]>([]);
+
+  const handleFileChange = $(async (event: Event, element: HTMLInputElement) => {
+    const files = element.files;
+    if (!files || files.length === 0) return;
+
+    isCompressing.value = true;
+    previewUrls.value = [];
+
+    const hiddenInput = element.closest('form')?.querySelector<HTMLInputElement>('input[name="imageUrlsJson"]');
+
+    try {
+      const newUrls: string[] = [];
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        const tempUrl = URL.createObjectURL(file);
+        previewUrls.value = [...previewUrls.value, tempUrl];
+
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1200,
+          useWebWorker: true,
+          fileType: 'image/webp' as const,
+          initialQuality: 0.8,
+        };
+        const compressedBlob = await imageCompression(file, options);
+        const uniqueId = Math.random().toString(36).substring(2, 8);
+        const newFileName = `${file.name.replace(/\.[^/.]+$/, '')}-${uniqueId}.webp`;
+        const compressedFile = new File([compressedBlob], newFileName, { type: 'image/webp' });
+
+        const blob = await upload(newFileName, compressedFile, {
+          access: 'public',
+          handleUploadUrl: '/api/upload',
+        });
+
+        newUrls.push(blob.url);
+
+        previewUrls.value = previewUrls.value.map(u => u === tempUrl ? blob.url : u);
+        URL.revokeObjectURL(tempUrl);
+      }
+
+      if (hiddenInput) {
+        hiddenInput.value = JSON.stringify(newUrls);
+      }
+    } catch (error) {
+      console.error('Error al comprimir/subir imagen:', error);
+    } finally {
+      isCompressing.value = false;
+      element.value = '';
+    }
+  });
+
+  const removeImage = $((indexToRemove: number) => {
+    if (!window.confirm('¿Seguro que deseas eliminar esta imagen?')) return;
+    const updated = previewUrls.value.filter((_, i) => i !== indexToRemove);
+    previewUrls.value = updated;
+    const hiddenInput = document.querySelector<HTMLInputElement>('input[name="imageUrlsJson"]');
+    if (hiddenInput) {
+      hiddenInput.value = updated.length > 0 ? JSON.stringify(updated) : '';
+    }
+  });
+
+  const handleSubmit = $(async (e: Event, currentTarget: HTMLFormElement) => {
+    if (isCompressing.value || addAction.isRunning) return;
+
+    const formData = new FormData(currentTarget);
+    formData.delete('images'); 
+
+    await addAction.submit(formData);
+  });
 
   return (
     <div class="max-w-4xl mx-auto">
@@ -84,8 +160,15 @@ export default component$(() => {
       )}
 
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <Form action={addAction} class="p-6 space-y-8">
+        <Form 
+          action={addAction} 
+          class="p-6 space-y-8"
+          spaReset
+          preventdefault:submit
+          onSubmit$={handleSubmit}
+        >
           
+
           <div class="space-y-4">
             <h2 class="text-lg font-semibold text-slate-800 border-b border-slate-100 pb-2">Información Básica</h2>
             
@@ -144,10 +227,47 @@ export default component$(() => {
           <div class="space-y-4">
             <h2 class="text-lg font-semibold text-slate-800 border-b border-slate-100 pb-2">Multimedia</h2>
             
+            <input type="hidden" name="imageUrlsJson" value="" />
+
             <div class="space-y-1.5">
-              <label for="imageUrl" class="text-sm font-medium text-slate-700">URL de Imagen Principal</label>
-              <input type="url" id="imageUrl" name="imageUrl" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none" placeholder="https://ejemplo.com/imagen.jpg" />
-              {addAction.value?.fieldErrors?.imageUrl && <p class="text-xs text-red-600">{addAction.value.fieldErrors.imageUrl[0]}</p>}
+              <label for="images" class="block text-sm font-medium text-slate-700">Imágenes del Producto</label>
+              
+              {previewUrls.value.length > 0 && (
+                <div class="mt-2 mb-4">
+                  <p class="text-xs text-slate-500 mb-2">
+                    {isCompressing.value ? '⏳ Subiendo imágenes...' : `✅ ${previewUrls.value.length} imagen(es) subida(s):`}
+                  </p>
+                  <div class="flex flex-wrap gap-4">
+                    {previewUrls.value.map((url, index) => (
+                      <div key={index} class="relative group">
+                        <img src={url} class="w-24 h-24 object-cover rounded-lg border border-slate-200" />
+                        {!isCompressing.value && (
+                          <button
+                            type="button"
+                            onClick$={() => removeImage(index)}
+                            class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600"
+                            title="Eliminar imagen"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <input 
+                type="file" 
+                id="images" 
+                name="images" 
+                multiple 
+                accept="image/*" 
+                class="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-50 file:text-slate-700 hover:file:bg-slate-100" 
+                disabled={isCompressing.value}
+                onChange$={handleFileChange}
+              />
+              <p class="mt-1 text-xs text-slate-400">Puedes seleccionar varias imágenes. Se optimizarán a .webp y se subirán automáticamente al seleccionarlas.</p>
             </div>
           </div>
 
@@ -157,10 +277,20 @@ export default component$(() => {
             </Link>
             <button
               type="submit"
-              class="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
-              disabled={addAction.isRunning}
+              class="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-2.5 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isCompressing.value || addAction.isRunning}
             >
-              {addAction.isRunning ? 'Guardando...' : <><LuSave class="w-5 h-5" /> Crear Producto</>}
+              {isCompressing.value || addAction.isRunning ? (
+                <>
+                  <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {isCompressing.value ? 'Subiendo imágenes...' : 'Guardando...'}
+                </>
+              ) : (
+                <><LuSave class="w-5 h-5" /> Crear Producto</>
+              )}
             </button>
           </div>
         </Form>
