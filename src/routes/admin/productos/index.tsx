@@ -108,25 +108,35 @@ export const useSyncMeliProducts = routeAction$(
       }
 
       let allIds: string[] = [];
-      let offset = 0;
-      const limit = 50;
-      let total = 0;
+      const limit = 100;
 
-      do {
-        const searchRes = await fetch(`https://api.mercadolibre.com/users/${userId}/items/search?offset=${offset}&limit=${limit}`, {
+      let searchRes = await fetch(`https://api.mercadolibre.com/users/${userId}/items/search?search_type=scan&limit=${limit}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      if (!searchRes.ok) throw new Error('Error searching items init');
+      
+      let searchData = await searchRes.json();
+      let scrollId = searchData.scroll_id;
+      
+      if (searchData.results && searchData.results.length > 0) {
+        allIds = allIds.concat(searchData.results);
+      }
+
+      while (searchData.results && searchData.results.length > 0) {
+        searchRes = await fetch(`https://api.mercadolibre.com/users/${userId}/items/search?search_type=scan&scroll_id=${scrollId}&limit=${limit}`, {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
-
-        if (!searchRes.ok) throw new Error('Error searching items');
-        const searchData = await searchRes.json();
+        
+        if (!searchRes.ok) throw new Error('Error searching items scroll');
+        
+        searchData = await searchRes.json();
         
         if (searchData.results && searchData.results.length > 0) {
           allIds = allIds.concat(searchData.results);
         }
-        
-        total = searchData.paging.total;
-        offset += limit;
-      } while (offset < total);
+        scrollId = searchData.scroll_id;
+      }
 
       if (allIds.length === 0) return { success: true, count: 0 };
 
