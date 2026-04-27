@@ -32,7 +32,8 @@ export const onGet: RequestHandler = async ({ query, env, json }) => {
     const data = await response.json();
 
     if (!response.ok) {
-        return json(response.status, { error: 'Falló el canje de tokens', details: data });
+        json(response.status, { error: 'Falló el canje de tokens', details: data });
+        return;
     }
 
     // TODO: Acá en el futuro meteremos Drizzle para guardar 'data.access_token' y 'data.refresh_token' en Turso.
