@@ -1,19 +1,19 @@
 import { component$ } from '@builder.io/qwik';
 import { routeLoader$ } from '@builder.io/qwik-city';
 
-interface MeliAuditItem {
+interface MeliProduct {
   id: string;
   title: string;
   price: number;
-  status: string;
   thumbnail: string;
-  user_product_id: string | null;
-  family_name: string | null;
+  permalink: string;
+  condition: string;
+  freeShipping: boolean;
 }
 
 interface MeliAuditResult {
   success: boolean;
-  data?: MeliAuditItem[];
+  data?: MeliProduct[];
   error?: string;
 }
 
@@ -55,15 +55,25 @@ export const useMeliAudit = routeLoader$<MeliAuditResult>(async () => {
 
     const itemsData = await itemsRes.json();
 
-    const data: MeliAuditItem[] = itemsData.map((item: any) => ({
-      id: item.body.id,
-      title: item.body.title,
-      price: item.body.price,
-      status: item.body.status,
-      thumbnail: item.body.secure_thumbnail || item.body.thumbnail,
-      user_product_id: item.body.catalog_product_id || item.body.user_product_id || null,
-      family_name: item.body.family_name || null
-    }));
+    const data: MeliProduct[] = itemsData.map((item: any) => {
+      // Regla estricta: intentar obtener url segura de alta calidad, fallback a thumbnail con https
+      let thumbnail = item.body.thumbnail || '';
+      if (item.body.pictures && item.body.pictures.length > 0 && item.body.pictures[0].secure_url) {
+        thumbnail = item.body.pictures[0].secure_url;
+      } else if (thumbnail) {
+        thumbnail = thumbnail.replace('http://', 'https://');
+      }
+
+      return {
+        id: item.body.id,
+        title: item.body.title,
+        price: item.body.price,
+        thumbnail: thumbnail,
+        permalink: item.body.permalink,
+        condition: item.body.condition || 'used',
+        freeShipping: item.body.shipping?.free_shipping || false,
+      };
+    });
 
     return { success: true, data };
   } catch (error: any) {
@@ -80,19 +90,19 @@ export default component$(() => {
   const { success, data, error } = auditResult.value;
 
   return (
-    <div class="min-h-screen bg-slate-50 p-8 text-slate-900 font-sans">
+    <div class="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 font-sans">
       <div class="max-w-7xl mx-auto">
-        <div class="flex items-center justify-between mb-8 border-b border-slate-200 pb-4">
-          <h1 class="text-2xl font-mono font-bold tracking-tight">
-            ME_LI :: AUDIT_DASHBOARD
+        <header class="mb-10">
+          <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            Nuestros Productos
           </h1>
-          <div class="text-sm font-mono bg-slate-200 px-3 py-1 rounded text-slate-600">
-            /demo-meli-up
-          </div>
-        </div>
+          <p class="mt-2 text-slate-500 text-lg">
+            Descubre nuestra selección con los mejores precios y envíos a todo el país.
+          </p>
+        </header>
 
         {!success ? (
-          <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-8 rounded shadow-sm">
+          <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl shadow-sm">
             <div class="flex">
               <div class="flex-shrink-0">
                 <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -106,13 +116,13 @@ export default component$(() => {
                 </div>
                 <div class="mt-4">
                   <p class="text-xs text-red-600 font-semibold uppercase tracking-wider">Acción Requerida:</p>
-                  <p class="text-sm mt-1">Verifica que el Access Token sea válido, no esté expirado, y que el User ID corresponda a la cuenta.</p>
+                  <p class="text-sm mt-1">Verifica que el Access Token sea válido y no esté expirado.</p>
                 </div>
               </div>
             </div>
           </div>
         ) : !data || data.length === 0 ? (
-          <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 rounded shadow-sm">
+          <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-xl shadow-sm">
             <div class="flex">
               <div class="flex-shrink-0">
                 <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
@@ -122,73 +132,68 @@ export default component$(() => {
               <div class="ml-3">
                 <h3 class="text-sm font-medium text-yellow-800">Sin Resultados</h3>
                 <div class="mt-2 text-sm text-yellow-700">
-                  <p>La consulta se realizó con éxito pero no se encontraron publicaciones activas para el usuario especificado.</p>
+                  <p>Por el momento no hay productos disponibles para mostrar en este catálogo.</p>
                 </div>
               </div>
             </div>
           </div>
         ) : (
-          <div class="bg-white shadow ring-1 ring-slate-200 sm:rounded-lg overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-300">
-              <thead class="bg-slate-50">
-                <tr>
-                  <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-xs font-semibold text-slate-900 sm:pl-6 uppercase tracking-wider">IMG</th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">Item ID</th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">Title</th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">Price</th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">Status</th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">User Product ID</th>
-                  <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-slate-900 uppercase tracking-wider">Family Name</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-200 bg-white font-mono text-sm">
-                {data.map((item) => (
-                  <tr key={item.id} class="hover:bg-slate-50 transition-colors">
-                    <td class="whitespace-nowrap py-4 pl-4 pr-3 sm:pl-6">
-                      <img src={item.thumbnail} alt="thumb" class="h-12 w-12 rounded border border-slate-200 object-cover bg-slate-100" width="48" height="48" loading="lazy" />
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-slate-500 font-medium">
-                      {item.id}
-                    </td>
-                    <td class="px-3 py-4 text-slate-700 max-w-xs truncate font-sans" title={item.title}>
-                      {item.title}
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-slate-900 font-semibold">
-                      ${item.price.toLocaleString('es-AR')}
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4">
-                      <span class={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${
-                        item.status === 'active' ? 'bg-green-50 text-green-700 ring-green-600/20' : 
-                        item.status === 'paused' ? 'bg-yellow-50 text-yellow-800 ring-yellow-600/20' : 
-                        'bg-slate-50 text-slate-600 ring-slate-500/10'
-                      }`}>
-                        {item.status}
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+            {data.map((product) => (
+              <article 
+                key={product.id} 
+                class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-shadow duration-300 flex flex-col h-full overflow-hidden"
+              >
+                {/* Imagen del producto */}
+                <header class="aspect-square bg-white p-6 relative flex items-center justify-center">
+                  <img
+                    src={product.thumbnail}
+                    alt={product.title}
+                    loading="lazy"
+                    decoding="async"
+                    class="w-full h-full object-contain"
+                  />
+                  
+                  {/* Badges Flotantes */}
+                  <div class="absolute top-3 left-3 flex flex-col gap-2 z-10">
+                    {product.condition === 'new' && (
+                      <span class="bg-indigo-100 text-indigo-800 text-xs font-extrabold px-2.5 py-1 rounded-lg uppercase tracking-wider">
+                        Nuevo
                       </span>
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4">
-                      {item.user_product_id ? (
-                        <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
-                          {item.user_product_id}
-                        </span>
-                      ) : (
-                        <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500 ring-1 ring-inset ring-slate-500/10">
-                          NULL
-                        </span>
-                      )}
-                    </td>
-                    <td class="whitespace-nowrap px-3 py-4 text-slate-500">
-                      {item.family_name ? (
-                        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                          {item.family_name}
-                        </span>
-                      ) : (
-                        <span class="text-slate-400 italic font-sans text-xs">No definido</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    )}
+                    {product.freeShipping && (
+                      <span class="bg-green-100 text-green-800 text-xs font-extrabold px-2.5 py-1 rounded-lg uppercase tracking-wider flex items-center gap-1 shadow-sm border border-green-200">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                        Envío Gratis
+                      </span>
+                    )}
+                  </div>
+                </header>
+
+                {/* Info del producto */}
+                <div class="p-5 flex flex-col flex-grow border-t border-slate-100 bg-slate-50/50">
+                  <h3 class="text-slate-700 text-sm line-clamp-2 mb-3 leading-relaxed">
+                    {product.title}
+                  </h3>
+
+                  {/* Espaciador flexible para alinear precio y botón abajo */}
+                  <div class="mt-auto">
+                    <p class="text-2xl font-bold text-slate-900 mb-4 tracking-tight">
+                      {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(product.price)}
+                    </p>
+
+                    <a
+                      href={product.permalink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3 px-4 font-semibold transition-colors duration-200 shadow-md hover:shadow-lg focus:ring-4 focus:ring-blue-300 outline-none"
+                    >
+                      Comprar en Mercado Libre
+                    </a>
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
         )}
       </div>

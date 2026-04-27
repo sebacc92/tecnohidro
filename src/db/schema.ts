@@ -46,3 +46,12 @@ export const brands = sqliteTable('brands', {
   category: text('category', { enum: ['infraestructura', 'domiciliaria', 'herramientas'] }).notNull(),
   imageUrl: text('image_url').notNull(),
 });
+
+export const instagramPosts = sqliteTable('instagram_posts', {
+  id: text('id').primaryKey(),
+  permalink: text('permalink'),
+  mediaUrl: text('media_url'),
+  mediaType: text('media_type'),
+  caption: text('caption'),
+  timestamp: text('timestamp'),
+});

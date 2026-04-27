@@ -1,10 +1,11 @@
 import { component$ } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, Link } from '@builder.io/qwik-city';
 import { getDb } from '../db/client';
-import { products, categories, siteContent, brands } from '../db/schema';
-import { eq, isNull } from 'drizzle-orm';
+import { products, categories, siteContent, brands, instagramPosts } from '../db/schema';
+import { eq, isNull, desc } from 'drizzle-orm';
 import { ContactButton } from '../components/ContactButton';
 import { buttonVariants } from '../components/ui/button/button';
+import { SocialFeed } from '../components/SocialFeed';
 
 export const useHomeData = routeLoader$(async ({ env }) => {
   try {
@@ -32,12 +33,23 @@ export const useHomeData = routeLoader$(async ({ env }) => {
 
     const allBrands = await db.select().from(brands);
 
+    const igPosts = await db.select().from(instagramPosts).orderBy(desc(instagramPosts.timestamp)).limit(6);
+    
+    // Map to ensure no nulls in required fields
+    const mappedIgPosts = igPosts.map(post => ({
+      id: post.id,
+      mediaUrl: post.mediaUrl || '',
+      permalink: post.permalink || '',
+      caption: post.caption || undefined,
+    }));
+
     return {
       heroTitle: contentMap['hero_title'] || 'Insumos de Calidad para Profesionales',
       heroDescription: contentMap['hero_desc'] || 'Distribuidora líder en insumos de agua, gas y cloacas. Proveemos a instaladores, consorcios y particulares.',
       categories: featuredCategories,
       products: featuredProducts,
       brands: allBrands,
+      instagramPosts: mappedIgPosts,
     };
   } catch (error) {
     console.error('Database query error:', error);
@@ -47,6 +59,7 @@ export const useHomeData = routeLoader$(async ({ env }) => {
       categories: [],
       products: [],
       brands: [],
+      instagramPosts: [],
     };
   }
 });
@@ -271,6 +284,9 @@ export default component$(() => {
           </div>
         </div>
       </section>
+
+      {/* Social Feed */}
+      <SocialFeed posts={data.value.instagramPosts} />
     </div>
   );
 });
