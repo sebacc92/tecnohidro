@@ -49,11 +49,11 @@ export async function refreshMeliToken(env: EnvGetter, userId: string): Promise<
   }
 
   // 2. Preparar el payload para la API de Mercado Libre
-  const appId = env.get('MELI_APP_ID');
+  const appId = env.get('MELI_CLIENT_ID');
   const clientSecret = env.get('MELI_CLIENT_SECRET');
 
   if (!appId || !clientSecret) {
-    throw new Error('Faltan variables de entorno MELI_APP_ID o MELI_CLIENT_SECRET');
+    throw new Error('Faltan variables de entorno MELI_CLIENT_ID o MELI_CLIENT_SECRET');
   }
 
   const payload = new URLSearchParams({
@@ -125,7 +125,7 @@ export async function getValidMeliToken(env: EnvGetter, userId: string): Promise
 
   // Margen de seguridad: 5 minutos (300,000 ms)
   const SAFETY_MARGIN_MS = 5 * 60 * 1000;
-  
+
   // Convertir timestamp/date a milisegundos
   const expiresAtMs = new Date(integration.expires_at).getTime();
   const nowMs = Date.now();
