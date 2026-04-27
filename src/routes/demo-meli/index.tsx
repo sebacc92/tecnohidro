@@ -36,7 +36,6 @@ export const useMeliProducts = routeLoader$(async (): Promise<MeliProduct[]> => 
     const itemsData = await itemsRes.json();
 
     // 3. Limpiamos y mapeamos la respuesta para enviar solo lo necesario al frontend
-    // Usamos la interfaz MeliProduct para asegurar los tipos
     return itemsData.map((item: any): MeliProduct => ({
       id: item.body.id,
       title: item.body.title,
@@ -59,7 +58,7 @@ export default component$(() => {
         <h1 class="text-3xl font-bold text-slate-900 mb-8">
           Catálogo Sincronizado
         </h1>
-        
+
         {products.value.length === 0 ? (
           <p class="text-slate-500">No se encontraron productos o el token expiró.</p>
         ) : (
@@ -67,9 +66,9 @@ export default component$(() => {
             {products.value.map((product) => (
               <div key={product.id} class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
                 <div class="aspect-square bg-white p-4">
-                  <img 
-                    src={product.thumbnail} 
-                    alt={product.title} 
+                  <img
+                    src={product.thumbnail}
+                    alt={product.title}
                     class="w-full h-full object-contain"
                     width="250"
                     height="250"
@@ -82,9 +81,9 @@ export default component$(() => {
                   <p class="text-2xl font-bold text-slate-900 mb-4">
                     ${product.price.toLocaleString('es-AR')}
                   </p>
-                  <a 
-                    href={product.permalink} 
-                    target="_blank" 
+                  <a
+                    href={product.permalink}
+                    target="_blank"
                     rel="noopener noreferrer"
                     class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                   >
