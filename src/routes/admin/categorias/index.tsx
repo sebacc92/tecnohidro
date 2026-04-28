@@ -1,4 +1,4 @@
-import { component$, useSignal, useComputed$, useStore, $ } from '@builder.io/qwik';
+import { component$, useSignal, useComputed$, useStore, $, type QRL } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, routeAction$, z, zod$ } from '@builder.io/qwik-city';
 import { getDb } from '~/db/client';
 import { categories } from '~/db/schema';
@@ -120,18 +120,18 @@ export const useReorderSiblings = routeAction$(
 export const InlineInput = component$<{
   parentId?: string;
   addAction: any;
-  onCancel$: () => void;
+  onCancel$: QRL<() => void>;
   level: number;
 }>(({ parentId, addAction, onCancel$, level }) => {
   const name = useSignal('');
   const slugPreview = useComputed$(() => toSlug(name.value));
   const isSubmitting = useSignal(false);
 
-  const doSubmit = $(() => {
+  const doSubmit = $(async () => {
     if (!name.value.trim() || isSubmitting.value) return;
     isSubmitting.value = true;
-    addAction.submit({ name: name.value.trim(), parentId: parentId ?? '' });
-    onCancel$();
+    await addAction.submit({ name: name.value.trim(), parentId: parentId ?? '' });
+    await onCancel$();
   });
 
   const levelPl = level * 2 + 1;
@@ -150,9 +150,9 @@ export const InlineInput = component$<{
           class="flex-1 bg-white border border-cyan-300 rounded-md px-3 py-1.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 shadow-sm"
           value={name.value}
           onInput$={(e) => (name.value = (e.target as HTMLInputElement).value)}
-          onKeyDown$={(e) => {
-            if (e.key === 'Enter') doSubmit();
-            if (e.key === 'Escape') onCancel$();
+          onKeyDown$={async (e) => {
+            if (e.key === 'Enter') await doSubmit();
+            if (e.key === 'Escape') await onCancel$();
           }}
         />
         <button
@@ -166,7 +166,7 @@ export const InlineInput = component$<{
         </button>
         <button
           class="p-1.5 text-slate-400 rounded-md hover:text-slate-700 hover:bg-slate-100 transition-colors"
-          onClick$={onCancel$}
+          onClick$={async () => await onCancel$()}
         >
           <LuX class="w-4 h-4" />
         </button>
