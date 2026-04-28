@@ -187,7 +187,7 @@ export default component$(() => {
                   <p class="mt-1 text-sm text-red-500">{action.value.fieldErrors.message}</p>
                 )}
               </div>
-              
+
               {action.value?.failed && (
                 <p class="rounded-md bg-red-50 p-4 text-sm font-medium text-red-600 border border-red-200">
                   {action.value.message}
@@ -199,8 +199,8 @@ export default component$(() => {
               </div>
               <input type="hidden" name="cf-turnstile-response" value={turnstileToken.value} />
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={action.isRunning || !turnstileToken.value}
                 class={buttonVariants({ look: 'primary', size: 'lg', class: 'w-full md:w-auto flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed' })}
               >
@@ -225,7 +225,7 @@ export default component$(() => {
               <LuMapPin class="w-7 h-7" />
             </div>
             <h3 class="text-lg font-bold text-slate-800 mb-2">Dirección</h3>
-            <p class="text-slate-600 text-sm">Av. 72 e/14 y 15 nº 970<br/>B1900 La Plata, Bs. As.</p>
+            <p class="text-slate-600 text-sm">Av. 72 e/14 y 15 nº 970<br />B1900 La Plata, Bs. As.</p>
           </div>
 
           {/* Llámenos */}
@@ -234,7 +234,7 @@ export default component$(() => {
               <LuPhone class="w-7 h-7" />
             </div>
             <h3 class="text-lg font-bold text-slate-800 mb-2">Llámenos</h3>
-            <p class="text-slate-600 text-sm">+54 221 453-2144<br/>Lun - Vie: 8:00 a 17:00 hs</p>
+            <p class="text-slate-600 text-sm">+54 221 457-1111<br />Lun - Vie: 8:00 a 17:00 hs</p>
           </div>
 
           {/* Email */}
@@ -269,13 +269,13 @@ export default component$(() => {
 
       {/* Full width map */}
       <div class="w-full h-96 lg:h-[500px] bg-slate-200 relative">
-        <iframe 
-          src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d26165.862291253154!2d-57.934515!3d-34.938238!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95a2e8be78dbe745%3A0x42a9e3e0e0a5b92c!2sAberturas%20Costa!5e0!3m2!1ses-419!2sus!4v1776987501854!5m2!1ses-419!2sus" 
-          width="100%" 
-          height="100%" 
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d26165.862291253154!2d-57.934515!3d-34.938238!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95a2e8be78dbe745%3A0x42a9e3e0e0a5b92c!2sAberturas%20Costa!5e0!3m2!1ses-419!2sus!4v1776987501854!5m2!1ses-419!2sus"
+          width="100%"
+          height="100%"
           style={{ border: 0 }}
           allowFullscreen={true}
-          loading="lazy" 
+          loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
           title="Ubicación Tecnohidro"
           class="absolute inset-0"

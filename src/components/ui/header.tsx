@@ -32,9 +32,9 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
             <div class="bg-orange-100 p-2 rounded-full text-orange-600">
               <LuPhone class="w-5 h-5" />
             </div>
-            <span>221 453-2144</span>
+            <span>221 457-1111</span>
           </div>
-          
+
           <div class="flex-1 max-w-2xl w-full">
             <LiveSearch />
           </div>
@@ -81,7 +81,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                       {cat.name}
                       {hasChildren && <LuChevronDown class="w-4 h-4 ml-1 transition-transform group-hover:rotate-180" />}
                     </Link>
-                    
+
                     {/* Mega Menu Dropdown */}
                     {hasChildren && (
                       <div class="absolute left-0 top-full w-full bg-[#fcfcfc] border-t-2 border-orange-500 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
@@ -119,7 +119,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                   </li>
                 );
               })}
-              
+
               {/* Static Links */}
               {navLinks.map((link) => (
                 <li key={link.href} class="group">
@@ -141,11 +141,11 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
         <div class="md:hidden border-t border-slate-100 bg-white absolute top-full w-full shadow-lg max-h-[80vh] overflow-y-auto">
           {/* Mobile Search - Only visible on small screens */}
           <div class="p-4 border-b border-slate-100">
-             <div class="flex items-center gap-3 text-slate-800 font-semibold mb-4">
+            <div class="flex items-center gap-3 text-slate-800 font-semibold mb-4">
               <div class="bg-orange-100 p-2 rounded-full text-orange-600">
                 <LuPhone class="w-4 h-4" />
               </div>
-              <span>221 453-2144</span>
+              <span>221 457-1111</span>
             </div>
             <LiveSearch />
           </div>
@@ -191,7 +191,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                 )}
               </div>
             ))}
-            
+
             {navLinks.map((link) => {
               const isActive = loc.url.pathname === link.href || (link.href !== '/' && loc.url.pathname.startsWith(link.href));
               return (
@@ -206,7 +206,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                 </Link>
               );
             })}
-            
+
             <div class="pt-4 px-4 pb-6 flex items-center justify-center gap-6">
               <a href="https://www.facebook.com/tecnohidrosa/" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-[#1877F2]">
                 <LuFacebook class="h-6 w-6" />
