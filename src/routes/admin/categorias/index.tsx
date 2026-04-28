@@ -1,9 +1,9 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useSignal } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, routeAction$, Form, z, zod$ } from '@builder.io/qwik-city';
 import { getDb } from '~/db/client';
 import { categories } from '~/db/schema';
 import { eq } from 'drizzle-orm';
-import { LuPlus, LuTrash2, LuImage, LuClipboardEdit } from '@qwikest/icons/lucide';
+import { LuPlus, LuTrash2, LuClipboardEdit, LuChevronRight, LuChevronDown } from '@qwikest/icons/lucide';
 
 export const useCategories = routeLoader$(async ({ env }) => {
   const db = getDb(env);
@@ -22,9 +22,8 @@ export const useAddCategory = routeAction$(
         id,
         name: data.name,
         slug: newSlug,
-        description: data.description,
-        image: data.image || null,
         parent_id: data.parentId || null,
+        show_in_menu: data.showInMenu === 'on',
       });
 
       return { success: true };
@@ -35,9 +34,8 @@ export const useAddCategory = routeAction$(
   },
   zod$({
     name: z.string().min(1, 'El nombre es obligatorio'),
-    description: z.string().optional(),
-    image: z.string().url('Debe ser una URL válida').optional().or(z.literal('')),
     parentId: z.string().optional().or(z.literal('')),
+    showInMenu: z.string().optional(),
   })
 );
 
@@ -57,17 +55,87 @@ export const useDeleteCategory = routeAction$(
   })
 );
 
+// Componente recursivo para renderizar el árbol de categorías
+export const CategoryTreeItem = component$<{ cat: any; allCats: any[]; deleteAction: any; level?: number }>(({ cat, allCats, deleteAction, level = 0 }) => {
+  const isExpanded = useSignal(level === 0);
+  const children = allCats.filter(c => c.parent_id === cat.id).sort((a, b) => a.name.localeCompare(b.name));
+  const hasChildren = children.length > 0;
+
+  return (
+    <div class="flex flex-col border-b border-slate-100 last:border-0">
+      <div class={`flex items-center justify-between py-3 pr-4 group transition-colors hover:bg-slate-50`} style={{ paddingLeft: `${level * 2 + 1}rem` }}>
+        <div class="flex items-center gap-2">
+          {hasChildren ? (
+            <button 
+              onClick$={() => isExpanded.value = !isExpanded.value}
+              class="p-1 rounded hover:bg-slate-200 text-slate-500 transition-colors"
+            >
+              {isExpanded.value ? <LuChevronDown class="w-4 h-4" /> : <LuChevronRight class="w-4 h-4" />}
+            </button>
+          ) : (
+            <div class="w-6 h-6" /> // spacer
+          )}
+          
+          <div class="flex items-center gap-3">
+            <p class={`font-medium ${level === 0 ? 'text-slate-900' : 'text-slate-700'}`}>{cat.name}</p>
+            {level === 0 && (
+              <span class={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${cat.show_in_menu ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-500'}`}>
+                {cat.show_in_menu ? 'En Menú' : 'Oculto'}
+              </span>
+            )}
+            <span class="text-xs text-slate-400">/{cat.slug}</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <a
+            href={`/admin/categorias/${cat.id}/`}
+            class="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-md transition-colors inline-block"
+            title="Editar"
+          >
+            <LuClipboardEdit class="h-4 w-4" />
+          </a>
+          <Form action={deleteAction} class="inline-block" onSubmit$={(e) => { if (!window.confirm(`¿Seguro que deseas eliminar "${cat.name}"?`)) e.preventDefault(); }}>
+            <input type="hidden" name="id" value={cat.id} />
+            <button
+              type="submit"
+              class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-md transition-colors"
+              title="Eliminar"
+            >
+              <LuTrash2 class="h-4 w-4" />
+            </button>
+          </Form>
+        </div>
+      </div>
+      
+      {hasChildren && isExpanded.value && (
+        <div class="flex flex-col border-l-2 border-slate-100 ml-5">
+          {children.map(child => (
+            <CategoryTreeItem key={child.id} cat={child} allCats={allCats} deleteAction={deleteAction} level={level + 1} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
+
 export default component$(() => {
   const cats = useCategories();
   const addAction = useAddCategory();
   const deleteAction = useDeleteCategory();
+
+  // Switch de estado local para el form
+  const isShowInMenu = useSignal(true);
+
+  // Raíces
+  const roots = cats.value.filter(c => !c.parent_id).sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div class="max-w-6xl mx-auto">
       <div class="flex justify-between items-end mb-6">
         <div>
           <h1 class="text-2xl font-bold text-slate-900">Categorías</h1>
-          <p class="text-slate-500">Gestiona los rubros y familias de productos.</p>
+          <p class="text-slate-500">Organiza el árbol de categorías en jerarquías.</p>
         </div>
       </div>
 
@@ -84,7 +152,7 @@ export default component$(() => {
             <div class="p-4 border-b border-slate-100 bg-slate-50/50">
               <h2 class="font-semibold text-slate-800">Nueva Categoría</h2>
             </div>
-            <Form action={addAction} class="p-4 space-y-4">
+            <Form action={addAction} class="p-4 space-y-5">
               <div class="space-y-1.5">
                 <label for="name" class="text-sm font-medium text-slate-700">Nombre</label>
                 <input
@@ -96,39 +164,40 @@ export default component$(() => {
                   placeholder="Ej: Cañerías"
                 />
               </div>
+              
               <div class="space-y-1.5">
-                <label for="description" class="text-sm font-medium text-slate-700">Descripción (Opcional)</label>
-                <textarea
-                  id="description"
-                  name="description"
-                  rows={2}
-                  class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none resize-none"
-                  placeholder="Breve descripción..."
-                ></textarea>
-              </div>
-              <div class="space-y-1.5">
-                <label for="parentId" class="text-sm font-medium text-slate-700">Categoría Padre (Opcional)</label>
+                <label for="parentId" class="text-sm font-medium text-slate-700">Categoría Padre</label>
                 <select
                   id="parentId"
                   name="parentId"
                   class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none bg-white"
                 >
-                  <option value="">Ninguna (Categoría Principal)</option>
+                  <option value="">Ninguna (Es Categoría Principal)</option>
                   {cats.value.map(cat => (
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
+                <p class="text-xs text-slate-500">Dejar en "Ninguna" para crear un Nivel 1.</p>
               </div>
-              <div class="space-y-1.5">
-                <label for="image" class="text-sm font-medium text-slate-700">URL de Imagen (Opcional)</label>
-                <input
-                  type="url"
-                  id="image"
-                  name="image"
-                  class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none"
-                  placeholder="https://ejemplo.com/imagen.jpg"
-                />
+
+              {/* Switch Toggle */}
+              <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+                <div>
+                  <p class="text-sm font-medium text-slate-900">Mostrar en el Menú</p>
+                  <p class="text-xs text-slate-500">Visible en la barra pública.</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    name="showInMenu" 
+                    class="sr-only peer" 
+                    checked={isShowInMenu.value}
+                    onChange$={(e) => isShowInMenu.value = (e.target as HTMLInputElement).checked}
+                  />
+                  <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                </label>
               </div>
+
               <button
                 type="submit"
                 class="w-full bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors flex items-center justify-center gap-2 mt-2"
@@ -143,79 +212,20 @@ export default component$(() => {
         {/* Right Column: List */}
         <div class="lg:col-span-2">
           <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-sm whitespace-nowrap">
-                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500">
-                  <tr>
-                    <th class="px-6 py-3 font-medium">Imagen</th>
-                    <th class="px-6 py-3 font-medium">Categoría</th>
-                    <th class="px-6 py-3 font-medium text-right">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                  {cats.value.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} class="px-6 py-8 text-center text-slate-500">
-                        No hay categorías creadas aún.
-                      </td>
-                    </tr>
-                  ) : (
-                    cats.value
-                      .sort((a, b) => {
-                        // Put root categories first, then sort by name
-                        if (!a.parent_id && b.parent_id) return -1;
-                        if (a.parent_id && !b.parent_id) return 1;
-                        return a.name.localeCompare(b.name);
-                      })
-                      .map((cat) => {
-                        const parent = cat.parent_id ? cats.value.find(c => c.id === cat.parent_id) : null;
-                        return (
-                          <tr key={cat.id} class="hover:bg-slate-50/50">
-                            <td class="px-6 py-3">
-                              <div class="w-10 h-10 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
-                                {cat.image ? (
-                                  <img src={cat.image} alt={cat.name} class="w-full h-full object-cover" />
-                                ) : (
-                                  <LuImage class="h-4 w-4 text-slate-400" />
-                                )}
-                              </div>
-                            </td>
-                            <td class="px-6 py-3">
-                              <div class="flex items-center gap-2">
-                                {parent && (
-                                  <span class="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{parent.name}</span>
-                                )}
-                                <p class="font-medium text-slate-900">{cat.name}</p>
-                              </div>
-                              <p class="text-xs text-slate-500">/{cat.slug}</p>
-                            </td>
-                            <td class="px-6 py-3 text-right">
-                              <div class="flex items-center justify-end gap-2">
-                                <a
-                                  href={`/admin/categorias/${cat.id}/`}
-                                  class="text-blue-500 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-md transition-colors inline-block"
-                                  title="Editar"
-                                >
-                                  <LuClipboardEdit class="h-4 w-4" />
-                                </a>
-                                <Form action={deleteAction} class="inline-block" onSubmit$={(e) => { if (!window.confirm('¿Seguro que deseas eliminar esta categoría? Esto podría fallar si tiene productos o subcategorías asociados.')) e.preventDefault(); }}>
-                                  <input type="hidden" name="id" value={cat.id} />
-                                  <button
-                                    type="submit"
-                                    class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-md transition-colors"
-                                    title="Eliminar"
-                                  >
-                                    <LuTrash2 class="h-4 w-4" />
-                                  </button>
-                                </Form>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                    })
-                  )}
-                </tbody>
-              </table>
+            <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+              <h2 class="font-semibold text-slate-800">Estructura del Catálogo</h2>
+            </div>
+            
+            <div class="flex flex-col">
+              {roots.length === 0 ? (
+                <div class="p-8 text-center text-slate-500">
+                  No hay categorías creadas aún.
+                </div>
+              ) : (
+                roots.map(root => (
+                  <CategoryTreeItem key={root.id} cat={root} allCats={cats.value} deleteAction={deleteAction} />
+                ))
+              )}
             </div>
           </div>
         </div>

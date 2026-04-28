@@ -158,9 +158,9 @@ export const LiveSearch = component$(() => {
   });
 
   return (
-    <div class="relative hidden sm:block" ref={wrapperRef}>
-      <div class="relative">
-        <LuSearch class="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+    <div class="relative hidden sm:block w-full" ref={wrapperRef}>
+      <div class="relative w-full">
+        <LuSearch class="absolute left-3 top-3.5 h-5 w-5 text-slate-400" />
         <input
           type="search"
           placeholder="Buscar productos..."
@@ -168,7 +168,7 @@ export const LiveSearch = component$(() => {
           onInput$={handleInput}
           onKeyDown$={handleKeyDown}
           onFocus$={() => { if (query.value.length >= 3) isOpen.value = true; }}
-          class="h-11 w-72 md:w-80 rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 text-base outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all shadow-sm"
+          class="h-12 w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-4 text-base outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all shadow-sm"
           autoComplete="off"
         />
         {isSearching.value && (
@@ -212,7 +212,7 @@ export const LiveSearch = component$(() => {
                       </div>
                       <div class="flex-1 min-w-0">
                         <div class="text-sm font-medium text-slate-900 truncate">{product.name}</div>
-                        <div class="text-xs text-cyan-600 font-medium truncate">{product.categoryName || 'General'}</div>
+                        <div class="text-xs text-orange-600 font-medium truncate">{product.categoryName || 'General'}</div>
                       </div>
                     </button>
                   </li>
@@ -225,7 +225,7 @@ export const LiveSearch = component$(() => {
                     nav(`/productos?q=${encodeURIComponent(query.value)}`);
                     isOpen.value = false;
                   }}
-                  class="w-full py-2 flex items-center justify-center gap-1 text-sm font-semibold text-cyan-700 hover:text-cyan-800 transition-colors"
+                  class="w-full py-2 flex items-center justify-center gap-1 text-sm font-semibold text-orange-600 hover:text-orange-700 transition-colors"
                 >
                   Ver todos los resultados <LuChevronRight class="w-4 h-4" />
                 </button>

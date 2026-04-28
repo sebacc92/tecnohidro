@@ -9,6 +9,7 @@ export const categories = sqliteTable('categories', {
   description: text('description'),
   image: text('image'),
   parent_id: text('parent_id').references((): AnySQLiteColumn => categories.id),
+  show_in_menu: integer('show_in_menu', { mode: 'boolean' }).default(true),
 });
 
 export const products = sqliteTable('products', {

@@ -328,7 +328,7 @@ export default component$(() => {
                               <LuImage class="h-4 w-4 text-slate-400" />
                             )}
                           </div>
-                          <div class="font-medium text-slate-900 truncate max-w-[200px]" title={product.name}>
+                          <div class="font-medium text-slate-900 text-xs line-clamp-2 max-w-[250px] whitespace-normal leading-tight" title={product.name}>
                             {product.name}
                           </div>
                         </div>
