@@ -340,9 +340,10 @@ export const CategoryTreeItem = component$<{
               }`}
               title={cat.show_in_menu ? 'Ocultar del menú' : 'Mostrar en menú'}
               disabled={menuPending.value}
-              onClick$={() => {
+              onClick$={async () => {
                 menuPending.value = true;
-                toggleMenuAction.submit({ id: cat.id, show: cat.show_in_menu ? 'false' : 'true' });
+                await toggleMenuAction.submit({ id: cat.id, show: cat.show_in_menu ? 'false' : 'true' });
+                menuPending.value = false;
               }}
             >
               {menuPending.value
@@ -456,7 +457,7 @@ export default component$(() => {
     const q = searchQuery.value.trim().toLowerCase();
     if (!q) {
       return {
-        roots: cats.value.filter((c) => !c.parent_id).sort((a, b) => a.name.localeCompare(b.name)),
+        roots: cats.value.filter((c) => !c.parent_id).sort((a, b) => ((a.sort_order ?? 0) - (b.sort_order ?? 0)) || a.name.localeCompare(b.name)),
         allCats: cats.value,
         hasFilter: false,
       };
@@ -482,7 +483,7 @@ export default component$(() => {
 
     const visibleCats = cats.value.filter((c) => visibleIds.has(c.id));
     return {
-      roots: visibleCats.filter((c) => !c.parent_id).sort((a, b) => a.name.localeCompare(b.name)),
+      roots: visibleCats.filter((c) => !c.parent_id).sort((a, b) => ((a.sort_order ?? 0) - (b.sort_order ?? 0)) || a.name.localeCompare(b.name)),
       allCats: visibleCats,
       hasFilter: true,
     };
@@ -629,7 +630,6 @@ export default component$(() => {
         <span><kbd class="px-1 bg-slate-100 rounded border border-slate-200 font-mono">Enter</kbd> confirmar · <kbd class="px-1 bg-slate-100 rounded border border-slate-200 font-mono">Esc</kbd> cancelar</span>
         <span>El ícono <span class="text-orange-500">👁</span> activa/desactiva la visibilidad en el menú</span>
         <span>Arrastrá el ícono <span class="text-slate-500">⠿</span> para reordenar dentro del mismo nivel</span>
-        <span>Para editar descripción, imagen y más → usar el ícono <span class="text-blue-500">✎</span></span>
       </div>
     </div>
   );

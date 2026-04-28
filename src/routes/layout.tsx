@@ -11,14 +11,16 @@ export const useNavigationCategories = routeLoader$(async ({ env }) => {
   const db = getDb(env);
   const allCats = await db.select().from(categories);
   
+  const sortFn = (a: any, b: any) => ((a.sort_order ?? 0) - (b.sort_order ?? 0)) || a.name.localeCompare(b.name);
+
   // Nivel 1 (Raíces que deben mostrarse en el menú)
-  const roots = allCats.filter(c => !c.parent_id && c.show_in_menu !== false);
+  const roots = allCats.filter(c => !c.parent_id && c.show_in_menu !== false).sort(sortFn);
   
   const tree = roots.map(root => {
     // Nivel 2
-    const children = allCats.filter(c => c.parent_id === root.id).map(child => {
+    const children = allCats.filter(c => c.parent_id === root.id).sort(sortFn).map(child => {
       // Nivel 3
-      const subChildren = allCats.filter(sub => sub.parent_id === child.id);
+      const subChildren = allCats.filter(sub => sub.parent_id === child.id).sort(sortFn);
       return {
         ...child,
         children: subChildren

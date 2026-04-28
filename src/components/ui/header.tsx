@@ -84,25 +84,24 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
 
                     {/* Mega Menu Dropdown */}
                     {hasChildren && (
-                      <div class="absolute left-0 top-full w-full bg-[#fcfcfc] border-t-2 border-orange-500 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      <div class="absolute left-0 top-full w-full bg-[#2d2d2d] border-t-2 border-orange-500 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                         <div class="container mx-auto px-8 py-10">
-                          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
+                          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-8 gap-y-12">
                             {cat.children.map((child: any) => (
                               <div key={child.id} class="flex flex-col gap-3">
                                 <Link
                                   href={`/productos?categoria=${child.slug}`}
-                                  class="font-bold text-slate-800 uppercase text-[13px] hover:text-orange-600 transition-colors"
+                                  class="font-bold text-white uppercase text-[13px] hover:text-orange-500 transition-colors border-b border-slate-600 pb-2"
                                 >
                                   {child.name}
                                 </Link>
-                                {/* Opcional soporte futuro para sub-subcategorías (Nivel 3) */}
                                 {child.children && child.children.length > 0 && (
-                                  <ul class="flex flex-col gap-2 mt-2">
+                                  <ul class="flex flex-col gap-2.5 mt-1">
                                     {child.children.map((subChild: any) => (
                                       <li key={subChild.id}>
                                         <Link
                                           href={`/productos?categoria=${subChild.slug}`}
-                                          class="text-slate-500 text-sm hover:text-orange-500 transition-colors"
+                                          class="text-slate-300 text-[13px] hover:text-white hover:translate-x-1 inline-block transition-transform duration-200"
                                         >
                                           {subChild.name}
                                         </Link>
@@ -155,7 +154,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
               <div key={cat.id} class="flex flex-col border-b border-slate-50">
                 <Link
                   href={`/productos?categoria=${cat.slug}`}
-                  class="text-base font-bold text-slate-800 py-3 px-4 hover:bg-orange-50 transition-colors"
+                  class="text-base font-bold uppercase text-slate-800 py-3 px-4 hover:bg-orange-50 transition-colors"
                   onClick$={() => (isMenuOpen.value = false)}
                 >
                   {cat.name}
@@ -166,7 +165,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                       <div key={child.id} class="flex flex-col">
                         <Link
                           href={`/productos?categoria=${child.slug}`}
-                          class="text-sm font-medium text-slate-600 py-2 px-8 hover:text-orange-600"
+                          class="text-sm font-medium uppercase text-slate-600 py-2 px-8 hover:text-orange-600"
                           onClick$={() => (isMenuOpen.value = false)}
                         >
                           {child.name}
