@@ -16,7 +16,7 @@
     --card-foreground: var(--color-slate-900);
     --border: var(--color-slate-200);
     --input: var(--color-slate-200);
-    --primary: var(--color-cyan-600);
+    --primary: var(--color-orange-600);
     --primary-foreground: white;
     --secondary: var(--color-slate-900);
     --secondary-foreground: white;
@@ -53,7 +53,7 @@
     --card-foreground: var(--color-slate-50);
     --border: var(--color-slate-800);
     --input: var(--color-slate-800);
-    --primary: var(--color-cyan-600);
+    --primary: var(--color-orange-500);
     --primary-foreground: white;
     --secondary: var(--color-slate-100);
     --secondary-foreground: black;

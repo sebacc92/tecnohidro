@@ -154,42 +154,7 @@ export default component$(() => {
         </div>
       </section>
 
-      {/* Featured Categories */}
-      <section class="py-16 bg-white">
-        <div class="container mx-auto px-4 md:px-8">
-          <div class="flex justify-between items-end mb-10">
-            <div>
-              <h2 class="text-3xl font-bold tracking-tight text-slate-900 mb-2">Categorías Principales</h2>
-              <p class="text-slate-500">Encuentra todo lo que necesitas por rubro.</p>
-            </div>
-            <Link href="/productos" class="hidden md:inline-flex text-primary-600 hover:text-primary-700 font-medium">
-              Ver todas &rarr;
-            </Link>
-          </div>
 
-          {data.value.categories.length > 0 ? (
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-              {data.value.categories.map((category) => (
-                <Link
-                  key={category.id}
-                  href={`/productos?category=${category.slug}`}
-                  class="group flex flex-col items-center justify-center p-6 bg-slate-50 rounded-xl border border-slate-100 hover:border-primary-200 hover:shadow-md transition-all text-center"
-                >
-                  <div class="w-16 h-16 mb-4 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    {/* Placeholder icon since we don't store icons yet */}
-                    <span class="text-2xl font-bold">{category.name.charAt(0)}</span>
-                  </div>
-                  <h3 class="font-semibold text-slate-800">{category.name}</h3>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div class="p-8 text-center text-slate-500 border border-dashed rounded-lg">
-              No hay categorías disponibles.
-            </div>
-          )}
-        </div>
-      </section>
 
       {/* Featured Products */}
       <section class="py-16 bg-slate-50 border-t border-slate-100">
