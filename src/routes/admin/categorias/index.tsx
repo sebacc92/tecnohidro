@@ -1,11 +1,12 @@
-import { component$, useSignal, useComputed$, $ } from '@builder.io/qwik';
-import { type DocumentHead, routeLoader$, routeAction$, server$, z, zod$ } from '@builder.io/qwik-city';
+import { component$, useSignal, useComputed$, useStore, $ } from '@builder.io/qwik';
+import { type DocumentHead, routeLoader$, routeAction$, z, zod$ } from '@builder.io/qwik-city';
 import { getDb } from '~/db/client';
 import { categories } from '~/db/schema';
 import { eq } from 'drizzle-orm';
 import {
   LuPlus, LuTrash2, LuPencil, LuChevronRight, LuChevronDown,
   LuEye, LuEyeOff, LuSearch, LuX, LuCheck, LuFolder, LuFolderOpen,
+  LuLoader2, LuGripVertical,
 } from '@qwikest/icons/lucide';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -95,6 +96,25 @@ export const useRenameCategory = routeAction$(
   zod$({ id: z.string(), name: z.string().min(1) })
 );
 
+export const useReorderSiblings = routeAction$(
+  async (data, { env }) => {
+    try {
+      const db = getDb(env);
+      const ids = data.siblings.split(',').filter(Boolean);
+      await Promise.all(
+        ids.map((id, idx) =>
+          db.update(categories).set({ sort_order: idx }).where(eq(categories.id, id))
+        )
+      );
+      return { success: true };
+    } catch (e) {
+      console.error(e);
+      return { success: false };
+    }
+  },
+  zod$({ siblings: z.string() })
+);
+
 // ─── Inline Input Component ──────────────────────────────────────────────────
 
 export const InlineInput = component$<{
@@ -105,6 +125,14 @@ export const InlineInput = component$<{
 }>(({ parentId, addAction, onCancel$, level }) => {
   const name = useSignal('');
   const slugPreview = useComputed$(() => toSlug(name.value));
+  const isSubmitting = useSignal(false);
+
+  const doSubmit = $(() => {
+    if (!name.value.trim() || isSubmitting.value) return;
+    isSubmitting.value = true;
+    addAction.submit({ name: name.value.trim(), parentId: parentId ?? '' });
+    onCancel$();
+  });
 
   const levelPl = level * 2 + 1;
 
@@ -123,24 +151,18 @@ export const InlineInput = component$<{
           value={name.value}
           onInput$={(e) => (name.value = (e.target as HTMLInputElement).value)}
           onKeyDown$={(e) => {
-            if (e.key === 'Enter' && name.value.trim()) {
-              addAction.submit({ name: name.value.trim(), parentId: parentId ?? '' });
-              onCancel$();
-            }
+            if (e.key === 'Enter') doSubmit();
             if (e.key === 'Escape') onCancel$();
           }}
         />
         <button
-          class="p-1.5 bg-cyan-500 text-white rounded-md hover:bg-cyan-600 transition-colors disabled:opacity-40"
-          disabled={!name.value.trim()}
-          onClick$={() => {
-            if (name.value.trim()) {
-              addAction.submit({ name: name.value.trim(), parentId: parentId ?? '' });
-              onCancel$();
-            }
-          }}
+          class="p-1.5 bg-cyan-500 text-white rounded-md hover:bg-cyan-600 transition-colors disabled:opacity-40 flex items-center justify-center"
+          disabled={!name.value.trim() || isSubmitting.value}
+          onClick$={doSubmit}
         >
-          <LuCheck class="w-4 h-4" />
+          {isSubmitting.value
+            ? <LuLoader2 class="w-4 h-4 animate-spin" />
+            : <LuCheck class="w-4 h-4" />}
         </button>
         <button
           class="p-1.5 text-slate-400 rounded-md hover:text-slate-700 hover:bg-slate-100 transition-colors"
@@ -193,18 +215,22 @@ export const CategoryTreeItem = component$<{
   deleteAction: any;
   toggleMenuAction: any;
   renameAction: any;
+  reorderAction: any;
   level?: number;
   forceExpand?: boolean;
-}>(({ cat, allCats, addAction, deleteAction, toggleMenuAction, renameAction, level = 0, forceExpand = false }) => {
+}>(({ cat, allCats, addAction, deleteAction, toggleMenuAction, renameAction, reorderAction, level = 0, forceExpand = false }) => {
   const isExpanded = useSignal(level === 0);
   const isAddingChild = useSignal(false);
   const isEditing = useSignal(false);
   const editName = useSignal(cat.name);
   const editSlug = useComputed$(() => toSlug(editName.value));
+  const menuPending = useSignal(false);
+  // drag state for this node's children group
+  const drag = useStore({ fromId: '', overId: '' });
 
   const children = allCats
     .filter((c) => c.parent_id === cat.id)
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => ((a.sort_order ?? 0) - (b.sort_order ?? 0)) || a.name.localeCompare(b.name));
   const hasChildren = children.length > 0 || isAddingChild.value;
 
   const cfg = LEVEL_CONFIG[Math.min(level, 2)];
@@ -219,8 +245,12 @@ export const CategoryTreeItem = component$<{
         class={`group flex items-center justify-between py-2.5 pr-3 border-b border-slate-100 last:border-0 transition-colors ${cfg.hoverBg}`}
         style={{ paddingLeft: `${levelPl}rem` }}
       >
-        {/* Left: toggle + icon + name */}
+        {/* Left: grip + toggle + icon + name */}
         <div class="flex items-center gap-2 min-w-0 flex-1">
+          {/* Drag grip */}
+          <span class="opacity-0 group-hover:opacity-40 cursor-grab active:cursor-grabbing text-slate-400 shrink-0">
+            <LuGripVertical class="w-3.5 h-3.5" />
+          </span>
           {/* Expand toggle */}
           <button
             class={`p-1 rounded hover:bg-white/70 text-slate-400 transition-colors shrink-0 ${!hasChildren ? 'invisible' : ''}`}
@@ -304,13 +334,20 @@ export const CategoryTreeItem = component$<{
 
             {/* Toggle menu visibility */}
             <button
-              class={`p-1.5 rounded-md transition-colors ${cat.show_in_menu ? 'text-orange-500 hover:bg-orange-50' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+              class={`p-1.5 rounded-md transition-colors ${
+                menuPending.value ? 'text-slate-400' :
+                cat.show_in_menu ? 'text-orange-500 hover:bg-orange-50' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+              }`}
               title={cat.show_in_menu ? 'Ocultar del menú' : 'Mostrar en menú'}
-              onClick$={() =>
-                toggleMenuAction.submit({ id: cat.id, show: cat.show_in_menu ? 'false' : 'true' })
-              }
+              disabled={menuPending.value}
+              onClick$={() => {
+                menuPending.value = true;
+                toggleMenuAction.submit({ id: cat.id, show: cat.show_in_menu ? 'false' : 'true' });
+              }}
             >
-              {cat.show_in_menu ? <LuEye class="w-3.5 h-3.5" /> : <LuEyeOff class="w-3.5 h-3.5" />}
+              {menuPending.value
+                ? <LuLoader2 class="w-3.5 h-3.5 animate-spin" />
+                : cat.show_in_menu ? <LuEye class="w-3.5 h-3.5" /> : <LuEyeOff class="w-3.5 h-3.5" />}
             </button>
 
             {/* Edit (navigate) */}
@@ -340,21 +377,49 @@ export const CategoryTreeItem = component$<{
 
       {/* Children + inline input */}
       {(expanded || isAddingChild.value) && (
-        <div class={`flex flex-col border-l-2 ${cfg.borderColor} ml-${Math.min(level, 2) === 0 ? '5' : '7'}`}
+        <div class={`flex flex-col border-l-2 ${cfg.borderColor}`}
           style={{ marginLeft: `${levelPl + 0.75}rem` }}
         >
           {children.map((child) => (
-            <CategoryTreeItem
+            <div
               key={child.id}
-              cat={child}
-              allCats={allCats}
-              addAction={addAction}
-              deleteAction={deleteAction}
-              toggleMenuAction={toggleMenuAction}
-              renameAction={renameAction}
-              level={level + 1}
-              forceExpand={forceExpand}
-            />
+              draggable
+              preventdefault:dragover
+              class={`transition-all ${
+                drag.fromId === child.id ? 'opacity-40' : ''
+              } ${
+                drag.overId === child.id && drag.fromId !== child.id
+                  ? 'border-t-2 border-cyan-400'
+                  : ''
+              }`}
+              onDragStart$={() => { drag.fromId = child.id; }}
+              onDragOver$={() => { if (drag.fromId !== child.id) drag.overId = child.id; }}
+              onDrop$={() => {
+                if (!drag.fromId || drag.fromId === child.id) { drag.fromId = ''; drag.overId = ''; return; }
+                const ids = children.map((c) => c.id);
+                const fromIdx = ids.indexOf(drag.fromId);
+                const toIdx = ids.indexOf(child.id);
+                const reordered = [...ids];
+                reordered.splice(fromIdx, 1);
+                reordered.splice(fromIdx < toIdx ? toIdx - 1 : toIdx, 0, drag.fromId);
+                reorderAction.submit({ siblings: reordered.join(',') });
+                drag.fromId = '';
+                drag.overId = '';
+              }}
+              onDragEnd$={() => { drag.fromId = ''; drag.overId = ''; }}
+            >
+              <CategoryTreeItem
+                cat={child}
+                allCats={allCats}
+                addAction={addAction}
+                deleteAction={deleteAction}
+                toggleMenuAction={toggleMenuAction}
+                renameAction={renameAction}
+                reorderAction={reorderAction}
+                level={level + 1}
+                forceExpand={forceExpand}
+              />
+            </div>
           ))}
 
           {isAddingChild.value && (
@@ -379,6 +444,9 @@ export default component$(() => {
   const deleteAction = useDeleteCategory();
   const toggleMenuAction = useToggleMenu();
   const renameAction = useRenameCategory();
+  const reorderAction = useReorderSiblings();
+  // drag state for root-level items
+  const rootDrag = useStore({ fromId: '', overId: '' });
 
   const searchQuery = useSignal('');
   const isAddingRoot = useSignal(false);
@@ -512,17 +580,45 @@ export default component$(() => {
             </div>
           ) : (
             filteredData.value.roots.map((root) => (
-              <CategoryTreeItem
+              <div
                 key={root.id}
-                cat={root}
-                allCats={filteredData.value.allCats}
-                addAction={addAction}
-                deleteAction={deleteAction}
-                toggleMenuAction={toggleMenuAction}
-                renameAction={renameAction}
-                level={0}
-                forceExpand={filteredData.value.hasFilter}
-              />
+                draggable
+                preventdefault:dragover
+                class={`transition-all ${
+                  rootDrag.fromId === root.id ? 'opacity-40' : ''
+                } ${
+                  rootDrag.overId === root.id && rootDrag.fromId !== root.id
+                    ? 'border-t-2 border-cyan-400'
+                    : ''
+                }`}
+                onDragStart$={() => { rootDrag.fromId = root.id; }}
+                onDragOver$={() => { if (rootDrag.fromId !== root.id) rootDrag.overId = root.id; }}
+                onDrop$={() => {
+                  const roots = filteredData.value.roots;
+                  if (!rootDrag.fromId || rootDrag.fromId === root.id) { rootDrag.fromId = ''; rootDrag.overId = ''; return; }
+                  const ids = roots.map((r) => r.id);
+                  const fromIdx = ids.indexOf(rootDrag.fromId);
+                  const toIdx = ids.indexOf(root.id);
+                  const reordered = [...ids];
+                  reordered.splice(fromIdx, 1);
+                  reordered.splice(fromIdx < toIdx ? toIdx - 1 : toIdx, 0, rootDrag.fromId);
+                  reorderAction.submit({ siblings: reordered.join(',') });
+                  rootDrag.fromId = ''; rootDrag.overId = '';
+                }}
+                onDragEnd$={() => { rootDrag.fromId = ''; rootDrag.overId = ''; }}
+              >
+                <CategoryTreeItem
+                  cat={root}
+                  allCats={filteredData.value.allCats}
+                  addAction={addAction}
+                  deleteAction={deleteAction}
+                  toggleMenuAction={toggleMenuAction}
+                  renameAction={renameAction}
+                  reorderAction={reorderAction}
+                  level={0}
+                  forceExpand={filteredData.value.hasFilter}
+                />
+              </div>
             ))
           )}
         </div>
@@ -532,6 +628,7 @@ export default component$(() => {
       <div class="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-[11px] text-slate-400 px-1">
         <span><kbd class="px-1 bg-slate-100 rounded border border-slate-200 font-mono">Enter</kbd> confirmar · <kbd class="px-1 bg-slate-100 rounded border border-slate-200 font-mono">Esc</kbd> cancelar</span>
         <span>El ícono <span class="text-orange-500">👁</span> activa/desactiva la visibilidad en el menú</span>
+        <span>Arrastrá el ícono <span class="text-slate-500">⠿</span> para reordenar dentro del mismo nivel</span>
         <span>Para editar descripción, imagen y más → usar el ícono <span class="text-blue-500">✎</span></span>
       </div>
     </div>

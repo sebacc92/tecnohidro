@@ -10,6 +10,7 @@ export const categories = sqliteTable('categories', {
   image: text('image'),
   parent_id: text('parent_id').references((): AnySQLiteColumn => categories.id),
   show_in_menu: integer('show_in_menu', { mode: 'boolean' }).default(true),
+  sort_order: integer('sort_order').default(0),
 });
 
 export const products = sqliteTable('products', {
@@ -56,4 +57,18 @@ export const instagramPosts = sqliteTable('instagram_posts', {
   mediaType: text('media_type'),
   caption: text('caption'),
   timestamp: text('timestamp'),
+});
+
+export const chatSessions = sqliteTable('chat_sessions', {
+  id: text('id').primaryKey(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
+  lastActive: integer('last_active', { mode: 'timestamp' }).notNull(),
+});
+
+export const chatMessages = sqliteTable('chat_messages', {
+  id: text('id').primaryKey(),
+  sessionId: text('session_id').references(() => chatSessions.id).notNull(),
+  role: text('role', { enum: ['user', 'assistant', 'system'] }).notNull(),
+  content: text('content').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });

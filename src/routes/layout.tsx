@@ -3,6 +3,7 @@ import { routeLoader$, type RequestHandler } from '@builder.io/qwik-city';
 import { Header } from '../components/ui/header';
 import { Footer } from '../components/ui/footer';
 import { WhatsAppButton } from '../components/ui/whatsapp-button';
+import { Chatbot } from '../components/chatbot/chatbot';
 import { getDb } from '~/db/client';
 import { categories } from '~/db/schema';
 
@@ -53,6 +54,7 @@ export default component$(() => {
       </main>
       <Footer />
       <WhatsAppButton />
+      <Chatbot />
     </div>
   );
 });
