@@ -20,16 +20,18 @@ export const useSaveContent = routeAction$(
     try {
       const db = getDb(env);
       
-      // Update the hero title and desc
-      await db
-        .update(siteContent)
-        .set({ value: data.hero_title })
-        .where(eq(siteContent.key, 'hero_title'));
-        
-      await db
-        .update(siteContent)
-        .set({ value: data.hero_desc })
-        .where(eq(siteContent.key, 'hero_desc'));
+      const updateOrInsert = async (key: string, value: string) => {
+        const existing = await db.select().from(siteContent).where(eq(siteContent.key, key));
+        if (existing.length > 0) {
+          await db.update(siteContent).set({ value }).where(eq(siteContent.key, key));
+        } else {
+          await db.insert(siteContent).values({ key, value });
+        }
+      };
+
+      await updateOrInsert('hero_title', data.hero_title);
+      await updateOrInsert('hero_desc', data.hero_desc);
+      await updateOrInsert('home_highlight_phrase', data.home_highlight_phrase);
 
       return { success: true };
     } catch (error) {
@@ -40,6 +42,7 @@ export const useSaveContent = routeAction$(
   zod$({
     hero_title: z.string().min(1, 'El título es obligatorio'),
     hero_desc: z.string().min(1, 'La descripción es obligatoria'),
+    home_highlight_phrase: z.string().min(1, 'La frase destacada es obligatoria'),
   })
 );
 
@@ -107,6 +110,22 @@ export default component$(() => {
             >{content.value.hero_desc || ''}</textarea>
             {saveAction.value?.fieldErrors?.hero_desc && (
               <p class="text-sm text-red-600">{saveAction.value.fieldErrors.hero_desc[0]}</p>
+            )}
+          </div>
+
+          <div class="space-y-2">
+            <label for="home_highlight_phrase" class="text-sm font-medium text-slate-700">
+              Frase Destacada (Sobre Instagram)
+            </label>
+            <textarea
+              id="home_highlight_phrase"
+              name="home_highlight_phrase"
+              rows={3}
+              class="w-full rounded-md border border-slate-300 px-4 py-2.5 focus:border-cyan-500 focus:ring-cyan-500 outline-none transition-colors resize-none"
+              placeholder="Ej: Somos los principales referentes en el rubro..."
+            >{content.value.home_highlight_phrase || ''}</textarea>
+            {saveAction.value?.fieldErrors?.home_highlight_phrase && (
+              <p class="text-sm text-red-600">{saveAction.value.fieldErrors.home_highlight_phrase[0]}</p>
             )}
           </div>
 

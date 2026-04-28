@@ -71,6 +71,7 @@ export const useHomeData = routeLoader$(async ({ env }) => {
     return {
       heroTitle: contentMap['hero_title'] || 'Insumos de Calidad para Profesionales',
       heroDescription: contentMap['hero_desc'] || 'Distribuidora líder en insumos de agua, gas y cloacas. Proveemos a instaladores, consorcios y particulares.',
+      homeHighlightPhrase: contentMap['home_highlight_phrase'] || 'Somos los principales referentes en el rubro de la distribución de materiales para la construcción, reparación y ampliación de redes de agua potable, cloaca, desagües pluviales y gas.',
       categories: featuredCategories,
       products: featuredProducts,
       brands: allBrands,
@@ -81,6 +82,7 @@ export const useHomeData = routeLoader$(async ({ env }) => {
     return {
       heroTitle: 'Insumos de Calidad para Profesionales',
       heroDescription: 'Distribuidora líder en insumos de agua, gas y cloacas. Proveemos a instaladores, consorcios y particulares.',
+      homeHighlightPhrase: 'Somos los principales referentes en el rubro de la distribución de materiales para la construcción, reparación y ampliación de redes de agua potable, cloaca, desagües pluviales y gas.',
       categories: [],
       products: [],
       brands: [],
@@ -272,6 +274,18 @@ export default component$(() => {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Highlight Phrase Section */}
+      <section class="py-16 bg-slate-50 border-t border-slate-100">
+        <div class="container mx-auto px-4 md:px-8 text-center">
+          <p class="text-2xl md:text-3xl font-medium text-slate-800 max-w-4xl mx-auto leading-relaxed mb-8">
+            "{data.value.homeHighlightPhrase}"
+          </p>
+          <Link href="/productos" class={buttonVariants({ look: 'primary', size: 'lg' })}>
+            Ver Productos
+          </Link>
         </div>
       </section>
 
