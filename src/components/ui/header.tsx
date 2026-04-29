@@ -22,28 +22,28 @@ export const Header = component$(() => {
   return (
     <header class="sticky top-0 z-50 w-full bg-white shadow-md">
       {/* Main Header Container */}
-      <div class="container mx-auto px-4 md:px-8 h-24 flex items-center justify-between gap-4 md:gap-8">
-        {/* Logo */}
+      <div class="container mx-auto px-4 xl:px-8 h-24 grid grid-cols-[auto_1fr_auto] items-center gap-4 lg:gap-8">
+        {/* Left: Logo */}
         <Link href="/" class="flex items-center shrink-0">
-          <Logo class="h-12 md:h-14 w-auto" />
+          <Logo class="h-9 lg:h-11 xl:h-14 w-auto" />
         </Link>
 
-        {/* Middle Section: Search on Catalog, Navigation Menu elsewhere */}
-        <div class="hidden md:flex flex-1 items-center justify-center min-w-0">
+        {/* Center: Search on Catalog, Navigation Menu elsewhere */}
+        <div class="hidden lg:flex items-center justify-center min-w-0">
           {isCatalog ? (
-            <div class="w-full max-w-2xl">
+            <div class="w-full max-w-xl">
               <LiveSearch />
             </div>
           ) : (
             <nav aria-label="Navegación principal">
-              <ul class="flex items-center gap-1 lg:gap-4">
+              <ul class="flex items-center gap-0 xl:gap-2">
                 {navLinks.map((link) => {
                   const isActive = loc.url.pathname === link.href || (link.href !== '/' && loc.url.pathname.startsWith(link.href));
                   return (
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        class={`px-2 lg:px-4 py-2 text-sm lg:text-[15px] font-bold uppercase tracking-[0.12em] transition-all duration-300 relative group ${isActive ? 'text-orange-600' : 'text-slate-600 hover:text-orange-600'
+                        class={`px-1.5 xl:px-4 py-2 text-[11px] xl:text-[15px] font-bold uppercase tracking-wide xl:tracking-[0.12em] transition-all duration-300 relative group whitespace-nowrap ${isActive ? 'text-orange-600' : 'text-slate-600 hover:text-orange-600'
                           }`}
                       >
                         {link.label}
@@ -58,20 +58,20 @@ export const Header = component$(() => {
         </div>
 
         {/* Right Section: Phone, Socials & Mobile Toggle */}
-        <div class="flex items-center gap-4 lg:gap-8 shrink-0">
-          {/* Phone - Visible on Desktop */}
-          <div class="hidden xl:flex items-center gap-3 text-slate-800 font-bold border-l border-slate-100 pl-8">
-            <div class="bg-orange-50 p-2 text-orange-600">
-              <LuPhone class="w-5 h-5" />
+        <div class="flex items-center justify-end gap-2 xl:gap-4">
+          {/* Phone - Compact from LG, Full from 2XL */}
+          <div class="hidden lg:flex items-center gap-2 text-slate-800 font-bold border-l border-slate-100 pl-4">
+            <div class="bg-orange-50 p-1.5 text-orange-600">
+              <LuPhone class="w-4 h-4 xl:w-5 xl:h-5" />
             </div>
             <div class="flex flex-col leading-none">
-              <span class="text-[10px] uppercase text-slate-400 tracking-wider mb-1">Llamanos</span>
-              <span class="text-sm">221 457-1111</span>
+              <span class="hidden 2xl:block text-[10px] uppercase text-slate-400 tracking-wider mb-1">Llamanos</span>
+              <span class="text-[11px] xl:text-sm">221 457-1111</span>
             </div>
           </div>
 
-          {/* Socials - Visible on Desktop */}
-          <div class="hidden lg:flex items-center gap-4 border-l border-slate-100 pl-8">
+          {/* Socials - Visible only from 2XL (approx 1536px) */}
+          <div class="hidden 2xl:flex items-center gap-4 border-l border-slate-100 pl-8">
             <a href="https://www.facebook.com/tecnohidrosa/" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-[#1877F2] transition-all hover:scale-110" aria-label="Facebook">
               <LuFacebook class="h-5 w-5" />
             </a>
@@ -85,7 +85,7 @@ export const Header = component$(() => {
 
           {/* Mobile Menu Toggle */}
           <button
-            class="md:hidden p-2 text-slate-600 hover:text-orange-500 transition-colors border border-slate-100"
+            class="lg:hidden p-2 text-slate-600 hover:text-orange-500 transition-colors border border-slate-100"
             onClick$={() => (isMenuOpen.value = !isMenuOpen.value)}
             aria-label="Toggle menu"
           >
