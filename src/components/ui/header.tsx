@@ -12,6 +12,7 @@ export interface HeaderProps {
 export const Header = component$<HeaderProps>(({ categoriesTree }) => {
   const isMenuOpen = useSignal(false);
   const loc = useLocation();
+  const isCatalog = loc.url.pathname.startsWith('/categorias') || loc.url.pathname.startsWith('/productos');
 
   const navLinks = [
     { href: '/nosotros/', label: 'Nosotros' },
@@ -35,9 +36,11 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
             <span>221 457-1111</span>
           </div>
 
-          <div class="flex-1 max-w-2xl w-full">
-            <LiveSearch />
-          </div>
+          {isCatalog && (
+            <div class="flex-1 max-w-2xl w-full">
+              <LiveSearch />
+            </div>
+          )}
         </div>
 
         {/* Socials & Mobile Toggle */}
@@ -151,13 +154,13 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
         <div class="md:hidden border-t border-slate-100 bg-white absolute top-full w-full shadow-lg max-h-[80vh] overflow-y-auto">
           {/* Mobile Search - Only visible on small screens */}
           <div class="p-4 border-b border-slate-100">
-            <div class="flex items-center gap-3 text-slate-800 font-semibold mb-4">
+            <div class={`flex items-center gap-3 text-slate-800 font-semibold ${isCatalog ? 'mb-4' : ''}`}>
               <div class="bg-orange-100 p-2 rounded-full text-orange-600">
                 <LuPhone class="w-4 h-4" />
               </div>
               <span>221 457-1111</span>
             </div>
-            <LiveSearch />
+            {isCatalog && <LiveSearch />}
           </div>
 
           <nav class="flex flex-col py-2">

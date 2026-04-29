@@ -194,12 +194,23 @@ export const OfferCarousel = component$(({ offers }: { offers: any[] }) => {
 });
 
 // ─── Componente: Hero Slider ──────────────────────────────────────────────────────────────────
-export const HeroSlider = component$(({ slides }: { slides: { url: string; alt: string }[] }) => {
+// ─── Componente: Hero Slider ──────────────────────────────────────────────────────────────────
+interface HeroSlide {
+  url: string;
+  alt: string;
+  title?: string;
+  subtitle?: string;
+  buttonText?: string;
+  buttonLink?: string;
+}
+
+export const HeroSlider = component$(({ slides }: { slides: HeroSlide[] }) => {
   const current = useSignal(0);
   const isHovered = useSignal(false);
 
   // Auto-avance con pausa en hover
   useVisibleTask$(({ cleanup }) => {
+    if (slides.length <= 1) return;
     const tick = () => {
       if (!isHovered.value) {
         current.value = (current.value + 1) % slides.length;
@@ -214,117 +225,114 @@ export const HeroSlider = component$(({ slides }: { slides: { url: string; alt: 
   const goPrev = $(() => { current.value = (current.value - 1 + slides.length) % slides.length; });
 
   return (
-    // Alturas: mobile 80vh, tablet 70vh, desktop 65vh
     <section
       class="relative w-full overflow-hidden bg-slate-900"
-      style="height: 50vh;"
+      style="height: 60vh;"
       onMouseEnter$={() => { isHovered.value = true; }}
       onMouseLeave$={() => { isHovered.value = false; }}
       aria-label="Carrusel de imágenes"
     >
-      {/* Estilos responsivos de altura via CSS */}
       <style>{`
-        @media (min-width: 768px) { .hero-slider { height: 45vh !important; } }
-        @media (min-width: 1024px) { .hero-slider { height: 40vh !important; } }
+        @media (min-width: 768px) { .hero-slider { height: 65vh !important; } }
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(30px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        .hero-fade-up-1 { animation: fadeUp 800ms cubic-bezier(0.4,0,0.2,1) 200ms both; }
-        .hero-fade-up-2 { animation: fadeUp 800ms cubic-bezier(0.4,0,0.2,1) 400ms both; }
-        .hero-fade-up-3 { animation: fadeUp 800ms cubic-bezier(0.4,0,0.2,1) 600ms both; }
-        @media (prefers-reduced-motion: reduce) {
-          .hero-fade-up-1, .hero-fade-up-2, .hero-fade-up-3 { animation: none; opacity: 1; transform: none; }
-        }
+        .hero-fade-up { animation: fadeUp 800ms cubic-bezier(0.4,0,0.2,1) both; }
         .dot-active { width: 32px; border-radius: 6px; background-color: #FF5722; }
         .dot-inactive { width: 12px; border-radius: 50%; background-color: rgba(255,255,255,0.5); }
-        .dot-inactive:hover { background-color: rgba(255,255,255,0.8); }
       `}</style>
 
-      {/* CAPA 1: Imágenes del slider */}
-      {slides.map((slide, idx) => (
-        <div
-          key={slide.url}
-          class="absolute inset-0 transition-opacity duration-[800ms] ease-in-out"
-          style={{ opacity: current.value === idx ? '1' : '0', zIndex: current.value === idx ? '10' : '0' }}
-        >
-          <img
-            src={slide.url}
-            alt={slide.alt}
-            class="w-full h-full object-cover"
-            loading={idx === 0 ? 'eager' : 'lazy'}
-            decoding={idx === 0 ? 'sync' : 'async'}
-          />
-        </div>
-      ))}
+      {slides.map((slide, idx) => {
+        const isActive = current.value === idx;
+        return (
+          <div
+            key={`${slide.url}-${idx}`}
+            class="absolute inset-0 transition-all duration-[1000ms] ease-in-out"
+            style={{ 
+              opacity: isActive ? '1' : '0', 
+              zIndex: isActive ? '10' : '0',
+              transform: isActive ? 'scale(1)' : 'scale(1.05)'
+            }}
+          >
+            {/* Image */}
+            <img
+              src={slide.url}
+              alt={slide.alt || slide.title || 'Slide'}
+              class="w-full h-full object-cover"
+              loading={idx === 0 ? 'eager' : 'lazy'}
+            />
+            
+            {/* Overlay */}
+            <div class="absolute inset-0 bg-black/50" />
 
-      {/* CAPA 2: Overlay oscuro 40% */}
-      <div class="absolute inset-0 bg-black/50" style="z-index: 20;" />
+            {/* Content */}
+            <div class="absolute inset-0 flex items-center justify-center px-8 z-30">
+              <div class="text-center text-white max-w-[850px] w-full">
+                {slide.title && (
+                  <h1 
+                    class={`font-extrabold text-white mb-6 ${isActive ? 'hero-fade-up' : ''}`}
+                    style="font-size: clamp(2.2rem, 5vw, 4rem); line-height: 1.1; animation-delay: 200ms;"
+                  >
+                    {slide.title}
+                  </h1>
+                )}
 
-      {/* CAPA 3: Contenido central */}
-      <div class="absolute inset-0 flex items-center justify-center px-8" style="z-index: 30;">
-        <div class="text-center text-white max-w-[700px] w-full">
-          {/* H1 */}
-          <h1 class="hero-fade-up-1 font-extrabold text-white mb-6"
-            style="font-size: clamp(2.2rem, 5vw, 3.5rem); line-height: 1.1;">
-            Materiales para Redes de Agua y GAS
-          </h1>
+                {slide.subtitle && (
+                  <p 
+                    class={`font-normal text-white/90 mb-10 mx-auto max-w-2xl ${isActive ? 'hero-fade-up' : ''}`}
+                    style="font-size: clamp(1rem, 2vw, 1.3rem); line-height: 1.6; animation-delay: 400ms;"
+                  >
+                    {slide.subtitle}
+                  </p>
+                )}
 
-          {/* Subtitle */}
-          <p class="hero-fade-up-2 font-normal text-white/95 mb-10"
-            style="font-size: clamp(1rem, 2vw, 1.2rem); line-height: 1.6;">
-            Distribuidores mayoristas especializados en agua potable, cloaca,
-            desagües pluviales y gas. Más de 40 años de experiencia.
-          </p>
-
-          {/* CTA */}
-          <div class="hero-fade-up-3 flex justify-center">
-            <Link
-              href="/productos"
-              class="inline-block text-white font-semibold no-underline transition-all duration-300 hover:scale-105"
-              style="background-color: #FF5722; padding: 1rem 3rem; border-radius: 12px; font-size: 1.1rem; max-width: 300px; box-shadow: 0 4px 15px rgba(255,87,34,0.4);"
-            >
-              Ver Catálogo
-            </Link>
+                {slide.buttonText && (
+                  <div class={`flex justify-center ${isActive ? 'hero-fade-up' : ''}`} style="animation-delay: 600ms;">
+                    <Link
+                      href={slide.buttonLink || '/productos'}
+                      class="inline-block text-white font-bold no-underline transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                      style="background-color: #FF5722; padding: 1.2rem 3.5rem; border-radius: 14px; font-size: 1.1rem; box-shadow: 0 8px 25px rgba(255,87,34,0.4);"
+                    >
+                      {slide.buttonText}
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        );
+      })}
 
-      {/* CAPA 4a: Flechas de navegación (solo md+) */}
-      <button
-        onClick$={goPrev}
-        class="hidden md:flex absolute left-8 top-1/2 -translate-y-1/2 items-center justify-center w-[50px] h-[50px] rounded-full text-white transition-all hover:bg-white/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
-        style="z-index: 40; background-color: rgba(255,255,255,0.2); backdrop-filter: blur(4px);"
-        aria-label="Imagen anterior"
-      >
-        <LuChevronLeft class="w-7 h-7" />
-      </button>
-      <button
-        onClick$={goNext}
-        class="hidden md:flex absolute right-8 top-1/2 -translate-y-1/2 items-center justify-center w-[50px] h-[50px] rounded-full text-white transition-all hover:bg-white/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
-        style="z-index: 40; background-color: rgba(255,255,255,0.2); backdrop-filter: blur(4px);"
-        aria-label="Siguiente imagen"
-      >
-        <LuChevronRight class="w-7 h-7" />
-      </button>
-
-      {/* CAPA 4b: Dots indicadores */}
-      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3" style="z-index: 40;">
-        {slides.map((_, idx) => (
+      {/* Navigation Arrows */}
+      {slides.length > 1 && (
+        <>
           <button
-            key={idx}
-            onClick$={() => goTo(idx)}
-            class={`h-3 transition-all duration-300 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${current.value === idx ? 'dot-active' : 'dot-inactive'}`}
-            aria-label={`Ir a imagen ${idx + 1}`}
-            aria-current={current.value === idx ? 'true' : 'false'}
-          />
-        ))}
-      </div>
+            onClick$={goPrev}
+            class="hidden md:flex absolute left-8 top-1/2 -translate-y-1/2 items-center justify-center w-[50px] h-[50px] rounded-full text-white transition-all hover:bg-white/30 z-40"
+            style="background-color: rgba(255,255,255,0.2); backdrop-filter: blur(4px);"
+          >
+            <LuChevronLeft class="w-7 h-7" />
+          </button>
+          <button
+            onClick$={goNext}
+            class="hidden md:flex absolute right-8 top-1/2 -translate-y-1/2 items-center justify-center w-[50px] h-[50px] rounded-full text-white transition-all hover:bg-white/30 z-40"
+            style="background-color: rgba(255,255,255,0.2); backdrop-filter: blur(4px);"
+          >
+            <LuChevronRight class="w-7 h-7" />
+          </button>
 
-      {/* Aria-live para lectores de pantalla */}
-      <div class="sr-only" aria-live="polite">
-        Imagen {current.value + 1} de {slides.length}
-      </div>
+          <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 z-40">
+            {slides.map((_, idx) => (
+              <button
+                key={idx}
+                onClick$={() => goTo(idx)}
+                class={`h-3 transition-all duration-300 cursor-pointer ${current.value === idx ? 'dot-active' : 'dot-inactive'}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </section>
   );
 });
@@ -412,14 +420,6 @@ export const useHomeData = routeLoader$(async ({ env }) => {
       caption: p.caption || undefined,
     }));
 
-    // Parse hero images from siteContent
-    let heroImages: { url: string; alt: string }[] = [];
-    try {
-      const urls: string[] = JSON.parse(contentMap['hero_images'] || '[]');
-      heroImages = urls.map((url, i) => ({ url, alt: `Imagen del hero ${i + 1}` }));
-    } catch { heroImages = []; }
-    if (heroImages.length === 0) heroImages = DEFAULT_HERO_SLIDES;
-
     // Parse highlight phrases
     let highlightPhrases: string[] = [];
     try {
@@ -429,11 +429,30 @@ export const useHomeData = routeLoader$(async ({ env }) => {
       highlightPhrases = [contentMap['home_highlight_phrase'] || 'Somos los principales referentes en el rubro de la distribución de materiales para la construcción, reparación y ampliación de redes de agua potable, cloaca, desagües pluviales y gas.'];
     }
 
+    // Parse hero slides
+    let heroSlides: HeroSlide[] = [];
+    try {
+      heroSlides = JSON.parse(contentMap['home_hero_slides'] || '[]');
+      if (heroSlides.length === 0) {
+        // Fallback to old format
+        let oldImages: string[] = [];
+        try { oldImages = JSON.parse(contentMap['hero_images'] || '[]'); } catch { oldImages = []; }
+        if (oldImages.length === 0) oldImages = DEFAULT_HERO_SLIDES.map(s => s.url);
+        
+        heroSlides = oldImages.map((url, i) => ({
+          url,
+          alt: `Imagen del hero ${i + 1}`,
+          title: i === 0 ? (contentMap['hero_title'] || 'Materiales para Redes de Agua y GAS') : '',
+          subtitle: i === 0 ? (contentMap['hero_desc'] || 'Distribuidores mayoristas especializados...') : '',
+          buttonText: 'Ver Catálogo',
+          buttonLink: '/productos'
+        }));
+      }
+    } catch { heroSlides = []; }
+
     return {
-      heroTitle: contentMap['hero_title'] || 'Insumos de Calidad para Profesionales',
-      heroDescription: contentMap['hero_desc'] || 'Distribuidora líder en insumos de agua, gas y cloacas.',
       highlightPhrases,
-      heroImages,
+      heroSlides,
       categories: featuredCategories,
       products: featuredProducts,
       offers: offerProducts,
@@ -443,10 +462,8 @@ export const useHomeData = routeLoader$(async ({ env }) => {
   } catch (error) {
     console.error('Database query error:', error);
     return {
-      heroTitle: 'Insumos de Calidad para Profesionales',
-      heroDescription: 'Distribuidora líder en insumos de agua, gas y cloacas.',
-      homeHighlightPhrase: '',
-      heroImages: DEFAULT_HERO_SLIDES,
+      highlightPhrases: [],
+      heroSlides: DEFAULT_HERO_SLIDES.map(s => ({ ...s, title: 'Insumos de Calidad', subtitle: 'Distribuidora líder...', buttonText: 'Ver Catálogo', buttonLink: '/productos' })),
       categories: [],
       products: [],
       offers: [],
@@ -466,7 +483,7 @@ export default component$(() => {
       {/* ════════════════════════════════════════════════
           SECCIÓN 1: HERO SLIDER
       ════════════════════════════════════════════════ */}
-      <HeroSlider slides={data.value.heroImages} />
+      <HeroSlider slides={data.value.heroSlides} />
 
       {/* ════════════════════════════════════════════════
           SECCIÓN 2: OFERTA DESTACADA (separada del hero)
