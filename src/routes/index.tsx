@@ -439,6 +439,7 @@ export const useHomeData = routeLoader$(async ({ env }) => {
       offers: [],
       brands: [],
       instagramPosts: [],
+      weeklyOffer: { image: '', link: '' },
     };
   }
 });
