@@ -51,15 +51,15 @@ export const useHomeData = routeLoader$(async ({ env }) => {
       images: products.images,
       categoryName: categories.name,
     })
-    .from(products)
-    .leftJoin(categories, eq(products.category_id, categories.id))
-    .where(eq(products.status, 'active'))
-    .limit(8);
+      .from(products)
+      .leftJoin(categories, eq(products.category_id, categories.id))
+      .where(eq(products.status, 'active'))
+      .limit(8);
 
     const allBrands = await db.select().from(brands);
 
     const igPosts = await db.select().from(instagramPosts).orderBy(desc(instagramPosts.timestamp)).limit(6);
-    
+
     // Map to ensure no nulls in required fields
     const mappedIgPosts = igPosts.map(post => ({
       id: post.id,
@@ -112,45 +112,42 @@ export default component$(() => {
                 <Link href="/productos" class={buttonVariants({ look: 'primary', size: 'lg' })}>
                   Ver Catálogo
                 </Link>
-                <Link href="/contacto" class={buttonVariants({ look: 'outline', size: 'lg' })}>
-                  Contactar Asesor
-                </Link>
               </div>
             </div>
 
             {/* Right Column: Featured/Offer Products Space */}
             <div class="relative lg:ml-auto w-full max-w-md mx-auto lg:mx-0">
-               {/* Decorative background blur */}
-               <div class="absolute inset-0 bg-primary-200 rounded-full blur-3xl opacity-40 transform translate-x-1/4 -translate-y-1/4"></div>
-               
-               <div class="relative bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-shadow duration-300">
-                 <div class="flex items-center justify-between mb-6">
-                   <h3 class="text-xl font-bold text-slate-900">Oferta Destacada</h3>
-                   <span class="bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">¡Solo por hoy!</span>
-                 </div>
-                 
-                 {/* Placeholder for Offer Product */}
-                 <div class="aspect-square bg-slate-50 rounded-xl mb-6 overflow-hidden relative group border border-slate-100 flex items-center justify-center">
-                    <img 
-                      src="https://placehold.co/500x500/f8fafc/94a3b8?text=Espacio+para+Oferta" 
-                      alt="Producto en Oferta" 
-                      width={500}
-                      height={500}
-                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                    />
-                 </div>
-                 
-                 <div>
-                   <h4 class="text-lg font-semibold text-slate-800 mb-2">Producto de Ejemplo</h4>
-                   <div class="flex items-end gap-3 mb-5">
-                     <span class="text-3xl font-bold text-primary-600">$125.000</span>
-                     <span class="text-sm text-slate-400 line-through mb-1">$150.000</span>
-                   </div>
-                   <Link href="/productos" class={buttonVariants({ look: 'primary', size: 'md', class: 'w-full' })}>
-                     Aprovechar Oferta
-                   </Link>
-                 </div>
-               </div>
+              {/* Decorative background blur */}
+              <div class="absolute inset-0 bg-primary-200 rounded-full blur-3xl opacity-40 transform translate-x-1/4 -translate-y-1/4"></div>
+
+              <div class="relative bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-shadow duration-300">
+                <div class="flex items-center justify-between mb-6">
+                  <h3 class="text-xl font-bold text-slate-900">Oferta Destacada</h3>
+                  <span class="bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">¡Solo por hoy!</span>
+                </div>
+
+                {/* Placeholder for Offer Product */}
+                <div class="aspect-square bg-slate-50 rounded-xl mb-6 overflow-hidden relative group border border-slate-100 flex items-center justify-center">
+                  <img
+                    src="https://placehold.co/500x500/f8fafc/94a3b8?text=Espacio+para+Oferta"
+                    alt="Producto en Oferta"
+                    width={500}
+                    height={500}
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+
+                <div>
+                  <h4 class="text-lg font-semibold text-slate-800 mb-2">Producto de Ejemplo</h4>
+                  <div class="flex items-end gap-3 mb-5">
+                    <span class="text-3xl font-bold text-primary-600">$125.000</span>
+                    <span class="text-sm text-slate-400 line-through mb-1">$150.000</span>
+                  </div>
+                  <Link href="/productos" class={buttonVariants({ look: 'primary', size: 'md', class: 'w-full' })}>
+                    Aprovechar Oferta
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -169,8 +166,8 @@ export default component$(() => {
           {data.value.products.length > 0 ? (
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {data.value.products.map((product) => {
-                const imageUrl = product.images && product.images.length > 0 
-                  ? product.images[0] 
+                const imageUrl = product.images && product.images.length > 0
+                  ? product.images[0]
                   : 'https://placehold.co/400x400/e2e8f0/475569?text=Sin+Imagen';
 
                 return (
@@ -194,7 +191,7 @@ export default component$(() => {
                           {product.name}
                         </h3>
                       </Link>
-                      
+
                       <div class="mt-auto pt-4 flex flex-col gap-3">
                         <ContactButton productName={product.name} look="primary" size="sm" class="w-full" />
                       </div>
@@ -208,7 +205,7 @@ export default component$(() => {
               No hay productos destacados disponibles en este momento.
             </div>
           )}
-          
+
           <div class="mt-12 text-center">
             <Link href="/productos" class={buttonVariants({ look: 'outline', size: 'lg' })}>
               Ver Catálogo Completo
@@ -218,62 +215,31 @@ export default component$(() => {
       </section>
 
       {/* Brands Section */}
-      <section class="py-16 bg-white border-t border-slate-100">
-        <div class="container mx-auto px-4 md:px-8">
-          <div class="mb-12 text-center">
-            <h2 class="text-3xl font-bold tracking-tight text-slate-900 mb-4">Marcas con las que Trabajamos</h2>
-            <p class="text-slate-500 max-w-2xl mx-auto">Respaldamos nuestros proyectos con productos de las mejores marcas del mercado.</p>
-          </div>
+      <section class="py-16 bg-white border-t border-slate-100 overflow-hidden">
+        <div class="container mx-auto px-4 md:px-8 mb-12 text-center">
+          <h2 class="text-3xl font-bold tracking-tight text-slate-900 mb-4">Marcas con las que Trabajamos</h2>
+          <p class="text-slate-500 max-w-2xl mx-auto">Respaldamos nuestros proyectos con productos de las mejores marcas del mercado.</p>
+        </div>
 
-          <div class="space-y-16">
-            {/* Infraestructura */}
-            <div>
-              <h3 class="text-xl font-semibold text-slate-800 mb-8 border-b border-slate-100 pb-2 text-center">Línea Infraestructura</h3>
-              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8 md:gap-12 items-center justify-items-center mx-auto max-w-5xl">
-                {data.value.brands.filter(b => b.category === 'infraestructura').length > 0 ? (
-                  data.value.brands.filter(b => b.category === 'infraestructura').map(brand => (
-                    <a key={brand.id} href={getBrandLink(brand.name)} target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-full aspect-[3/2] p-4 hover:scale-110 transition-transform duration-300">
-                       <img src={brand.imageUrl} alt={brand.name} class="max-h-full max-w-full object-contain mix-blend-multiply" loading="lazy" />
-                    </a>
-                  ))
-                ) : (
-                  <p class="text-slate-400 text-sm italic col-span-full text-center">Próximamente marcas de infraestructura.</p>
-                )}
-              </div>
+        {/* Marquee Container */}
+        <div class="relative w-full flex items-center py-4 overflow-hidden before:absolute before:left-0 before:top-0 before:z-10 before:h-full before:w-24 before:bg-gradient-to-r before:from-white before:to-transparent after:absolute after:right-0 after:top-0 after:z-10 after:h-full after:w-24 after:bg-gradient-to-l after:from-white after:to-transparent">
+          {data.value.brands.length > 0 ? (
+            <div class="flex w-max animate-marquee hover:[animation-play-state:paused]">
+              {Array(4).fill(data.value.brands).flat().map((brand, idx) => (
+                <a
+                  key={`${brand.id}-${idx}`}
+                  href={getBrandLink(brand.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="flex items-center justify-center w-40 md:w-56 px-6 mx-4 aspect-[3/2] grayscale opacity-60 hover:grayscale-0 hover:opacity-100 hover:scale-110 transition-all duration-300"
+                >
+                  <img src={brand.imageUrl} alt={brand.name} class="max-h-full max-w-full object-contain mix-blend-multiply" loading="lazy" />
+                </a>
+              ))}
             </div>
-
-            {/* Domiciliaria */}
-            <div>
-              <h3 class="text-xl font-semibold text-slate-800 mb-8 border-b border-slate-100 pb-2 text-center">Línea Domiciliaria</h3>
-              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8 md:gap-12 items-center justify-items-center mx-auto max-w-5xl">
-                {data.value.brands.filter(b => b.category === 'domiciliaria').length > 0 ? (
-                  data.value.brands.filter(b => b.category === 'domiciliaria').map(brand => (
-                    <a key={brand.id} href={getBrandLink(brand.name)} target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-full aspect-[3/2] p-4 hover:scale-110 transition-transform duration-300">
-                       <img src={brand.imageUrl} alt={brand.name} class="max-h-full max-w-full object-contain mix-blend-multiply" loading="lazy" />
-                    </a>
-                  ))
-                ) : (
-                  <p class="text-slate-400 text-sm italic col-span-full text-center">Próximamente marcas domiciliarias.</p>
-                )}
-              </div>
-            </div>
-
-            {/* Herramientas */}
-            <div>
-              <h3 class="text-xl font-semibold text-slate-800 mb-8 border-b border-slate-100 pb-2 text-center">Línea Herramientas</h3>
-              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-8 md:gap-12 items-center justify-items-center mx-auto max-w-5xl">
-                {data.value.brands.filter(b => b.category === 'herramientas').length > 0 ? (
-                  data.value.brands.filter(b => b.category === 'herramientas').map(brand => (
-                    <a key={brand.id} href={getBrandLink(brand.name)} target="_blank" rel="noopener noreferrer" class="flex items-center justify-center w-full aspect-[3/2] p-4 hover:scale-110 transition-transform duration-300">
-                       <img src={brand.imageUrl} alt={brand.name} class="max-h-full max-w-full object-contain mix-blend-multiply" loading="lazy" />
-                    </a>
-                  ))
-                ) : (
-                  <p class="text-slate-400 text-sm italic col-span-full text-center">Próximamente herramientas.</p>
-                )}
-              </div>
-            </div>
-          </div>
+          ) : (
+            <div class="p-8 text-center text-slate-400 w-full">No hay marcas disponibles.</div>
+          )}
         </div>
       </section>
 
