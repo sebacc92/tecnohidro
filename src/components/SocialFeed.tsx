@@ -60,7 +60,7 @@ export const SocialFeed = component$<SocialFeedProps>(({ posts }) => {
         <header class="flex flex-col items-center text-center gap-6 mb-12">
           <div>
             <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mb-2">
-              Síguenos en Instagram
+              Seguinos en Instagram
             </h2>
             <p class="text-slate-500 max-w-2xl">
               Enterate de nuestras novedades, ofertas y productos destacados.

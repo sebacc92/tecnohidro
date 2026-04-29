@@ -7,24 +7,24 @@ export const Footer = component$(() => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer class="bg-slate-900 text-slate-200">
+    <footer class="bg-black text-slate-100">
       <div class="container mx-auto px-4 py-12 md:px-8">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <Link href="/" class="inline-flex items-center mb-4">
               <Logo class="h-12 w-auto" />
             </Link>
-            <p class="text-slate-400 text-sm max-w-xs mb-6">
+            <p class="text-slate-300 text-sm max-w-xs mb-6">
               Distribuidora líder en insumos de agua, gas y cloacas para profesionales e industrias.
             </p>
             <div class="flex items-center gap-4">
-              <a href="https://www.facebook.com/tecnohidrosa/" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-white transition-colors" aria-label="Facebook">
+              <a href="https://www.facebook.com/tecnohidrosa/" target="_blank" rel="noopener noreferrer" class="text-slate-300 hover:text-white transition-colors" aria-label="Facebook">
                 <LuFacebook class="h-5 w-5" />
               </a>
-              <a href="https://www.instagram.com/tecnohidrosa/" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-white transition-colors" aria-label="Instagram">
+              <a href="https://www.instagram.com/tecnohidrosa/" target="_blank" rel="noopener noreferrer" class="text-slate-300 hover:text-white transition-colors" aria-label="Instagram">
                 <LuInstagram class="h-5 w-5" />
               </a>
-              <a href="https://www.linkedin.com/company/tecnohidro-s.a." target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-white transition-colors" aria-label="LinkedIn">
+              <a href="https://www.linkedin.com/company/tecnohidro-s.a." target="_blank" rel="noopener noreferrer" class="text-slate-300 hover:text-white transition-colors" aria-label="LinkedIn">
                 <LuLinkedin class="h-5 w-5" />
               </a>
             </div>
@@ -32,7 +32,7 @@ export const Footer = component$(() => {
 
           <div>
             <h3 class="text-white font-semibold mb-4">Enlaces Rápidos</h3>
-            <ul class="space-y-2 text-sm text-slate-400">
+            <ul class="space-y-2 text-sm text-slate-300">
               <li><Link href="/" class="hover:text-primary-400 transition-colors">Inicio</Link></li>
               <li><Link href="/productos" class="hover:text-primary-400 transition-colors">Catálogo Completo</Link></li>
               <li><Link href="/nosotros" class="hover:text-primary-400 transition-colors">Sobre Nosotros</Link></li>
@@ -42,7 +42,7 @@ export const Footer = component$(() => {
 
           <div>
             <h3 class="text-white font-semibold mb-4">Contacto</h3>
-            <ul class="space-y-3 text-sm text-slate-400">
+            <ul class="space-y-3 text-sm text-slate-300">
               <li class="flex items-start gap-3">
                 <LuMapPin class="h-5 w-5 text-primary-400 shrink-0" />
                 <span>Av. 72 e/14 y 15 nº 970, B1900 La Plata, Buenos Aires</span>
@@ -59,7 +59,7 @@ export const Footer = component$(() => {
           </div>
         </div>
 
-        <div class="border-t border-slate-800 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between text-sm text-slate-500">
+        <div class="border-t border-slate-300 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between text-sm text-slate-300">
           <p>&copy; {currentYear} Tecnohidro. Todos los derechos reservados.</p>
           <p class="mt-4 md:mt-0">
             Desarrollado por{' '}

@@ -6,6 +6,7 @@ import { eq, isNull, desc, and } from 'drizzle-orm';
 import { buttonVariants } from '../components/ui/button/button';
 import { SocialFeed } from '../components/SocialFeed';
 import { LuChevronLeft, LuChevronRight, LuTruck, LuPackage, LuPercent, LuTag } from '@qwikest/icons/lucide';
+import MediosDePagoImg from '~/media/medios-de-pago.webp?jsx'
 
 // ─── Imágenes del Slider por defecto (se usan si no hay nada en la BD) ──────────────────────────
 const DEFAULT_HERO_SLIDES = [
@@ -326,7 +327,7 @@ export const HighlightCarousel = component$(({ phrases }: { phrases: string[] })
             visibility: current.value === idx ? 'visible' : 'hidden',
           }}
         >
-          <p class="text-xl md:text-3xl font-medium text-white max-w-4xl mx-auto leading-relaxed italic font-['Playfair_Display',_serif]">
+          <p class="text-xl md:text-3xl font-medium text-white max-w-4xl mx-auto">
             "{phrase}"
           </p>
         </div>
@@ -595,9 +596,12 @@ export default component$(() => {
             <div class="bg-white p-8 rounded-xl shadow-sm border-2 border-orange-500 flex flex-col hover:shadow-md transition-shadow">
               <LuPercent class="w-10 h-10 text-orange-600 mb-4" />
               <h3 class="text-xl font-bold mb-3">Promociones con tarjeta de crédito</h3>
-              <p class="text-slate-600 leading-relaxed">
+              <p class="text-slate-600 leading-relaxed mb-6">
                 6 Cuotas sin interés, Banco Provincia, Presencial en el local.
               </p>
+              <div class="mt-auto">
+                <MediosDePagoImg />
+              </div>
             </div>
           </div>
         </div>
