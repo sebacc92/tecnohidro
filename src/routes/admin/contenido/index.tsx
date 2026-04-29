@@ -3,7 +3,7 @@ import { type DocumentHead, routeLoader$, routeAction$, Form, z, zod$ } from '@b
 import { getDb } from '~/db/client';
 import { siteContent } from '~/db/schema';
 import { eq } from 'drizzle-orm';
-import { LuSave, LuCheckCircle2, LuImage, LuTrash2, LuLayout, LuQuote, LuChevronRight, LuPhone } from '@qwikest/icons/lucide';
+import { LuSave, LuCheckCircle2, LuImage, LuTrash2, LuLayout, LuQuote } from '@qwikest/icons/lucide';
 import { upload } from '@vercel/blob/client';
 import imageCompression from 'browser-image-compression';
 
@@ -79,7 +79,7 @@ export default component$(() => {
       // Migration logic from old format
       let oldImages: string[] = [];
       try { oldImages = JSON.parse(content.value.hero_images || '[]'); } catch { oldImages = []; }
-      
+
       initialSlides = oldImages.map((url, i) => ({
         url,
         title: i === 0 ? (content.value.hero_title || 'Materiales para Redes de Agua y GAS') : '',
@@ -169,9 +169,8 @@ export default component$(() => {
       <div class="flex border-b border-slate-200 mb-8 gap-8">
         <button
           onClick$={() => (activeTab.value = 'portada')}
-          class={`pb-4 px-2 text-sm font-bold tracking-wide uppercase transition-all relative ${
-            activeTab.value === 'portada' ? 'text-orange-600' : 'text-slate-400 hover:text-slate-600'
-          }`}
+          class={`pb-4 px-2 text-sm font-bold tracking-wide uppercase transition-all relative ${activeTab.value === 'portada' ? 'text-orange-600' : 'text-slate-400 hover:text-slate-600'
+            }`}
         >
           <div class="flex items-center gap-2">
             <LuLayout class="w-4 h-4" /> Portada
@@ -180,9 +179,8 @@ export default component$(() => {
         </button>
         <button
           onClick$={() => (activeTab.value = 'frases')}
-          class={`pb-4 px-2 text-sm font-bold tracking-wide uppercase transition-all relative ${
-            activeTab.value === 'frases' ? 'text-orange-600' : 'text-slate-400 hover:text-slate-600'
-          }`}
+          class={`pb-4 px-2 text-sm font-bold tracking-wide uppercase transition-all relative ${activeTab.value === 'frases' ? 'text-orange-600' : 'text-slate-400 hover:text-slate-600'
+            }`}
         >
           <div class="flex items-center gap-2">
             <LuQuote class="w-4 h-4" /> Frases
