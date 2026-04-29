@@ -1,12 +1,12 @@
 import { component$, useSignal } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, Link } from '@builder.io/qwik-city';
-import { getDb } from '../../db/client';
-import { products, categories } from '../../db/schema';
+import { getDb } from '~/db/client';
+import { products, categories } from '~/db/schema';
 import { eq, like, or, and, inArray } from 'drizzle-orm';
-import { ContactButton } from '../../components/ContactButton';
-import { LuFilter, LuTag, LuChevronDown, LuLayoutGrid, LuList, LuCheck } from '@qwikest/icons/lucide';
-import { ProductImageCarousel } from '../../components/ProductImageCarousel';
-import { ShareButton } from '../../components/ui/share-button';
+import { ContactButton } from '~/components/ContactButton';
+import { LuFilter, LuTag, LuChevronDown, LuLayoutGrid, LuList, LuCheck, LuPercent } from '@qwikest/icons/lucide';
+import { ProductImageCarousel } from '~/components/ProductImageCarousel';
+import { ShareButton } from '~/components/ui/share-button';
 
 
 export const useCatalogData = routeLoader$(async (requestEvent) => {
