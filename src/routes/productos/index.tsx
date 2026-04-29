@@ -124,7 +124,7 @@ export default component$(() => {
                         <ul class="pl-4 mt-1 border-l-2 border-slate-100 ml-4 space-y-1 mb-2">
                           <li>
                             <Link
-                              href={`/productos?category=${cat.slug}${data.value.searchQuery ? `&q=${data.value.searchQuery}` : ''}`}
+                              href={`/categorias/${cat.slug}`}
                               class={`block py-1 px-2 rounded text-xs transition-colors ${isCatActive ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-500 hover:bg-slate-50'}`}
                             >
                               Todo {cat.name}
@@ -135,7 +135,7 @@ export default component$(() => {
                             return (
                               <li key={sub.id}>
                                 <Link
-                                  href={`/productos?category=${sub.slug}${data.value.searchQuery ? `&q=${data.value.searchQuery}` : ''}`}
+                                  href={`/categorias/${cat.slug}/${sub.slug}`}
                                   class={`block py-1 px-2 rounded text-xs transition-colors ${isSubActive ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-500 hover:bg-slate-50'}`}
                                 >
                                   {sub.name}
@@ -152,7 +152,7 @@ export default component$(() => {
                 return (
                   <li key={cat.id} class="mb-1">
                     <Link
-                      href={`/productos?category=${cat.slug}${data.value.searchQuery ? `&q=${data.value.searchQuery}` : ''}`}
+                      href={`/categorias/${cat.slug}`}
                       class={`block py-1.5 px-3 rounded-md transition-colors text-sm ${isCatActive ? 'bg-primary-50 text-primary-700 font-medium' : 'text-slate-700 font-medium hover:bg-slate-50'}`}
                     >
                       {cat.name}
