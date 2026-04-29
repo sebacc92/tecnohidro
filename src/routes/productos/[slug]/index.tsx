@@ -5,7 +5,7 @@ import { products, categories } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 import { ContactButton } from '../../../components/ContactButton';
 import { buttonVariants } from '../../../components/ui/button/button';
-import { LuCheck, LuExternalLink, LuChevronLeft } from '@qwikest/icons/lucide';
+import { LuCheck, LuExternalLink, LuChevronLeft, LuTag } from '@qwikest/icons/lucide';
 import { Link } from '@builder.io/qwik-city';
 
 export const useProductDetail = routeLoader$(async (requestEvent) => {
@@ -88,8 +88,8 @@ export default component$(() => {
                 {product.categoryName || 'General'}
               </span>
               {product.source === 'meli' && (
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 ml-2">
-                  MercadoLibre Sync
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[10px] font-bold bg-yellow-400 text-yellow-900 ml-2">
+                  <LuTag class="w-3 h-3" /> MercadoLibre
                 </span>
               )}
             </div>
@@ -120,9 +120,9 @@ export default component$(() => {
                     href={product.external_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    class={buttonVariants({ look: 'outline', size: 'lg' }) + " flex-1"}
+                    class="flex-1 inline-flex items-center justify-center gap-2 bg-yellow-400 text-yellow-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-yellow-500 transition-colors shadow-lg"
                   >
-                    <LuExternalLink class="mr-2 h-5 w-5" />
+                    <LuExternalLink class="w-5 h-5" />
                     Ver en MercadoLibre
                   </a>
                 )}

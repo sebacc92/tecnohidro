@@ -75,7 +75,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                 return (
                   <li key={cat.id} class="group">
                     <Link
-                      href={`/productos?categoria=${cat.slug}`}
+                      href={`/productos?category=${cat.slug}`}
                       class="flex items-center gap-1 px-5 py-4 text-base font-bold text-slate-700 uppercase tracking-wide group-hover:bg-[#2d2d2d] group-hover:text-white transition-colors cursor-pointer"
                     >
                       {cat.name}
@@ -90,7 +90,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                             {cat.children.map((child: any) => (
                               <div key={child.id} class="flex flex-col gap-3">
                                 <Link
-                                  href={`/productos?categoria=${child.slug}`}
+                                  href={`/productos?category=${child.slug}`}
                                   class="font-bold text-white uppercase text-sm hover:text-orange-500 transition-colors border-b border-slate-600 pb-2"
                                 >
                                   {child.name}
@@ -100,7 +100,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                                     {child.children.map((subChild: any) => (
                                       <li key={subChild.id}>
                                         <Link
-                                          href={`/productos?categoria=${subChild.slug}`}
+                                          href={`/productos?category=${subChild.slug}`}
                                           class="text-slate-300 text-sm hover:text-white hover:translate-x-1 inline-block transition-transform duration-200"
                                         >
                                           {subChild.name}
@@ -112,7 +112,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                                   <ul class="flex flex-col gap-2.5 mt-1">
                                     <li>
                                       <Link
-                                        href={`/productos?categoria=${child.slug}`}
+                                        href={`/productos?category=${child.slug}`}
                                         class="text-orange-400 text-sm hover:text-orange-300 hover:translate-x-1 inline-block transition-transform duration-200"
                                       >
                                         Ver todo
@@ -164,7 +164,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
             {categoriesTree.map((cat) => (
               <div key={cat.id} class="flex flex-col border-b border-slate-50">
                 <Link
-                  href={`/productos?categoria=${cat.slug}`}
+                  href={`/productos?category=${cat.slug}`}
                   class="text-base font-bold uppercase text-slate-800 py-3 px-4 hover:bg-orange-50 transition-colors"
                   onClick$={() => (isMenuOpen.value = false)}
                 >
@@ -175,7 +175,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                     {cat.children.map((child: any) => (
                       <div key={child.id} class="flex flex-col">
                         <Link
-                          href={`/productos?categoria=${child.slug}`}
+                          href={`/productos?category=${child.slug}`}
                           class="text-sm font-medium uppercase text-slate-600 py-2 px-8 hover:text-orange-600"
                           onClick$={() => (isMenuOpen.value = false)}
                         >
@@ -186,7 +186,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                             {child.children.map((subChild: any) => (
                               <Link
                                 key={subChild.id}
-                                href={`/productos?categoria=${subChild.slug}`}
+                                href={`/productos?category=${subChild.slug}`}
                                 class="text-sm text-slate-500 py-1.5 px-12 hover:text-orange-500"
                                 onClick$={() => (isMenuOpen.value = false)}
                               >
@@ -197,7 +197,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                         ) : (
                           <div class="flex flex-col bg-slate-100 py-1">
                             <Link
-                              href={`/productos?categoria=${child.slug}`}
+                              href={`/productos?category=${child.slug}`}
                               class="text-sm text-orange-600 font-medium py-1.5 px-12 hover:text-orange-500"
                               onClick$={() => (isMenuOpen.value = false)}
                             >

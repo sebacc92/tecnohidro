@@ -6,7 +6,7 @@ import { eq, isNull, desc, and } from 'drizzle-orm';
 import { ContactButton } from '../components/ContactButton';
 import { buttonVariants } from '../components/ui/button/button';
 import { SocialFeed } from '../components/SocialFeed';
-import { LuChevronLeft, LuChevronRight, LuTruck, LuPackage, LuPercent } from '@qwikest/icons/lucide';
+import { LuChevronLeft, LuChevronRight, LuTruck, LuPackage, LuPercent, LuTag } from '@qwikest/icons/lucide';
 
 // ─── Imágenes del Slider (reemplazar con URLs reales cuando estén disponibles) ─────────────────
 const HERO_SLIDES = [
@@ -259,7 +259,7 @@ export const HeroSlider = component$(() => {
       ))}
 
       {/* CAPA 2: Overlay oscuro 40% */}
-      <div class="absolute inset-0 bg-black/40" style="z-index: 20;" />
+      <div class="absolute inset-0 bg-black/50" style="z-index: 20;" />
 
       {/* CAPA 3: Contenido central */}
       <div class="absolute inset-0 flex items-center justify-center px-8" style="z-index: 30;">
@@ -347,11 +347,12 @@ export const useHomeData = routeLoader$(async ({ env }) => {
       slug: products.slug,
       price: products.price,
       images: products.images,
+      source: products.source,
       categoryName: categories.name,
     })
       .from(products)
       .leftJoin(categories, eq(products.category_id, categories.id))
-      .where(eq(products.status, 'active'))
+      .where(and(eq(products.status, 'active'), eq(products.is_featured, true)))
       .limit(8);
 
     const nowMs = Date.now();
@@ -442,10 +443,17 @@ export default component$(() => {
 
                 return (
                   <div key={product.id} class="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
-                    <Link href={`/productos/${product.slug}`} class="block aspect-square overflow-hidden bg-slate-100">
-                      <img src={imageUrl} alt={product.name} width={400} height={400}
-                        class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" loading="lazy" />
-                    </Link>
+                    <div class="block aspect-square overflow-hidden bg-slate-100 relative">
+                      {product.source === 'meli' && (
+                        <div class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-1 rounded-sm flex items-center gap-1 shadow-sm z-20">
+                          <LuTag class="w-3 h-3" /> MercadoLibre
+                        </div>
+                      )}
+                      <Link href={`/productos/${product.slug}`} class="block w-full h-full">
+                        <img src={imageUrl} alt={product.name} width={400} height={400}
+                          class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" loading="lazy" />
+                      </Link>
+                    </div>
                     <div class="p-5 flex flex-col flex-1">
                       <span class="text-xs font-medium text-orange-600 mb-1 block">
                         {product.categoryName || 'General'}
@@ -490,7 +498,7 @@ export default component$(() => {
           {/* Grid de logos: 2 col mobile, 3 col tablet, 6 col desktop */}
           {data.value.brands.length > 0 ? (
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 md:gap-8 items-center justify-items-center">
-              {data.value.brands.slice(0, 6).map((brand, idx) => (
+              {data.value.brands.map((brand, idx) => (
                 <a
                   key={`${brand.id}-${idx}`}
                   href={getBrandLink(brand.name)}
