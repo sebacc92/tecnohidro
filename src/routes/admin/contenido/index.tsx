@@ -190,16 +190,6 @@ export default component$(() => {
           {activeTab.value === 'portada' && <div class="absolute bottom-0 left-0 w-full h-1 bg-orange-500 rounded-full" />}
         </button>
         <button
-          onClick$={() => (activeTab.value = 'frases')}
-          class={`pb-4 px-2 text-sm font-bold tracking-wide uppercase transition-all relative ${activeTab.value === 'frases' ? 'text-orange-600' : 'text-slate-400 hover:text-slate-600'
-            }`}
-        >
-          <div class="flex items-center gap-2">
-            <LuQuote class="w-4 h-4" /> Frases
-          </div>
-          {activeTab.value === 'frases' && <div class="absolute bottom-0 left-0 w-full h-1 bg-orange-500 rounded-full" />}
-        </button>
-        <button
           onClick$={() => (activeTab.value = 'ofertas')}
           class={`pb-4 px-2 text-sm font-bold tracking-wide uppercase transition-all relative ${activeTab.value === 'ofertas' ? 'text-orange-600' : 'text-slate-400 hover:text-slate-600'
             }`}
@@ -208,6 +198,16 @@ export default component$(() => {
             <LuImage class="w-4 h-4" /> Ofertas
           </div>
           {activeTab.value === 'ofertas' && <div class="absolute bottom-0 left-0 w-full h-1 bg-orange-500 rounded-full" />}
+        </button>
+        <button
+          onClick$={() => (activeTab.value = 'frases')}
+          class={`pb-4 px-2 text-sm font-bold tracking-wide uppercase transition-all relative ${activeTab.value === 'frases' ? 'text-orange-600' : 'text-slate-400 hover:text-slate-600'
+            }`}
+        >
+          <div class="flex items-center gap-2">
+            <LuQuote class="w-4 h-4" /> Frases
+          </div>
+          {activeTab.value === 'frases' && <div class="absolute bottom-0 left-0 w-full h-1 bg-orange-500 rounded-full" />}
         </button>
       </div>
 

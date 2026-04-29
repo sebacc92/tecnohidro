@@ -462,6 +462,10 @@ export default component$(() => {
       {data.value.weeklyOffer.image && (
         <section class="py-12 px-4">
           <div class="container mx-auto">
+            <div class="mb-10 text-center">
+              <h2 class="text-3xl font-bold tracking-tight text-slate-900 mb-2">Oferta de la Semana</h2>
+              <p class="text-slate-500">Aprovechá este beneficio exclusivo por tiempo limitado.</p>
+            </div>
             <Link
               href={data.value.weeklyOffer.link || '/productos'}
               class="block relative rounded-2xl overflow-hidden shadow-2xl hover:scale-[1.01] transition-transform duration-500 group"
@@ -527,39 +531,42 @@ export default component$(() => {
 
           <div class="mt-12 text-center">
             <Link href="/productos" class={buttonVariants({ look: 'outline', size: 'lg' })}>
-              Ver Catálogo Completo
+              Ver Todos los Productos
             </Link>
           </div>
         </div>
       </section>
 
-      <section class="bg-white py-16 px-4">
-        <div class="max-w-[1400px] mx-auto">
-          <p class="text-center text-xs font-bold tracking-[0.25em] uppercase text-slate-400 mb-12">
-            Marcas con las que Trabajamos
-          </p>
+      <section class="bg-white py-24 px-4 border-t border-slate-50">
+        <div class="max-w-7xl mx-auto">
+          <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 mb-4">Marcas con las que Trabajamos</h2>
+            <p class="text-slate-500 max-w-2xl mx-auto">Contamos con el respaldo de las empresas líderes en el rubro para garantizar la máxima calidad en cada proyecto.</p>
+          </div>
 
           {data.value.brands.length > 0 ? (
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 md:gap-12 items-center justify-items-center">
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-x-12 gap-y-16 items-center justify-items-center">
               {data.value.brands.map((brand, idx) => (
                 <a
                   key={`${brand.id}-${idx}`}
                   href={getBrandLink(brand.name)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="w-full max-w-[220px] h-[100px] flex items-center justify-center grayscale opacity-50 hover:grayscale-0 hover:opacity-100 hover:scale-105 transition-all duration-300 p-4"
+                  class="w-full max-w-[240px] h-[120px] flex items-center justify-center grayscale opacity-50 hover:grayscale-0 hover:opacity-100 hover:scale-105 transition-all duration-500 p-4 group"
                 >
                   <img
                     src={brand.imageUrl}
                     alt={brand.name}
-                    class="max-h-full max-w-full object-contain mix-blend-multiply"
+                    class="max-h-full max-w-full object-contain filter drop-shadow-sm group-hover:drop-shadow-md transition-all"
                     loading="lazy"
                   />
                 </a>
               ))}
             </div>
           ) : (
-            <div class="py-8 text-center text-slate-400">No hay marcas disponibles.</div>
+            <div class="py-12 text-center text-slate-400 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+              No hay marcas disponibles en este momento.
+            </div>
           )}
         </div>
       </section>
