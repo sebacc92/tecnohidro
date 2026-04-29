@@ -59,7 +59,7 @@ export const Footer = component$(() => {
           </div>
         </div>
 
-        <div class="border-t border-slate-300 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between text-sm text-slate-300">
+        <div class="border-t border-slate-300 mt-12 pt-8 pb-24 md:pb-12 flex flex-col md:flex-row items-center justify-between text-sm text-slate-300">
           <p>&copy; {currentYear} Tecnohidro. Todos los derechos reservados.</p>
           <p class="mt-4 md:mt-0">
             Desarrollado por{' '}
