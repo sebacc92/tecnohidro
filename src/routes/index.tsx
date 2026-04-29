@@ -3,7 +3,6 @@ import { type DocumentHead, routeLoader$, Link } from '@builder.io/qwik-city';
 import { getDb } from '../db/client';
 import { products, categories, siteContent, brands, instagramPosts } from '../db/schema';
 import { eq, isNull, desc, and } from 'drizzle-orm';
-import { buttonVariants } from '../components/ui/button/button';
 import { SocialFeed } from '../components/SocialFeed';
 import { LuChevronLeft, LuChevronRight, LuTruck, LuPackage, LuPercent, LuTag } from '@qwikest/icons/lucide';
 import MediosDePagoImg from '~/media/medios-de-pago.webp?jsx'
