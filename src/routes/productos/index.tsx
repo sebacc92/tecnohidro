@@ -1,5 +1,5 @@
 import { component$, useSignal } from '@builder.io/qwik';
-import { type DocumentHead, routeLoader$, Link } from '@builder.io/qwik-city';
+import { type DocumentHead, routeLoader$, Link, useLocation } from '@builder.io/qwik-city';
 import { getDb } from '~/db/client';
 import { products, categories } from '~/db/schema';
 import { eq, like, or, and, inArray } from 'drizzle-orm';
@@ -7,6 +7,8 @@ import { ContactButton } from '~/components/ContactButton';
 import { LuFilter, LuTag, LuChevronDown, LuLayoutGrid, LuList, LuCheck, LuPercent } from '@qwikest/icons/lucide';
 import { ProductImageCarousel } from '~/components/ProductImageCarousel';
 import { ShareButton } from '~/components/ui/share-button';
+
+import { LiveSearch } from '~/components/LiveSearch';
 
 
 export const useCatalogData = routeLoader$(async (requestEvent) => {
@@ -83,6 +85,7 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
 
 export default component$(() => {
   const data = useCatalogData();
+  const loc = useLocation();
   const viewMode = useSignal<'grid' | 'list'>('grid');
 
   const rootCategories = data.value.categories.filter(c => !c.parent_id);
@@ -90,15 +93,20 @@ export default component$(() => {
 
   return (
     <div class="container mx-auto px-4 md:px-8 py-12">
-      <div class="mb-8 border-b pb-6">
-        <h1 class="text-3xl md:text-4xl font-bold text-slate-900">
-          {data.value.isOffers ? 'Ofertas Relámpago' : 'Catálogo de Productos'}
-        </h1>
-        {data.value.searchQuery && (
-          <p class="text-slate-500 mt-2">
-            Resultados de búsqueda para: <span class="font-semibold text-slate-800">"{data.value.searchQuery}"</span>
-          </p>
-        )}
+      <div class="mb-8 border-b pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold text-slate-900">
+            {data.value.isOffers ? 'Ofertas Relámpago' : 'Catálogo de Productos'}
+          </h1>
+          {data.value.searchQuery && (
+            <p class="text-slate-500 mt-2">
+              Resultados de búsqueda para: <span class="font-semibold text-slate-800">"{data.value.searchQuery}"</span>
+            </p>
+          )}
+        </div>
+        <div class="w-full md:w-80 lg:w-96">
+          <LiveSearch />
+        </div>
       </div>
 
       <div class="flex flex-col md:flex-row gap-8">
@@ -176,7 +184,19 @@ export default component$(() => {
         </aside>
 
         {/* Product Grid */}
-        <div class="flex-1">
+        <div class="flex-1 relative">
+          {loc.isNavigating && (
+            <div class="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-30 flex items-center justify-center rounded-xl">
+              <div class="flex flex-col items-center gap-3">
+                <svg class="animate-spin h-10 w-10 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-sm font-bold text-orange-600 uppercase tracking-widest animate-pulse">Filtrando...</span>
+              </div>
+            </div>
+          )}
+
           <div class="mb-6 flex justify-between items-center text-sm text-slate-500">
             <span>Mostrando {data.value.products.length} productos</span>
             <div class="flex items-center gap-1 bg-slate-100 rounded-lg p-1">

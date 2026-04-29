@@ -28,33 +28,26 @@ export const Header = component$(() => {
           <Logo class="h-9 lg:h-11 xl:h-14 w-auto" />
         </Link>
 
-        {/* Center: Search on Catalog, Navigation Menu elsewhere */}
         <div class="hidden lg:flex items-center justify-center min-w-0">
-          {isCatalog ? (
-            <div class="w-full max-w-xl">
-              <LiveSearch />
-            </div>
-          ) : (
-            <nav aria-label="Navegación principal">
-              <ul class="flex items-center gap-0 xl:gap-2">
-                {navLinks.map((link) => {
-                  const isActive = loc.url.pathname === link.href || (link.href !== '/' && loc.url.pathname.startsWith(link.href));
-                  return (
-                    <li key={link.href}>
-                      <Link
-                        href={link.href}
-                        class={`px-1.5 xl:px-4 py-2 text-[11px] xl:text-[15px] font-bold uppercase tracking-wide xl:tracking-[0.12em] transition-all duration-300 relative group whitespace-nowrap ${isActive ? 'text-orange-600' : 'text-slate-600 hover:text-orange-600'
-                          }`}
-                      >
-                        {link.label}
-                        <span class={`absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-orange-600 transition-all duration-300 group-hover:w-2/3 ${isActive ? 'w-2/3' : ''}`} />
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-          )}
+          <nav aria-label="Navegación principal">
+            <ul class="flex items-center gap-0 xl:gap-2">
+              {navLinks.map((link) => {
+                const isActive = loc.url.pathname === link.href || (link.href !== '/' && loc.url.pathname.startsWith(link.href));
+                return (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      class={`px-1.5 xl:px-4 py-2 text-[11px] xl:text-[15px] font-bold uppercase tracking-wide xl:tracking-[0.12em] transition-all duration-300 relative group whitespace-nowrap ${isActive ? 'text-orange-600' : 'text-slate-600 hover:text-orange-600'
+                        }`}
+                    >
+                      {link.label}
+                      <span class={`absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-orange-600 transition-all duration-300 group-hover:w-2/3 ${isActive ? 'w-2/3' : ''}`} />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
         </div>
 
         {/* Right Section: Phone, Socials & Mobile Toggle */}
