@@ -3,7 +3,6 @@ import { type DocumentHead, routeLoader$, Link } from '@builder.io/qwik-city';
 import { getDb } from '../db/client';
 import { products, categories, siteContent, brands, instagramPosts } from '../db/schema';
 import { eq, isNull, desc, and } from 'drizzle-orm';
-import { ContactButton } from '../components/ContactButton';
 import { buttonVariants } from '../components/ui/button/button';
 import { SocialFeed } from '../components/SocialFeed';
 import { LuChevronLeft, LuChevronRight, LuTruck, LuPackage, LuPercent, LuTag } from '@qwikest/icons/lucide';
@@ -121,13 +120,13 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
           </div>
         )}
         <Link href={`/productos/${product.slug}`} class="block w-full h-full">
-          <img 
-            src={imageUrl} 
-            alt={product.name} 
-            width={400} 
+          <img
+            src={imageUrl}
+            alt={product.name}
+            width={400}
             height={400}
-            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-            loading="lazy" 
+            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            loading="lazy"
           />
         </Link>
       </div>
@@ -147,7 +146,7 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
           <span class="text-xl font-black text-slate-900">
             ${(product.price || 0).toLocaleString('es-AR')}
           </span>
-          <Link 
+          <Link
             href={`/productos/${product.slug}`}
             class="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-orange-600 hover:text-white transition-all"
           >
@@ -215,8 +214,8 @@ export const HeroSlider = component$(({ slides }: { slides: HeroSlide[] }) => {
           <div
             key={`${slide.url}-${idx}`}
             class="absolute inset-0 transition-all duration-[1000ms] ease-in-out"
-            style={{ 
-              opacity: isActive ? '1' : '0', 
+            style={{
+              opacity: isActive ? '1' : '0',
               zIndex: isActive ? '10' : '0',
               transform: isActive ? 'scale(1)' : 'scale(1.05)'
             }}
@@ -228,7 +227,7 @@ export const HeroSlider = component$(({ slides }: { slides: HeroSlide[] }) => {
               class="w-full h-full object-cover"
               loading={idx === 0 ? 'eager' : 'lazy'}
             />
-            
+
             {/* Overlay */}
             <div class="absolute inset-0 bg-black/50" />
 
@@ -236,7 +235,7 @@ export const HeroSlider = component$(({ slides }: { slides: HeroSlide[] }) => {
             <div class="absolute inset-0 flex items-center justify-center px-8 z-30">
               <div class="text-center text-white max-w-[850px] w-full">
                 {slide.title && (
-                  <h1 
+                  <h1
                     class={`font-extrabold text-white mb-6 ${isActive ? 'hero-fade-up' : ''}`}
                     style="font-size: clamp(2.2rem, 5vw, 4rem); line-height: 1.1; animation-delay: 200ms;"
                   >
@@ -245,7 +244,7 @@ export const HeroSlider = component$(({ slides }: { slides: HeroSlide[] }) => {
                 )}
 
                 {slide.subtitle && (
-                  <p 
+                  <p
                     class={`font-normal text-white/90 mb-10 mx-auto max-w-2xl ${isActive ? 'hero-fade-up' : ''}`}
                     style="font-size: clamp(1rem, 2vw, 1.3rem); line-height: 1.6; animation-delay: 400ms;"
                   >
@@ -405,7 +404,7 @@ export const useHomeData = routeLoader$(async ({ env }) => {
         let oldImages: string[] = [];
         try { oldImages = JSON.parse(contentMap['hero_images'] || '[]'); } catch { oldImages = []; }
         if (oldImages.length === 0) oldImages = DEFAULT_HERO_SLIDES.map(s => s.url);
-        
+
         heroSlides = oldImages.map((url, i) => ({
           url,
           alt: `Imagen del hero ${i + 1}`,
@@ -462,14 +461,14 @@ export default component$(() => {
       {data.value.weeklyOffer.image && (
         <section class="py-12 px-4">
           <div class="container mx-auto">
-            <Link 
-              href={data.value.weeklyOffer.link || '/productos'} 
+            <Link
+              href={data.value.weeklyOffer.link || '/productos'}
               class="block relative rounded-2xl overflow-hidden shadow-2xl hover:scale-[1.01] transition-transform duration-500 group"
             >
-              <img 
-                src={data.value.weeklyOffer.image} 
-                alt="Oferta de la Semana" 
-                class="w-full h-auto object-cover aspect-[21/9] md:aspect-[25/9]" 
+              <img
+                src={data.value.weeklyOffer.image}
+                alt="Oferta de la Semana"
+                class="w-full h-auto object-cover aspect-[21/9] md:aspect-[25/9]"
               />
               <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-8">
                 <span class="text-white font-bold bg-orange-600 px-6 py-2 rounded-lg shadow-lg">Ver Oferta Semanal</span>
