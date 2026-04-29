@@ -29,6 +29,8 @@ export const products = sqliteTable('products', {
   is_featured: integer('is_featured', { mode: 'boolean' }).default(false),
   is_offer: integer('is_offer', { mode: 'boolean' }).default(false),
   offer_expires_at: integer('offer_expires_at', { mode: 'timestamp' }),
+  discount_price: integer('discount_price'),
+  discount_percent: integer('discount_percent'),
 });
 
 export const siteContent = sqliteTable('site_content', {

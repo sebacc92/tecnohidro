@@ -45,6 +45,8 @@ export const useAddProduct = routeAction$(
         is_featured: data.is_featured === 'true',
         is_offer: data.is_offer === 'true',
         offer_expires_at: data.offer_expires_at ? new Date(data.offer_expires_at) : null,
+        discount_price: data.discount_price,
+        discount_percent: data.discount_percent,
         images: imagesArray,
       });
 
@@ -66,6 +68,8 @@ export const useAddProduct = routeAction$(
     is_featured: z.string().optional(),
     is_offer: z.string().optional(),
     offer_expires_at: z.string().optional(),
+    discount_price: z.coerce.number().optional().nullable(),
+    discount_percent: z.coerce.number().optional().nullable(),
     imageUrlsJson: z.string().optional(),
   })
 );
@@ -76,6 +80,26 @@ export default component$(() => {
   const isCompressing = useSignal(false);
   const previewUrls = useSignal<string[]>([]);
   const isOffer = useSignal(false);
+  const basePrice = useSignal(0);
+  const discountPrice = useSignal(0);
+  const discountPercent = useSignal(0);
+  const isUpdating = useSignal(false);
+
+  const calculateFromPrice = $((price: number) => {
+    if (isUpdating.value || basePrice.value <= 0) return;
+    isUpdating.value = true;
+    discountPrice.value = price;
+    discountPercent.value = Math.round((1 - price / basePrice.value) * 100);
+    setTimeout(() => { isUpdating.value = false; }, 0);
+  });
+
+  const calculateFromPercent = $((percent: number) => {
+    if (isUpdating.value || basePrice.value <= 0) return;
+    isUpdating.value = true;
+    discountPercent.value = percent;
+    discountPrice.value = Math.round(basePrice.value * (1 - percent / 100));
+    setTimeout(() => { isUpdating.value = false; }, 0);
+  });
 
   const handleFileChange = $(async (event: Event, element: HTMLInputElement) => {
     const files = element.files;
@@ -210,8 +234,21 @@ export default component$(() => {
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div class="space-y-1.5">
-                <label for="price" class="text-sm font-medium text-slate-700">Precio ($) *</label>
-                <input type="number" id="price" name="price" required min="0" step="0.01" class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none" placeholder="0.00" />
+                <label for="price" class="text-sm font-medium text-slate-700">Precio Original ($) *</label>
+                <input 
+                  type="number" 
+                  id="price" 
+                  name="price" 
+                  required 
+                  min="0" 
+                  step="0.01" 
+                  class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none" 
+                  placeholder="0.00"
+                  onInput$={(e, el) => {
+                    basePrice.value = parseFloat(el.value) || 0;
+                    if (isOffer.value) calculateFromPercent(discountPercent.value);
+                  }}
+                />
                 {addAction.value?.fieldErrors?.price && <p class="text-xs text-red-600">{addAction.value.fieldErrors.price[0]}</p>}
               </div>
 
@@ -258,16 +295,50 @@ export default component$(() => {
             </div>
             
             {isOffer.value && (
-              <div class="mt-4 p-4 border border-red-100 bg-red-50 rounded-lg">
-                <label for="offer_expires_at" class="block text-sm font-medium text-red-800 mb-1">Fecha y Hora de Fin de Oferta *</label>
-                <input 
-                  type="datetime-local" 
-                  id="offer_expires_at" 
-                  name="offer_expires_at" 
-                  required={isOffer.value}
-                  class="w-full md:w-1/2 rounded-md border border-red-200 px-3 py-2 text-sm focus:border-red-500 focus:ring-red-500 outline-none" 
-                />
-                <p class="mt-1 text-xs text-red-600">Al pasar esta fecha, la oferta desaparecerá automáticamente del inicio.</p>
+              <div class="mt-4 p-4 border border-orange-100 bg-orange-50/50 rounded-lg space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="space-y-1.5">
+                    <label for="discount_price" class="text-sm font-medium text-orange-800">Precio con Descuento ($)</label>
+                    <input 
+                      type="number" 
+                      id="discount_price" 
+                      name="discount_price" 
+                      min="0" 
+                      step="0.01" 
+                      value={discountPrice.value || ''} 
+                      class="w-full rounded-md border border-orange-200 px-3 py-2 text-sm focus:border-orange-500 focus:ring-orange-500 outline-none" 
+                      placeholder="0.00"
+                      onInput$={(e, el) => calculateFromPrice(parseFloat(el.value) || 0)}
+                    />
+                  </div>
+                  <div class="space-y-1.5">
+                    <label for="discount_percent" class="text-sm font-medium text-orange-800">Porcentaje de Descuento (%)</label>
+                    <input 
+                      type="number" 
+                      id="discount_percent" 
+                      name="discount_percent" 
+                      min="0" 
+                      max="100" 
+                      step="1" 
+                      value={discountPercent.value || ''} 
+                      class="w-full rounded-md border border-orange-200 px-3 py-2 text-sm focus:border-orange-500 focus:ring-orange-500 outline-none" 
+                      placeholder="0"
+                      onInput$={(e, el) => calculateFromPercent(parseInt(el.value) || 0)}
+                    />
+                  </div>
+                </div>
+
+                <div class="pt-2 border-t border-orange-100">
+                  <label for="offer_expires_at" class="block text-sm font-medium text-orange-800 mb-1">Fecha y Hora de Fin de Oferta *</label>
+                  <input 
+                    type="datetime-local" 
+                    id="offer_expires_at" 
+                    name="offer_expires_at" 
+                    required={isOffer.value}
+                    class="w-full md:w-1/2 rounded-md border border-orange-200 px-3 py-2 text-sm focus:border-orange-500 focus:ring-orange-500 outline-none" 
+                  />
+                  <p class="mt-1 text-xs text-orange-600">Al pasar esta fecha, el producto volverá a su precio original automáticamente.</p>
+                </div>
               </div>
             )}
           </div>

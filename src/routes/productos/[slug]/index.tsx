@@ -27,6 +27,9 @@ export const useProductDetail = routeLoader$(async (requestEvent) => {
         source: products.source,
         external_link: products.external_link,
         categoryId: products.category_id,
+        is_offer: products.is_offer,
+        discount_price: products.discount_price,
+        discount_percent: products.discount_percent,
         categoryName: categories.name,
         categorySlug: categories.slug,
       })
@@ -187,10 +190,24 @@ export default component$(() => {
             </div>
 
             {hasPrice && (
-              <div class="mb-6">
-                <span class="text-3xl font-bold text-orange-600">
-                  ${product.price!.toLocaleString('es-AR')}
-                </span>
+              <div class="mb-6 flex flex-col">
+                {product.is_offer && product.discount_price && product.discount_price > 0 ? (
+                  <>
+                    <div class="flex items-center gap-3 mb-1">
+                      <span class="text-lg text-slate-400 line-through">${(product.price || 0).toLocaleString('es-AR')}</span>
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-bold bg-red-100 text-red-600">
+                        -{product.discount_percent}% OFF
+                      </span>
+                    </div>
+                    <span class="text-4xl font-bold text-orange-600">
+                      ${product.discount_price.toLocaleString('es-AR')}
+                    </span>
+                  </>
+                ) : (
+                  <span class="text-4xl font-bold text-slate-900">
+                    ${product.price!.toLocaleString('es-AR')}
+                  </span>
+                )}
               </div>
             )}
 

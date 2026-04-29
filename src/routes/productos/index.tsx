@@ -4,7 +4,7 @@ import { getDb } from '../../db/client';
 import { products, categories } from '../../db/schema';
 import { eq, like, or, and, inArray } from 'drizzle-orm';
 import { ContactButton } from '../../components/ContactButton';
-import { LuFilter, LuTag, LuChevronDown, LuExternalLink, LuLayoutGrid, LuList, LuCheck } from '@qwikest/icons/lucide';
+import { LuFilter, LuTag, LuChevronDown, LuLayoutGrid, LuList, LuCheck } from '@qwikest/icons/lucide';
 import { ProductImageCarousel } from '../../components/ProductImageCarousel';
 import { ShareButton } from '../../components/ui/share-button';
 
@@ -54,6 +54,9 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
       images: products.images,
       source: products.source,
       external_link: products.external_link,
+      is_offer: products.is_offer,
+      discount_price: products.discount_price,
+      discount_percent: products.discount_percent,
       categoryName: categories.name,
     })
       .from(products)
@@ -264,7 +267,14 @@ export default component$(() => {
                           <LuTag class="w-3 h-3" /> MercadoLibre
                         </div>
                       )}
-                      {images.length > 1 && (
+                      {product.is_offer && (
+                        <div class="absolute top-2 left-2 z-20">
+                          <div class="bg-orange-600 text-white text-[10px] font-bold px-2 py-1 rounded-sm shadow-sm flex items-center gap-1 w-fit">
+                            <LuPercent class="w-3 h-3" /> OFERTA
+                          </div>
+                        </div>
+                      )}
+                      {images.length > 1 && !product.is_offer && (
                         <span class="absolute top-2.5 left-2.5 bg-black/60 text-white px-2 py-0.5 rounded text-[10px] font-medium backdrop-blur-sm z-20">
                           {images.length} fotos
                         </span>
@@ -284,7 +294,22 @@ export default component$(() => {
                       </Link>
                       <div class="mt-auto">
                         {hasPrice && (
-                          <span class="text-base font-bold text-orange-600 block mb-3">${product.price!.toLocaleString('es-AR')}</span>
+                          <div class="flex flex-col mb-3">
+                            {product.is_offer && product.discount_price && product.discount_price > 0 ? (
+                              <>
+                                <div class="flex items-center gap-2 mb-1">
+                                  <span class="text-[11px] text-slate-400 line-through font-medium">${(product.price || 0).toLocaleString('es-AR')}</span>
+                                  <span class="text-[10px] font-bold text-red-600 uppercase">-{product.discount_percent}% OFF</span>
+                                </div>
+                                <span class="text-2xl font-black text-slate-900 leading-none">${product.discount_price.toLocaleString('es-AR')}</span>
+                                <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-tighter mt-2">
+                                  ¡Ahorrás ${(product.price! - product.discount_price).toLocaleString('es-AR')}!
+                                </span>
+                              </>
+                            ) : (
+                              <span class="text-2xl font-black text-slate-900 leading-none">${product.price!.toLocaleString('es-AR')}</span>
+                            )}
+                          </div>
                         )}
                         <ContactButton productName={product.name} look="primary" size="sm" class="w-full !h-8 !text-xs" />
                       </div>

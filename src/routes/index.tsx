@@ -114,7 +114,7 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
           </div>
         )}
         {isOffer && (
-          <div class="absolute top-2 left-2 flex flex-col gap-2 z-20">
+          <div class="absolute top-2 left-2 z-20">
             <div class="bg-orange-600 text-white text-[10px] font-bold px-2 py-1 rounded-sm shadow-sm flex items-center gap-1 w-fit">
               <LuPercent class="w-3 h-3" /> OFERTA
             </div>
@@ -143,16 +143,43 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
             {product.name}
           </h3>
         </Link>
-        <div class="mt-auto pt-2 flex items-center justify-between">
-          <span class="text-base font-black text-slate-900">
-            ${(product.price || 0).toLocaleString('es-AR')}
-          </span>
-          <Link
-            href={`/productos/${product.slug}`}
-            class="p-2 bg-slate-100 text-slate-600 rounded-none hover:bg-orange-600 hover:text-white transition-all"
-          >
-            <LuChevronRight class="w-5 h-5" />
-          </Link>
+        <div class="mt-auto pt-2 flex flex-col">
+          {isOffer && product.discount_price && product.discount_price > 0 ? (
+            <>
+              <div class="flex items-center gap-2 mb-0.5">
+                <span class="text-[11px] text-slate-400 line-through font-medium">${(product.price || 0).toLocaleString('es-AR')}</span>
+                <span class="text-[10px] font-bold text-red-600 uppercase">-{product.discount_percent}%</span>
+              </div>
+              <div class="flex items-end justify-between">
+                <div class="flex flex-col">
+                  <span class="text-2xl font-black text-slate-900 leading-none">
+                    ${(product.discount_price).toLocaleString('es-AR')}
+                  </span>
+                  <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-tighter mt-2">
+                    ¡Ahorrás ${(product.price - product.discount_price).toLocaleString('es-AR')}!
+                  </span>
+                </div>
+                <Link
+                  href={`/productos/${product.slug}`}
+                  class="p-2 bg-orange-600 text-white rounded-none hover:bg-slate-900 transition-all shadow-md mb-1"
+                >
+                  <LuChevronRight class="w-5 h-5" />
+                </Link>
+              </div>
+            </>
+          ) : (
+            <div class="flex items-center justify-between">
+              <span class="text-2xl font-black text-slate-900">
+                ${(product.price || 0).toLocaleString('es-AR')}
+              </span>
+              <Link
+                href={`/productos/${product.slug}`}
+                class="p-2 bg-slate-50 text-slate-400 rounded-none hover:bg-orange-600 hover:text-white transition-all"
+              >
+                <LuChevronRight class="w-5 h-5" />
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -355,6 +382,9 @@ export const useHomeData = routeLoader$(async ({ env }) => {
       price: products.price,
       images: products.images,
       source: products.source,
+      is_offer: products.is_offer,
+      discount_price: products.discount_price,
+      discount_percent: products.discount_percent,
       categoryName: categories.name,
     })
       .from(products)
@@ -369,6 +399,9 @@ export const useHomeData = routeLoader$(async ({ env }) => {
       price: products.price,
       images: products.images,
       source: products.source,
+      is_offer: products.is_offer,
+      discount_price: products.discount_price,
+      discount_percent: products.discount_percent,
       offer_expires_at: products.offer_expires_at,
       categoryName: categories.name,
     })
