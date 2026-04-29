@@ -1,15 +1,11 @@
 import { component$, useSignal } from '@builder.io/qwik';
 import { Link, useLocation } from '@builder.io/qwik-city';
-import { LuMenu, LuX, LuFacebook, LuInstagram, LuLinkedin, LuChevronDown, LuPhone } from '@qwikest/icons/lucide';
+import { LuMenu, LuX, LuFacebook, LuInstagram, LuLinkedin, LuPhone } from '@qwikest/icons/lucide';
 import Logo from '~/media/tecnohidro.png?jsx';
 import { LiveSearch } from '../LiveSearch';
 
 
-export interface HeaderProps {
-  categoriesTree: any[];
-}
-
-export const Header = component$<HeaderProps>(({ categoriesTree: _categoriesTree }) => {
+export const Header = component$(() => {
   const isMenuOpen = useSignal(false);
   const loc = useLocation();
   // Se considera catálogo si empieza con /productos o /categorias
@@ -47,9 +43,8 @@ export const Header = component$<HeaderProps>(({ categoriesTree: _categoriesTree
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        class={`px-2 lg:px-4 py-2 text-sm lg:text-[15px] font-bold uppercase tracking-[0.12em] transition-all duration-300 relative group ${
-                          isActive ? 'text-orange-600' : 'text-slate-600 hover:text-orange-600'
-                        }`}
+                        class={`px-2 lg:px-4 py-2 text-sm lg:text-[15px] font-bold uppercase tracking-[0.12em] transition-all duration-300 relative group ${isActive ? 'text-orange-600' : 'text-slate-600 hover:text-orange-600'
+                          }`}
                       >
                         {link.label}
                         <span class={`absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-0.5 bg-orange-600 transition-all duration-300 group-hover:w-2/3 ${isActive ? 'w-2/3' : ''}`} />
@@ -120,9 +115,8 @@ export const Header = component$<HeaderProps>(({ categoriesTree: _categoriesTree
                   <Link
                     key={link.href}
                     href={link.href}
-                    class={`text-lg font-bold py-2 border-b border-slate-50 transition-colors uppercase tracking-widest ${
-                      isActive ? 'text-orange-600 pl-2 border-orange-600' : 'text-slate-800 hover:text-orange-600'
-                    }`}
+                    class={`text-lg font-bold py-2 border-b border-slate-50 transition-colors uppercase tracking-widest ${isActive ? 'text-orange-600 pl-2 border-orange-600' : 'text-slate-800 hover:text-orange-600'
+                      }`}
                     onClick$={() => (isMenuOpen.value = false)}
                   >
                     {link.label}

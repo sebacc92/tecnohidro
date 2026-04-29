@@ -1,40 +1,9 @@
 import { component$, Slot } from '@builder.io/qwik';
-import { routeLoader$, type RequestHandler } from '@builder.io/qwik-city';
+import { type RequestHandler } from '@builder.io/qwik-city';
 import { Header } from '../components/ui/header';
 import { Footer } from '../components/ui/footer';
 import { WhatsAppButton } from '../components/ui/whatsapp-button';
 import { Chatbot } from '../components/chatbot/chatbot';
-import { getDb } from '~/db/client';
-import { categories } from '~/db/schema';
-
-export const useNavigationCategories = routeLoader$(async ({ env }) => {
-  const db = getDb(env);
-  const allCats = await db.select().from(categories);
-  
-  const sortFn = (a: any, b: any) => ((a.sort_order ?? 0) - (b.sort_order ?? 0)) || a.name.localeCompare(b.name);
-
-  // Nivel 1 (Raíces que deben mostrarse en el menú)
-  const roots = allCats.filter(c => !c.parent_id && c.show_in_menu !== false).sort(sortFn);
-  
-  const tree = roots.map(root => {
-    // Nivel 2
-    const children = allCats.filter(c => c.parent_id === root.id).sort(sortFn).map(child => {
-      // Nivel 3
-      const subChildren = allCats.filter(sub => sub.parent_id === child.id).sort(sortFn);
-      return {
-        ...child,
-        children: subChildren
-      };
-    });
-    
-    return {
-      ...root,
-      children
-    };
-  });
-  
-  return tree;
-});
 
 export const onGet: RequestHandler = async ({ cacheControl }) => {
   // Control caching for this request for best performance and to reduce hosting costs:
@@ -46,11 +15,9 @@ export const onGet: RequestHandler = async ({ cacheControl }) => {
 };
 
 export default component$(() => {
-  const categoriesSignal = useNavigationCategories();
-
   return (
     <div class="flex min-h-screen flex-col font-sans bg-slate-50">
-      <Header categoriesTree={categoriesSignal.value || []} />
+      <Header />
       <main class="flex-1">
         <Slot />
       </main>
