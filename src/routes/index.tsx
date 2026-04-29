@@ -149,7 +149,7 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
           </span>
           <Link
             href={`/productos/${product.slug}`}
-            class="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-orange-600 hover:text-white transition-all"
+            class="p-2 bg-slate-100 text-slate-600 rounded-none hover:bg-orange-600 hover:text-white transition-all"
           >
             <LuChevronRight class="w-5 h-5" />
           </Link>
@@ -205,8 +205,8 @@ export const HeroSlider = component$(({ slides }: { slides: HeroSlide[] }) => {
           to { opacity: 1; transform: translateY(0); }
         }
         .hero-fade-up { animation: fadeUp 800ms cubic-bezier(0.4,0,0.2,1) both; }
-        .dot-active { width: 32px; border-radius: 6px; background-color: #FF5722; }
-        .dot-inactive { width: 12px; border-radius: 50%; background-color: rgba(255,255,255,0.5); }
+        .dot-active { width: 32px; border-radius: 0; background-color: #FF5722; }
+        .dot-inactive { width: 12px; border-radius: 0; background-color: rgba(255,255,255,0.5); }
       `}</style>
 
       {slides.map((slide, idx) => {
@@ -258,7 +258,7 @@ export const HeroSlider = component$(({ slides }: { slides: HeroSlide[] }) => {
                     <Link
                       href={slide.buttonLink || '/productos'}
                       class="inline-block text-white font-bold no-underline transition-all duration-300 hover:scale-105 hover:shadow-2xl"
-                      style="background-color: #FF5722; padding: 1.2rem 3.5rem; border-radius: 14px; font-size: 1.1rem; box-shadow: 0 8px 25px rgba(255,87,34,0.4);"
+                      style="background-color: #FF5722; padding: 1.2rem 3.5rem; border-radius: 0; font-size: 1.1rem; box-shadow: 0 8px 25px rgba(255,87,34,0.4);"
                     >
                       {slide.buttonText}
                     </Link>
@@ -275,14 +275,14 @@ export const HeroSlider = component$(({ slides }: { slides: HeroSlide[] }) => {
         <>
           <button
             onClick$={goPrev}
-            class="hidden md:flex absolute left-8 top-1/2 -translate-y-1/2 items-center justify-center w-[50px] h-[50px] rounded-full text-white transition-all hover:bg-white/30 z-40"
+            class="hidden md:flex absolute left-8 top-1/2 -translate-y-1/2 items-center justify-center w-[50px] h-[50px] rounded-none text-white transition-all hover:bg-white/30 z-40"
             style="background-color: rgba(255,255,255,0.2); backdrop-filter: blur(4px);"
           >
             <LuChevronLeft class="w-7 h-7" />
           </button>
           <button
             onClick$={goNext}
-            class="hidden md:flex absolute right-8 top-1/2 -translate-y-1/2 items-center justify-center w-[50px] h-[50px] rounded-full text-white transition-all hover:bg-white/30 z-40"
+            class="hidden md:flex absolute right-8 top-1/2 -translate-y-1/2 items-center justify-center w-[50px] h-[50px] rounded-none text-white transition-all hover:bg-white/30 z-40"
             style="background-color: rgba(255,255,255,0.2); backdrop-filter: blur(4px);"
           >
             <LuChevronRight class="w-7 h-7" />
@@ -477,7 +477,7 @@ export default component$(() => {
                 class="w-full h-auto object-cover aspect-[21/9] md:aspect-[25/9]"
               />
               <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-8">
-                <span class="text-white font-bold bg-orange-600 px-6 py-2 rounded-lg shadow-lg">Ver Oferta Semanal</span>
+                <span class="text-white font-bold bg-orange-600 px-6 py-2 rounded-none shadow-lg">Ver Oferta Semanal</span>
               </div>
             </Link>
           </div>

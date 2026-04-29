@@ -13,6 +13,7 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
   const url = requestEvent.url;
   const categorySlug = url.searchParams.get('category');
   const searchQ = url.searchParams.get('q');
+  const isOffers = url.searchParams.get('ofertas') === 'true';
 
   try {
     const db = getDb(requestEvent.env);
@@ -40,6 +41,10 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
       );
     }
 
+    if (isOffers) {
+      conditions.push(eq(products.is_offer, true));
+    }
+
     const filteredProducts = await db.select({
       id: products.id,
       name: products.name,
@@ -60,6 +65,7 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
       products: filteredProducts,
       currentCategory: categorySlug,
       searchQuery: searchQ,
+      isOffers,
     };
   } catch (error) {
     console.error('Database query error:', error);
@@ -82,7 +88,9 @@ export default component$(() => {
   return (
     <div class="container mx-auto px-4 md:px-8 py-12">
       <div class="mb-8 border-b pb-6">
-        <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Catálogo de Productos</h1>
+        <h1 class="text-3xl md:text-4xl font-bold text-slate-900">
+          {data.value.isOffers ? 'Ofertas Relámpago' : 'Catálogo de Productos'}
+        </h1>
         {data.value.searchQuery && (
           <p class="text-slate-500 mt-2">
             Resultados de búsqueda para: <span class="font-semibold text-slate-800">"{data.value.searchQuery}"</span>
