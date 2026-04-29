@@ -27,6 +27,8 @@ export const products = sqliteTable('products', {
   category_id: text('category_id').references(() => categories.id),
   status: text('status', { enum: ['active', 'draft'] }).notNull().default('active'),
   is_featured: integer('is_featured', { mode: 'boolean' }).default(false),
+  is_offer: integer('is_offer', { mode: 'boolean' }).default(false),
+  offer_expires_at: integer('offer_expires_at', { mode: 'timestamp' }),
 });
 
 export const siteContent = sqliteTable('site_content', {

@@ -76,7 +76,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                   <li key={cat.id} class="group">
                     <Link
                       href={`/productos?categoria=${cat.slug}`}
-                      class="flex items-center gap-1 px-5 py-4 text-[13px] font-bold text-slate-700 uppercase tracking-wide group-hover:bg-[#2d2d2d] group-hover:text-white transition-colors cursor-pointer"
+                      class="flex items-center gap-1 px-5 py-4 text-sm font-bold text-slate-700 uppercase tracking-wide group-hover:bg-[#2d2d2d] group-hover:text-white transition-colors cursor-pointer"
                     >
                       {cat.name}
                       {hasChildren && <LuChevronDown class="w-4 h-4 ml-1 transition-transform group-hover:rotate-180" />}
@@ -91,22 +91,33 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                               <div key={child.id} class="flex flex-col gap-3">
                                 <Link
                                   href={`/productos?categoria=${child.slug}`}
-                                  class="font-bold text-white uppercase text-[13px] hover:text-orange-500 transition-colors border-b border-slate-600 pb-2"
+                                  class="font-bold text-white uppercase text-sm hover:text-orange-500 transition-colors border-b border-slate-600 pb-2"
                                 >
                                   {child.name}
                                 </Link>
-                                {child.children && child.children.length > 0 && (
+                                {child.children && child.children.length > 0 ? (
                                   <ul class="flex flex-col gap-2.5 mt-1">
                                     {child.children.map((subChild: any) => (
                                       <li key={subChild.id}>
                                         <Link
                                           href={`/productos?categoria=${subChild.slug}`}
-                                          class="text-slate-300 text-[13px] hover:text-white hover:translate-x-1 inline-block transition-transform duration-200"
+                                          class="text-slate-300 text-sm hover:text-white hover:translate-x-1 inline-block transition-transform duration-200"
                                         >
                                           {subChild.name}
                                         </Link>
                                       </li>
                                     ))}
+                                  </ul>
+                                ) : (
+                                  <ul class="flex flex-col gap-2.5 mt-1">
+                                    <li>
+                                      <Link
+                                        href={`/productos?categoria=${child.slug}`}
+                                        class="text-orange-400 text-sm hover:text-orange-300 hover:translate-x-1 inline-block transition-transform duration-200"
+                                      >
+                                        Ver todo
+                                      </Link>
+                                    </li>
                                   </ul>
                                 )}
                               </div>
@@ -124,7 +135,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                 <li key={link.href} class="group">
                   <Link
                     href={link.href}
-                    class="flex items-center px-5 py-4 text-[13px] font-bold text-slate-700 uppercase tracking-wide group-hover:bg-[#2d2d2d] group-hover:text-white transition-colors"
+                    class="flex items-center px-5 py-4 text-sm font-bold text-slate-700 uppercase tracking-wide group-hover:bg-[#2d2d2d] group-hover:text-white transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -170,18 +181,28 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                         >
                           {child.name}
                         </Link>
-                        {child.children && child.children.length > 0 && (
+                        {child.children && child.children.length > 0 ? (
                           <div class="flex flex-col bg-slate-100 py-1">
                             {child.children.map((subChild: any) => (
                               <Link
                                 key={subChild.id}
                                 href={`/productos?categoria=${subChild.slug}`}
-                                class="text-[13px] text-slate-500 py-1.5 px-12 hover:text-orange-500"
+                                class="text-sm text-slate-500 py-1.5 px-12 hover:text-orange-500"
                                 onClick$={() => (isMenuOpen.value = false)}
                               >
                                 - {subChild.name}
                               </Link>
                             ))}
+                          </div>
+                        ) : (
+                          <div class="flex flex-col bg-slate-100 py-1">
+                            <Link
+                              href={`/productos?categoria=${child.slug}`}
+                              class="text-sm text-orange-600 font-medium py-1.5 px-12 hover:text-orange-500"
+                              onClick$={() => (isMenuOpen.value = false)}
+                            >
+                              - Ver todo
+                            </Link>
                           </div>
                         )}
                       </div>

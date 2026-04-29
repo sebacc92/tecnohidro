@@ -54,6 +54,8 @@ export const useEditProduct = routeAction$(
           category_id: data.categoryId,
           status: data.status === 'active' ? 'active' : 'draft',
           is_featured: data.is_featured === 'true',
+          is_offer: data.is_offer === 'true',
+          offer_expires_at: data.offer_expires_at ? new Date(data.offer_expires_at) : null,
           images: imagesArray,
         })
         .where(eq(products.id, data.id));
@@ -74,6 +76,8 @@ export const useEditProduct = routeAction$(
     categoryId: z.string().min(1, 'Debe seleccionar una categoría'),
     status: z.string().optional(),
     is_featured: z.string().optional(),
+    is_offer: z.string().optional(),
+    offer_expires_at: z.string().optional(),
     imageUrlsJson: z.string().optional(),
   })
 );
@@ -91,6 +95,15 @@ export default component$(() => {
   const isCompressing = useSignal(false);
   const previewUrls = useSignal<string[]>([]);
   const hasNewImages = useSignal(false);
+  const isOffer = useSignal(product.is_offer === true);
+
+  let initialExpiresAt = '';
+  if (product.offer_expires_at) {
+    const d = new Date(product.offer_expires_at);
+    if (!isNaN(d.getTime())) {
+      initialExpiresAt = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+    }
+  }
 
   const handleFileChange = $(async (event: Event, element: HTMLInputElement) => {
     const files = element.files;
@@ -274,8 +287,34 @@ export default component$(() => {
                     <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-500"></div>
                   </label>
                 </div>
+
+                <div class="flex items-center justify-between p-3 border border-slate-200 rounded-md bg-slate-50">
+                  <div class="flex flex-col">
+                    <label for="is_offer" class="text-sm font-medium text-slate-800">Oferta de Tiempo Limitado</label>
+                    <span class="text-xs text-slate-500">Se mostrará en el carrusel principal</span>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="is_offer" name="is_offer" value="true" class="sr-only peer" checked={isOffer.value} onChange$={(e, el) => { isOffer.value = el.checked; }} />
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-cyan-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
+                  </label>
+                </div>
               </div>
             </div>
+            
+            {isOffer.value && (
+              <div class="mt-4 p-4 border border-red-100 bg-red-50 rounded-lg">
+                <label for="offer_expires_at" class="block text-sm font-medium text-red-800 mb-1">Fecha y Hora de Fin de Oferta *</label>
+                <input 
+                  type="datetime-local" 
+                  id="offer_expires_at" 
+                  name="offer_expires_at" 
+                  required={isOffer.value}
+                  value={initialExpiresAt}
+                  class="w-full md:w-1/2 rounded-md border border-red-200 px-3 py-2 text-sm focus:border-red-500 focus:ring-red-500 outline-none" 
+                />
+                <p class="mt-1 text-xs text-red-600">Al pasar esta fecha, la oferta desaparecerá automáticamente del inicio.</p>
+              </div>
+            )}
           </div>
 
           <div class="space-y-4">

@@ -1,11 +1,111 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, Link } from '@builder.io/qwik-city';
 import { getDb } from '../db/client';
 import { products, categories, siteContent, brands, instagramPosts } from '../db/schema';
-import { eq, isNull, desc } from 'drizzle-orm';
+import { eq, isNull, desc, and } from 'drizzle-orm';
 import { ContactButton } from '../components/ContactButton';
 import { buttonVariants } from '../components/ui/button/button';
 import { SocialFeed } from '../components/SocialFeed';
+import { LuChevronLeft, LuChevronRight, LuTruck, LuPackage, LuPercent } from '@qwikest/icons/lucide';
+
+export const OfferCarousel = component$(({ offers }: { offers: any[] }) => {
+  const currentIndex = useSignal(0);
+  const timeLeft = useSignal<Record<string, { d: number, h: number, m: number, s: number }>>({});
+
+  useVisibleTask$(({ cleanup }) => {
+    const updateTimers = () => {
+      const now = Date.now();
+      const newTimeLeft: Record<string, { d: number, h: number, m: number, s: number }> = {};
+
+      offers.forEach(offer => {
+        if (!offer.offer_expires_at) return;
+        const diff = new Date(offer.offer_expires_at).getTime() - now;
+        if (diff > 0) {
+          newTimeLeft[offer.id] = {
+            d: Math.floor(diff / (1000 * 60 * 60 * 24)),
+            h: Math.floor((diff / (1000 * 60 * 60)) % 24),
+            m: Math.floor((diff / 1000 / 60) % 60),
+            s: Math.floor((diff / 1000) % 60)
+          };
+        }
+      });
+      timeLeft.value = newTimeLeft;
+    };
+
+    updateTimers();
+    const interval = setInterval(updateTimers, 1000);
+    cleanup(() => clearInterval(interval));
+  });
+
+  const nextOffer = $(() => {
+    currentIndex.value = (currentIndex.value + 1) % offers.length;
+  });
+
+  const prevOffer = $(() => {
+    currentIndex.value = (currentIndex.value - 1 + offers.length) % offers.length;
+  });
+
+  if (offers.length === 0) return null;
+
+  const currentOffer = offers[currentIndex.value];
+  const timer = timeLeft.value[currentOffer.id];
+  const imageUrl = currentOffer.images && currentOffer.images.length > 0
+    ? currentOffer.images[0]
+    : 'https://placehold.co/500x500/f8fafc/94a3b8?text=Sin+Imagen';
+
+  return (
+    <div class="relative bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-shadow duration-300">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-bold text-slate-900">Oferta Destacada</h3>
+      </div>
+
+      <div class="aspect-square bg-slate-50 rounded-xl mb-6 overflow-hidden relative group border border-slate-100 flex items-center justify-center">
+        <Link href={`/producto/${currentOffer.slug}`}>
+          <img
+            src={imageUrl}
+            alt={currentOffer.name}
+            width={500}
+            height={500}
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        </Link>
+
+        {timer && (
+          <div class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-lg shadow-lg border border-slate-200/50 flex gap-3 text-center min-w-max">
+            <div class="flex flex-col"><span class="text-lg font-bold text-red-600 leading-none">{timer.d}</span><span class="text-[10px] uppercase text-slate-500 font-semibold">Días</span></div>
+            <span class="text-red-300 font-bold">:</span>
+            <div class="flex flex-col"><span class="text-lg font-bold text-red-600 leading-none">{timer.h.toString().padStart(2, '0')}</span><span class="text-[10px] uppercase text-slate-500 font-semibold">Hrs</span></div>
+            <span class="text-red-300 font-bold">:</span>
+            <div class="flex flex-col"><span class="text-lg font-bold text-red-600 leading-none">{timer.m.toString().padStart(2, '0')}</span><span class="text-[10px] uppercase text-slate-500 font-semibold">Min</span></div>
+            <span class="text-red-300 font-bold">:</span>
+            <div class="flex flex-col"><span class="text-lg font-bold text-red-600 leading-none">{timer.s.toString().padStart(2, '0')}</span><span class="text-[10px] uppercase text-slate-500 font-semibold">Seg</span></div>
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h4 class="text-lg font-semibold text-slate-800 mb-2 truncate" title={currentOffer.name}>{currentOffer.name}</h4>
+        <div class="flex items-end gap-3 mb-5">
+          <span class="text-3xl font-bold text-primary-600">${(currentOffer.price || 0).toLocaleString('es-AR')}</span>
+        </div>
+        <Link href={`/producto/${currentOffer.slug}`} class={buttonVariants({ look: 'primary', size: 'md', class: 'w-full' })}>
+          Aprovechar Oferta
+        </Link>
+      </div>
+
+      {offers.length > 1 && (
+        <>
+          <button onClick$={prevOffer} class="absolute top-1/2 -left-4 -translate-y-1/2 bg-white rounded-full p-2 shadow-md border border-slate-200 text-slate-600 hover:text-primary-600 hover:scale-110 transition-all z-10" aria-label="Anterior oferta">
+            <LuChevronLeft class="w-5 h-5" />
+          </button>
+          <button onClick$={nextOffer} class="absolute top-1/2 -right-4 -translate-y-1/2 bg-white rounded-full p-2 shadow-md border border-slate-200 text-slate-600 hover:text-primary-600 hover:scale-110 transition-all z-10" aria-label="Siguiente oferta">
+            <LuChevronRight class="w-5 h-5" />
+          </button>
+        </>
+      )}
+    </div>
+  );
+});
 
 const BRAND_LINKS: Record<string, string> = {
   'genebre': 'https://www.genebre.es/',
@@ -56,6 +156,20 @@ export const useHomeData = routeLoader$(async ({ env }) => {
       .where(eq(products.status, 'active'))
       .limit(8);
 
+    const nowMs = Date.now();
+    const offerProducts = (await db.select({
+      id: products.id,
+      name: products.name,
+      slug: products.slug,
+      price: products.price,
+      images: products.images,
+      offer_expires_at: products.offer_expires_at,
+    })
+      .from(products)
+      .where(and(eq(products.status, 'active'), eq(products.is_offer, true))))
+      .filter(p => !p.offer_expires_at || new Date(p.offer_expires_at).getTime() > nowMs)
+      .slice(0, 5);
+
     const allBrands = await db.select().from(brands);
 
     const igPosts = await db.select().from(instagramPosts).orderBy(desc(instagramPosts.timestamp)).limit(6);
@@ -74,6 +188,7 @@ export const useHomeData = routeLoader$(async ({ env }) => {
       homeHighlightPhrase: contentMap['home_highlight_phrase'] || 'Somos los principales referentes en el rubro de la distribución de materiales para la construcción, reparación y ampliación de redes de agua potable, cloaca, desagües pluviales y gas.',
       categories: featuredCategories,
       products: featuredProducts,
+      offers: offerProducts,
       brands: allBrands,
       instagramPosts: mappedIgPosts,
     };
@@ -85,6 +200,7 @@ export const useHomeData = routeLoader$(async ({ env }) => {
       homeHighlightPhrase: 'Somos los principales referentes en el rubro de la distribución de materiales para la construcción, reparación y ampliación de redes de agua potable, cloaca, desagües pluviales y gas.',
       categories: [],
       products: [],
+      offers: [],
       brands: [],
       instagramPosts: [],
     };
@@ -116,44 +232,46 @@ export default component$(() => {
             </div>
 
             {/* Right Column: Featured/Offer Products Space */}
-            <div class="relative lg:ml-auto w-full max-w-md mx-auto lg:mx-0">
+            <div class="relative lg:ml-auto w-full max-w-md mx-auto lg:mx-0 min-h-[400px]">
               {/* Decorative background blur */}
               <div class="absolute inset-0 bg-primary-200 rounded-full blur-3xl opacity-40 transform translate-x-1/4 -translate-y-1/4"></div>
 
-              <div class="relative bg-white p-6 md:p-8 rounded-2xl shadow-xl border border-slate-100 hover:shadow-2xl transition-shadow duration-300">
-                <div class="flex items-center justify-between mb-6">
-                  <h3 class="text-xl font-bold text-slate-900">Oferta Destacada</h3>
-                  <span class="bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">¡Solo por hoy!</span>
-                </div>
-
-                {/* Placeholder for Offer Product */}
-                <div class="aspect-square bg-slate-50 rounded-xl mb-6 overflow-hidden relative group border border-slate-100 flex items-center justify-center">
-                  <img
-                    src="https://placehold.co/500x500/f8fafc/94a3b8?text=Espacio+para+Oferta"
-                    alt="Producto en Oferta"
-                    width={500}
-                    height={500}
-                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-
-                <div>
-                  <h4 class="text-lg font-semibold text-slate-800 mb-2">Producto de Ejemplo</h4>
-                  <div class="flex items-end gap-3 mb-5">
-                    <span class="text-3xl font-bold text-primary-600">$125.000</span>
-                    <span class="text-sm text-slate-400 line-through mb-1">$150.000</span>
-                  </div>
-                  <Link href="/productos" class={buttonVariants({ look: 'primary', size: 'md', class: 'w-full' })}>
-                    Aprovechar Oferta
-                  </Link>
-                </div>
-              </div>
+              {data.value.offers.length > 0 && (
+                <OfferCarousel offers={data.value.offers} />
+              )}
             </div>
           </div>
         </div>
       </section>
 
+      {/* Brands Section */}
+      <section class="py-16 bg-white border-t border-slate-100 overflow-hidden">
+        <div class="container mx-auto px-4 md:px-8 mb-12 text-center">
+          <h2 class="text-3xl font-bold tracking-tight text-slate-900 mb-4">Marcas con las que Trabajamos</h2>
+          <p class="text-slate-500 max-w-2xl mx-auto">Respaldamos nuestros proyectos con productos de las mejores marcas del mercado.</p>
+        </div>
 
+        {/* Marquee Container */}
+        <div class="relative w-full flex items-center py-4 overflow-hidden before:absolute before:left-0 before:top-0 before:z-10 before:h-full before:w-24 before:bg-gradient-to-r before:from-white before:to-transparent after:absolute after:right-0 after:top-0 after:z-10 after:h-full after:w-24 after:bg-gradient-to-l after:from-white after:to-transparent">
+          {data.value.brands.length > 0 ? (
+            <div class="flex w-max animate-marquee hover:[animation-play-state:paused]">
+              {Array(4).fill(data.value.brands).flat().map((brand, idx) => (
+                <a
+                  key={`${brand.id}-${idx}`}
+                  href={getBrandLink(brand.name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="flex items-center justify-center w-40 md:w-56 px-6 mx-4 aspect-[3/2] grayscale opacity-60 hover:grayscale-0 hover:opacity-100 hover:scale-110 transition-all duration-300"
+                >
+                  <img src={brand.imageUrl} alt={brand.name} class="max-h-full max-w-full object-contain mix-blend-multiply" loading="lazy" />
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div class="p-8 text-center text-slate-400 w-full">No hay marcas disponibles.</div>
+          )}
+        </div>
+      </section>
 
       {/* Featured Products */}
       <section class="py-16 bg-slate-50 border-t border-slate-100">
@@ -214,34 +332,46 @@ export default component$(() => {
         </div>
       </section>
 
-      {/* Brands Section */}
-      <section class="py-16 bg-white border-t border-slate-100 overflow-hidden">
-        <div class="container mx-auto px-4 md:px-8 mb-12 text-center">
-          <h2 class="text-3xl font-bold tracking-tight text-slate-900 mb-4">Marcas con las que Trabajamos</h2>
-          <p class="text-slate-500 max-w-2xl mx-auto">Respaldamos nuestros proyectos con productos de las mejores marcas del mercado.</p>
-        </div>
+      {/* Features Section */}
+      <section class="py-12 bg-slate-100 border-t border-slate-200">
+        <div class="container mx-auto px-4 md:px-8">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-        {/* Marquee Container */}
-        <div class="relative w-full flex items-center py-4 overflow-hidden before:absolute before:left-0 before:top-0 before:z-10 before:h-full before:w-24 before:bg-gradient-to-r before:from-white before:to-transparent after:absolute after:right-0 after:top-0 after:z-10 after:h-full after:w-24 after:bg-gradient-to-l after:from-white after:to-transparent">
-          {data.value.brands.length > 0 ? (
-            <div class="flex w-max animate-marquee hover:[animation-play-state:paused]">
-              {Array(4).fill(data.value.brands).flat().map((brand, idx) => (
-                <a
-                  key={`${brand.id}-${idx}`}
-                  href={getBrandLink(brand.name)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="flex items-center justify-center w-40 md:w-56 px-6 mx-4 aspect-[3/2] grayscale opacity-60 hover:grayscale-0 hover:opacity-100 hover:scale-110 transition-all duration-300"
-                >
-                  <img src={brand.imageUrl} alt={brand.name} class="max-h-full max-w-full object-contain mix-blend-multiply" loading="lazy" />
-                </a>
-              ))}
+            {/* Card 1 */}
+            <div class="bg-white p-8 rounded-xl shadow-sm border-2 border-orange-500 flex flex-col hover:shadow-md transition-shadow">
+              <LuTruck class="w-10 h-10 text-orange-600 mb-4" />
+              <h3 class="text-xl font-bold text-orange-600 mb-3">Envíos a todo el país</h3>
+              <p class="text-slate-600 leading-relaxed">
+                Elegí la forma de entrega que prefieras ¡y listo!
+                <br /><br />
+                Aseguramos tu entrega con envíos de Mercado Libre.
+              </p>
             </div>
-          ) : (
-            <div class="p-8 text-center text-slate-400 w-full">No hay marcas disponibles.</div>
-          )}
+
+            {/* Card 2 */}
+            <div class="bg-white p-8 rounded-xl shadow-sm border-2 border-orange-500 flex flex-col hover:shadow-md transition-shadow">
+              <LuPackage class="w-10 h-10 text-orange-600 mb-4" />
+              <h3 class="text-xl font-bold text-orange-600 mb-3">Envíos Gratis</h3>
+              <p class="text-slate-600 leading-relaxed">
+                Envío gratis en compras con envíos de Mercado Libre a partir de $70.000
+              </p>
+            </div>
+
+            {/* Card 3 */}
+            <div class="bg-white p-8 rounded-xl shadow-sm border-2 border-orange-500 flex flex-col hover:shadow-md transition-shadow">
+              <LuPercent class="w-10 h-10 text-orange-600 mb-4" />
+              <h3 class="text-xl font-bold text-orange-600 mb-3">Promociones con tarjeta de crédito</h3>
+              <p class="text-slate-600 leading-relaxed">
+                6 Cuotas sin interés, Banco Provincia, Presencial en el local.
+              </p>
+            </div>
+
+          </div>
         </div>
       </section>
+
+      {/* Social Feed */}
+      <SocialFeed posts={data.value.instagramPosts} />
 
       {/* Highlight Phrase Section */}
       <section class="py-16 bg-slate-50 border-t border-slate-100">
@@ -254,9 +384,6 @@ export default component$(() => {
           </Link>
         </div>
       </section>
-
-      {/* Social Feed */}
-      <SocialFeed posts={data.value.instagramPosts} />
     </div>
   );
 });
