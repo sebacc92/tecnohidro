@@ -195,7 +195,7 @@ export default component$(() => {
           </div>
 
           {data.value.products.length > 0 ? (
-            <div class={viewMode.value === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5' : 'flex flex-col gap-3'}>
+            <div class={viewMode.value === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4' : 'flex flex-col gap-3'}>
               {data.value.products.map((product) => {
                 const images = (product.images && Array.isArray(product.images)) ? product.images as string[] : [];
                 const firstImage = images.length > 0 ? images[0] : 'https://placehold.co/400x400/e2e8f0/475569?text=Sin+Imagen';
@@ -207,7 +207,7 @@ export default component$(() => {
                   return (
                     <div key={product.id} class="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all flex flex-row overflow-hidden">
                       {/* Imagen */}
-                      <Link href={`/productos/${product.slug}`} class="relative flex-w-28 sm:w-32 bg-slate-50 flex items-center justify-center overflow-hidden">
+                      <Link href={`/productos/${product.slug}`} class="relative w-28 sm:w-32 bg-slate-50 flex items-center justify-center overflow-hidden">
                         {product.source === 'meli' && (
                           <div class="absolute top-1.5 right-1.5 bg-yellow-400 text-yellow-900 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm z-10">
                             <LuTag class="w-2.5 h-2.5" /> ML
@@ -249,17 +249,6 @@ export default component$(() => {
                           <ContactButton productName={product.name} look="primary" size="sm" class="flex-1 !h-8 !text-xs" />
                           <ShareButton product={{ id: product.id, name: product.name }} />
                         </div>
-                        {product.source === 'meli' && product.external_link && (
-                          <a
-                            href={product.external_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="inline-flex items-center justify-center gap-1 rounded-lg text-[11px] font-bold bg-yellow-400 text-yellow-900 hover:bg-yellow-500 transition-colors h-7 px-2 w-full"
-                          >
-                            <LuExternalLink class="h-3 w-3" />
-                            MercadoLibre
-                          </a>
-                        )}
                       </div>
                     </div>
                   );
@@ -269,9 +258,9 @@ export default component$(() => {
                 return (
                   <div key={product.id} class="bg-white rounded-xl border border-slate-200 hover:border-slate-300 overflow-hidden hover:shadow-lg transition-all flex flex-col group">
                     {/* Imagen */}
-                    <div class="aspect-[4/3] overflow-hidden bg-slate-50 relative">
+                    <div class="aspect-square overflow-hidden bg-slate-50 relative p-6">
                       {product.source === 'meli' && (
-                        <div class="absolute top-2.5 right-2.5 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 shadow-sm z-20">
+                        <div class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 shadow-sm z-20">
                           <LuTag class="w-3 h-3" /> MercadoLibre
                         </div>
                       )}
@@ -284,36 +273,20 @@ export default component$(() => {
                     </div>
 
                     {/* Info */}
-                    <div class="p-4 flex flex-col flex-1">
-                      <span class="text-[11px] font-semibold text-orange-600 uppercase tracking-wider mb-1">
+                    <div class="p-3 flex flex-col flex-1">
+                      <span class="text-[10px] font-semibold text-orange-600 uppercase tracking-wider mb-1">
                         {product.categoryName || 'General'}
                       </span>
                       <Link href={`/productos/${product.slug}`} class="hover:text-orange-600 transition-colors">
-                        <h3 class="font-semibold text-slate-800 leading-snug mb-2 line-clamp-2 text-[15px]">
+                        <h3 class="font-semibold text-slate-800 leading-snug mb-2 line-clamp-2 text-[13px]">
                           {product.name}
                         </h3>
                       </Link>
-                      {hasPrice && (
-                        <span class="text-xl font-bold text-orange-600 mb-3">${product.price!.toLocaleString('es-AR')}</span>
-                      )}
-
-                      {/* Acciones */}
-                      <div class="mt-auto flex flex-col gap-2">
-                        <div class="flex items-center gap-2">
-                          <ContactButton productName={product.name} look="primary" size="sm" class="flex-1" />
-                          <ShareButton product={{ id: product.id, name: product.name }} />
-                        </div>
-                        {product.source === 'meli' && product.external_link && (
-                          <a
-                            href={product.external_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="inline-flex items-center justify-center gap-1.5 rounded-lg text-sm font-bold bg-yellow-400 text-yellow-900 hover:bg-yellow-500 transition-colors h-9 px-4 w-full"
-                          >
-                            <LuExternalLink class="h-4 w-4" />
-                            Ver en MercadoLibre
-                          </a>
+                      <div class="mt-auto">
+                        {hasPrice && (
+                          <span class="text-base font-bold text-orange-600 block mb-3">${product.price!.toLocaleString('es-AR')}</span>
                         )}
+                        <ContactButton productName={product.name} look="primary" size="sm" class="w-full !h-8 !text-xs" />
                       </div>
                     </div>
                   </div>

@@ -60,15 +60,15 @@ export const Header = component$(() => {
         {/* Right Section: Phone, Socials & Mobile Toggle */}
         <div class="flex items-center justify-end gap-2 xl:gap-4">
           {/* Phone - Compact from LG, Full from 2XL */}
-          <div class="hidden lg:flex items-center gap-2 text-slate-800 font-bold border-l border-slate-100 pl-4">
-            <div class="bg-orange-50 p-1.5 text-orange-600">
+          <a href="tel:2214571111" class="hidden lg:flex items-center gap-2 text-slate-800 font-bold border-l border-slate-100 pl-4 hover:text-orange-600 transition-colors group">
+            <div class="bg-orange-50 p-1.5 text-orange-600 group-hover:bg-orange-100 transition-colors">
               <LuPhone class="w-4 h-4 xl:w-5 xl:h-5" />
             </div>
             <div class="flex flex-col leading-none">
               <span class="hidden 2xl:block text-[10px] uppercase text-slate-400 tracking-wider mb-1">Llamanos</span>
               <span class="text-[11px] xl:text-sm">221 457-1111</span>
             </div>
-          </div>
+          </a>
 
           {/* Socials - Visible only from 2XL (approx 1536px) */}
           <div class="hidden 2xl:flex items-center gap-4 border-l border-slate-100 pl-8">
@@ -96,7 +96,7 @@ export const Header = component$(() => {
 
       {/* Mobile Navigation Dropdown */}
       {isMenuOpen.value && (
-        <div class="md:hidden border-t border-slate-100 bg-white absolute top-full w-full shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300 z-50">
+        <div class="lg:hidden border-t border-slate-100 bg-white absolute top-full w-full shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300 z-50">
           <div class="p-6 space-y-8">
             {/* Mobile Search - Only on Catalog */}
             {isCatalog && (
@@ -127,10 +127,10 @@ export const Header = component$(() => {
 
             {/* Mobile Contact & Socials */}
             <div class="pt-6 border-t border-slate-100 space-y-6 text-center">
-              <div class="flex items-center justify-center gap-3 text-slate-800 font-bold text-xl">
+              <a href="tel:2214571111" class="flex items-center justify-center gap-3 text-slate-800 font-bold text-xl hover:text-orange-600 transition-colors">
                 <LuPhone class="w-6 h-6 text-orange-600" />
                 <span>221 457-1111</span>
-              </div>
+              </a>
               <div class="flex items-center justify-center gap-8">
                 <a href="https://www.facebook.com/tecnohidrosa/" target="_blank" rel="noopener noreferrer" class="text-slate-400 hover:text-[#1877F2]">
                   <LuFacebook class="h-8 w-8" />

@@ -34,7 +34,7 @@ export const ProductImageCarousel = component$<ProductImageCarouselProps>(({ ima
       <img
         src={images[currentIndex.value]}
         alt={`${productName} - Imagen ${currentIndex.value + 1}`}
-        class="w-full h-full object-cover transition-opacity duration-300"
+        class="w-full h-full object-contain transition-opacity duration-300"
         loading={currentIndex.value === 0 ? "lazy" : "eager"}
       />
 

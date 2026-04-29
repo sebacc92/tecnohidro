@@ -107,7 +107,7 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
 
   return (
     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col group h-full relative">
-      <div class="block aspect-square overflow-hidden bg-slate-100 relative">
+      <div class="block aspect-square overflow-hidden bg-slate-100 relative p-6">
         {product.source === 'meli' && (
           <div class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-1 rounded-sm flex items-center gap-1 shadow-sm z-20">
             <LuTag class="w-3 h-3" /> MercadoLibre
@@ -126,7 +126,7 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
             alt={product.name}
             width={400}
             height={400}
-            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
             loading="lazy"
           />
         </Link>
@@ -134,17 +134,17 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
       {isOffer && product.offer_expires_at && (
         <Countdown expiresAt={product.offer_expires_at} />
       )}
-      <div class="p-5 flex flex-col flex-1">
-        <span class="text-xs font-bold text-orange-600 mb-1 block uppercase tracking-wider">
+      <div class="p-3 flex flex-col flex-1">
+        <span class="text-[10px] font-bold text-orange-600 mb-1 block uppercase tracking-wider">
           {product.categoryName || (isOffer ? 'Oferta Relámpago' : 'Destacado')}
         </span>
         <Link href={`/productos/${product.slug}`} class="hover:text-orange-600 transition-colors">
-          <h3 class="font-bold text-slate-800 text-base leading-tight mb-3 line-clamp-2">
+          <h3 class="font-bold text-slate-800 text-[13px] leading-tight mb-2 line-clamp-2">
             {product.name}
           </h3>
         </Link>
-        <div class="mt-auto pt-4 flex items-center justify-between">
-          <span class="text-xl font-black text-slate-900">
+        <div class="mt-auto pt-2 flex items-center justify-between">
+          <span class="text-base font-black text-slate-900">
             ${(product.price || 0).toLocaleString('es-AR')}
           </span>
           <Link
@@ -499,7 +499,7 @@ export default component$(() => {
                 Ver todas <LuChevronRight class="w-4 h-4" />
               </Link>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               {data.value.offers.map((offer) => (
                 <ProductCard key={offer.id} product={offer} isOffer={true} />
               ))}
@@ -519,7 +519,7 @@ export default component$(() => {
           </div>
 
           {data.value.products.length > 0 ? (
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               {data.value.products.slice(0, 4).map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
