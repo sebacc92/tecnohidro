@@ -48,6 +48,57 @@ function getBrandLink(brandName: string): string {
   return `https://www.google.com/search?q=${encodeURIComponent(brandName)}`;
 }
 
+// ─── Componente: Contador de Tiempo ──────────────────────────────────────────────────────────
+export const Countdown = component$(({ expiresAt }: { expiresAt: string }) => {
+  const timeLeft = useSignal<{ d: number; h: number; m: number; s: number } | null>(null);
+
+  useVisibleTask$(({ cleanup }) => {
+    const update = () => {
+      const now = Date.now();
+      const diff = new Date(expiresAt).getTime() - now;
+      if (diff > 0) {
+        timeLeft.value = {
+          d: Math.floor(diff / (1000 * 60 * 60 * 24)),
+          h: Math.floor((diff / (1000 * 60 * 60)) % 24),
+          m: Math.floor((diff / 1000 / 60) % 60),
+          s: Math.floor((diff / 1000) % 60),
+        };
+      } else {
+        timeLeft.value = null;
+      }
+    };
+    update();
+    const id = setInterval(update, 1000);
+    cleanup(() => clearInterval(id));
+  });
+
+  if (!timeLeft.value) return null;
+
+  return (
+    <div class="flex gap-2 items-center justify-center py-2 border-y border-orange-100 bg-orange-50/30">
+      <div class="flex flex-col items-center min-w-[32px]">
+        <span class="text-2xl font-black leading-none text-orange-600">{timeLeft.value.d}</span>
+        <span class="text-[8px] uppercase font-bold text-orange-400">Días</span>
+      </div>
+      <span class="text-sm font-bold text-orange-200">:</span>
+      <div class="flex flex-col items-center min-w-[32px]">
+        <span class="text-2xl font-black leading-none text-orange-600">{timeLeft.value.h.toString().padStart(2, '0')}</span>
+        <span class="text-[8px] uppercase font-bold text-orange-400">Hrs</span>
+      </div>
+      <span class="text-sm font-bold text-orange-200">:</span>
+      <div class="flex flex-col items-center min-w-[32px]">
+        <span class="text-2xl font-black leading-none text-orange-600">{timeLeft.value.m.toString().padStart(2, '0')}</span>
+        <span class="text-[8px] uppercase font-bold text-orange-400">Min</span>
+      </div>
+      <span class="text-sm font-bold text-orange-200">:</span>
+      <div class="flex flex-col items-center min-w-[32px]">
+        <span class="text-2xl font-black leading-none text-orange-600">{timeLeft.value.s.toString().padStart(2, '0')}</span>
+        <span class="text-[8px] uppercase font-bold text-orange-400">Seg</span>
+      </div>
+    </div>
+  );
+});
+
 // ─── Componente: Tarjeta de Producto (Reutilizable) ──────────────────────────────────────────
 export const ProductCard = component$(({ product, isOffer = false }: { product: any; isOffer?: boolean }) => {
   const imageUrl = Array.isArray(product.images) && product.images.length > 0
@@ -55,7 +106,7 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
     : 'https://placehold.co/400x400/e2e8f0/475569?text=Sin+Imagen';
 
   return (
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col group h-full">
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col group h-full relative">
       <div class="block aspect-square overflow-hidden bg-slate-100 relative">
         {product.source === 'meli' && (
           <div class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-1 rounded-sm flex items-center gap-1 shadow-sm z-20">
@@ -63,8 +114,10 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
           </div>
         )}
         {isOffer && (
-          <div class="absolute top-2 left-2 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-sm shadow-sm z-20 flex items-center gap-1">
-            <LuPercent class="w-3 h-3" /> OFERTA
+          <div class="absolute top-2 left-2 flex flex-col gap-2 z-20">
+            <div class="bg-orange-600 text-white text-[10px] font-bold px-2 py-1 rounded-sm shadow-sm flex items-center gap-1 w-fit">
+              <LuPercent class="w-3 h-3" /> OFERTA
+            </div>
           </div>
         )}
         <Link href={`/productos/${product.slug}`} class="block w-full h-full">
@@ -78,9 +131,12 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
           />
         </Link>
       </div>
+      {isOffer && product.offer_expires_at && (
+        <Countdown expiresAt={product.offer_expires_at} />
+      )}
       <div class="p-5 flex flex-col flex-1">
         <span class="text-xs font-bold text-orange-600 mb-1 block uppercase tracking-wider">
-          {product.categoryName || (isOffer ? 'Oferta' : 'Destacado')}
+          {product.categoryName || (isOffer ? 'Oferta Relámpago' : 'Destacado')}
         </span>
         <Link href={`/productos/${product.slug}`} class="hover:text-orange-600 transition-colors">
           <h3 class="font-bold text-slate-800 text-base leading-tight mb-3 line-clamp-2">
@@ -313,6 +369,7 @@ export const useHomeData = routeLoader$(async ({ env }) => {
       price: products.price,
       images: products.images,
       source: products.source,
+      offer_expires_at: products.offer_expires_at,
       categoryName: categories.name,
     })
       .from(products)
