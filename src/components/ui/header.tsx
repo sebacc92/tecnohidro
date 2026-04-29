@@ -21,7 +21,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
   return (
     <header class="sticky top-0 z-50 w-full bg-white flex flex-col shadow-sm">
       {/* Top Header */}
-      <div class="container mx-auto flex h-24 items-center justify-between px-4 md:px-8 gap-4">
+      <div class="container mx-auto flex h-20 items-center justify-between px-4 md:px-8 gap-4">
         <Link href="/" class="flex items-center shrink-0">
           <Logo class="h-12 w-auto" />
         </Link>
@@ -76,7 +76,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                   <li key={cat.id} class="group">
                     <Link
                       href={`/productos?categoria=${cat.slug}`}
-                      class="flex items-center gap-1 px-5 py-4 text-sm font-bold text-slate-700 uppercase tracking-wide group-hover:bg-[#2d2d2d] group-hover:text-white transition-colors cursor-pointer"
+                      class="flex items-center gap-1 px-5 py-4 text-base font-bold text-slate-700 uppercase tracking-wide group-hover:bg-[#2d2d2d] group-hover:text-white transition-colors cursor-pointer"
                     >
                       {cat.name}
                       {hasChildren && <LuChevronDown class="w-4 h-4 ml-1 transition-transform group-hover:rotate-180" />}
@@ -135,7 +135,7 @@ export const Header = component$<HeaderProps>(({ categoriesTree }) => {
                 <li key={link.href} class="group">
                   <Link
                     href={link.href}
-                    class="flex items-center px-5 py-4 text-sm font-bold text-slate-700 uppercase tracking-wide group-hover:bg-[#2d2d2d] group-hover:text-white transition-colors"
+                    class="flex items-center px-5 py-4 text-base font-bold text-slate-700 uppercase tracking-wide group-hover:bg-[#2d2d2d] group-hover:text-white transition-colors"
                   >
                     {link.label}
                   </Link>

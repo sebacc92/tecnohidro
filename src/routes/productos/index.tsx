@@ -197,11 +197,14 @@ export default component$(() => {
                       <span class="text-xs font-medium text-cyan-700 mb-1 block">
                         {product.categoryName || 'General'}
                       </span>
-                      <Link href={`/producto/${product.id}/`} class="hover:underline block">
+                      <Link href={`/productos/${product.slug}`} class="hover:underline block">
                         <h3 class="font-semibold text-slate-800 text-lg leading-tight mb-2 line-clamp-2">
                           {product.name}
                         </h3>
                       </Link>
+                      {product.price != null && product.price > 0 && (
+                        <span class="text-lg font-bold text-orange-600 mb-2 block">${product.price.toLocaleString('es-AR')}</span>
+                      )}
                       
                       <div class="mt-auto pt-4 flex flex-col gap-2">
                         <div class="flex items-center gap-2">

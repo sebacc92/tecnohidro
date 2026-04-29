@@ -70,7 +70,7 @@ export const useEditProduct = routeAction$(
   zod$({
     id: z.string(),
     name: z.string().min(1, 'El nombre es obligatorio'),
-    description: z.string().min(1, 'La descripción es obligatoria'),
+    description: z.string().optional(),
     price: z.coerce.number().min(0, 'El precio debe ser 0 o mayor'),
     stock: z.coerce.number().int().min(0, 'El stock debe ser 0 o mayor'),
     categoryId: z.string().min(1, 'Debe seleccionar una categoría'),
@@ -243,8 +243,8 @@ export default component$(() => {
             </div>
 
             <div class="space-y-1.5">
-              <label for="description" class="text-sm font-medium text-slate-700">Descripción *</label>
-              <textarea id="description" name="description" required rows={4} class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none resize-none" placeholder="Descripción detallada del producto...">{product.description || ''}</textarea>
+              <label for="description" class="text-sm font-medium text-slate-700">Descripción</label>
+              <textarea id="description" name="description" rows={4} class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none resize-none" placeholder="Descripción detallada del producto...">{product.description || ''}</textarea>
               {editAction.value?.fieldErrors?.description && <p class="text-xs text-red-600">{editAction.value.fieldErrors.description[0]}</p>}
             </div>
           </div>
