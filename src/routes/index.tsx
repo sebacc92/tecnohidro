@@ -174,7 +174,7 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
               </span>
               <Link
                 href={`/productos/${product.slug}`}
-                class="p-2 bg-slate-50 text-slate-400 rounded-none hover:bg-orange-600 hover:text-white transition-all"
+                class="p-2 bg-orange-600 text-white rounded-none hover:bg-slate-900 transition-all shadow-md"
               >
                 <LuChevronRight class="w-5 h-5" />
               </Link>
@@ -546,13 +546,18 @@ export default component$(() => {
       ════════════════════════════════════════════════ */}
       <section class="py-16 bg-white">
         <div class="container mx-auto px-4 md:px-8">
-          <div class="mb-10 text-center">
-            <h2 class="text-3xl font-bold tracking-tight text-slate-900 mb-2">Productos Destacados</h2>
-            <p class="text-slate-500">Seleccionamos lo mejor para tus proyectos.</p>
+          <div class="mb-10 flex items-center justify-between">
+            <div>
+              <h2 class="text-3xl font-bold tracking-tight text-slate-900">Productos Destacados</h2>
+              <p class="text-slate-500 mt-1">Seleccionamos lo mejor para tus proyectos.</p>
+            </div>
+            <Link href="/productos" class="text-orange-600 font-bold text-sm hover:underline flex items-center gap-1">
+              Ver todos <LuChevronRight class="w-4 h-4" />
+            </Link>
           </div>
 
           {data.value.products.length > 0 ? (
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {data.value.products.slice(0, 4).map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -562,12 +567,6 @@ export default component$(() => {
               No hay productos destacados disponibles en este momento.
             </div>
           )}
-
-          <div class="mt-12 text-center">
-            <Link href="/productos" class={buttonVariants({ look: 'outline', size: 'lg' })}>
-              Ver Todos los Productos
-            </Link>
-          </div>
         </div>
       </section>
 
