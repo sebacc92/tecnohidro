@@ -49,6 +49,10 @@ export const useSaveContent = routeAction$(
       }
       await updateOrInsert('home_highlight_phrases', JSON.stringify(highlightPhrases));
 
+      // Save weekly offer fields
+      await updateOrInsert('home_weekly_offer_image', data.home_weekly_offer_image || '');
+      await updateOrInsert('home_weekly_offer_link', data.home_weekly_offer_link || '');
+
       return { success: true };
     } catch (error) {
       console.error('Error saving content:', error);
@@ -62,14 +66,16 @@ export const useSaveContent = routeAction$(
     home_highlight_phrase_3: z.string().optional(),
     home_highlight_phrase_4: z.string().optional(),
     home_highlight_phrase_5: z.string().optional(),
+    home_weekly_offer_image: z.string().optional(),
+    home_weekly_offer_link: z.string().optional(),
   })
 );
 
 export default component$(() => {
   const content = useSiteContent();
   const saveAction = useSaveContent();
-  const activeTab = useSignal<'portada' | 'frases'>('portada');
-  const isUploading = useSignal<number | null>(null);
+  const activeTab = useSignal<'portada' | 'frases' | 'ofertas'>('portada');
+  const isUploading = useSignal<number | string | null>(null);
 
   // Parse existing hero slides
   let initialSlides: Slide[] = [];
@@ -101,7 +107,9 @@ export default component$(() => {
     existingPhrases = JSON.parse(content.value.home_highlight_phrases || '[]');
   } catch { existingPhrases = []; }
 
-  const handleFileChange = $(async (idx: number, event: Event, element: HTMLInputElement) => {
+  const weeklyOfferImage = useSignal(content.value.home_weekly_offer_image || '');
+
+  const handleFileChange = $(async (idx: number | string, event: Event, element: HTMLInputElement) => {
     const file = element.files?.[0];
     if (!file) return;
 
@@ -116,7 +124,7 @@ export default component$(() => {
       };
       const compressedBlob = await imageCompression(file, options);
       const uniqueId = Math.random().toString(36).substring(2, 8);
-      const newFileName = `hero-slide-${idx}-${uniqueId}.webp`;
+      const newFileName = typeof idx === 'number' ? `hero-slide-${idx}-${uniqueId}.webp` : `weekly-offer-${uniqueId}.webp`;
       const compressedFile = new File([compressedBlob], newFileName, { type: 'image/webp' });
 
       const blob = await upload(newFileName, compressedFile, {
@@ -124,11 +132,15 @@ export default component$(() => {
         handleUploadUrl: '/api/upload',
       });
 
-      const updated = [...slides.value];
-      updated[idx] = { ...updated[idx], url: blob.url };
-      slides.value = updated;
+      if (typeof idx === 'number') {
+        const updated = [...slides.value];
+        updated[idx] = { ...updated[idx], url: blob.url };
+        slides.value = updated;
+      } else if (idx === 'weekly') {
+        weeklyOfferImage.value = blob.url;
+      }
     } catch (error) {
-      console.error('Error uploading hero image:', error);
+      console.error('Error uploading image:', error);
     } finally {
       isUploading.value = null;
       element.value = '';
@@ -187,6 +199,16 @@ export default component$(() => {
           </div>
           {activeTab.value === 'frases' && <div class="absolute bottom-0 left-0 w-full h-1 bg-orange-500 rounded-full" />}
         </button>
+        <button
+          onClick$={() => (activeTab.value = 'ofertas')}
+          class={`pb-4 px-2 text-sm font-bold tracking-wide uppercase transition-all relative ${activeTab.value === 'ofertas' ? 'text-orange-600' : 'text-slate-400 hover:text-slate-600'
+            }`}
+        >
+          <div class="flex items-center gap-2">
+            <LuImage class="w-4 h-4" /> Ofertas
+          </div>
+          {activeTab.value === 'ofertas' && <div class="absolute bottom-0 left-0 w-full h-1 bg-orange-500 rounded-full" />}
+        </button>
       </div>
 
       {saveAction.value?.success && (
@@ -201,6 +223,7 @@ export default component$(() => {
 
       <Form action={saveAction} class="space-y-8">
         <input type="hidden" name="home_hero_slides" value={JSON.stringify(slides.value.filter(s => s.url))} />
+        <input type="hidden" name="home_weekly_offer_image" value={weeklyOfferImage.value} />
 
         {activeTab.value === 'portada' && (
           <div class="space-y-6">
@@ -311,6 +334,61 @@ export default component$(() => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {activeTab.value === 'ofertas' && (
+          <div class="space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="font-bold text-slate-800">Oferta de la Semana</h2>
+                <p class="text-xs text-slate-500 mt-1">Sube una imagen impactante para la oferta destacada semanal.</p>
+              </div>
+              <div class="p-6 space-y-6">
+                <div class="space-y-4">
+                  <label class="text-xs font-bold text-slate-500 uppercase">Imagen del Banner</label>
+                  <div class="relative aspect-[21/9] rounded-xl overflow-hidden border-2 border-dashed border-slate-200 bg-slate-50 group max-w-2xl">
+                    {weeklyOfferImage.value ? (
+                      <>
+                        <img src={weeklyOfferImage.value} class="w-full h-full object-cover" />
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <label class="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-lg font-bold text-sm shadow-xl">
+                            Cambiar Imagen
+                            <input type="file" class="hidden" accept="image/*" onChange$={(e, el) => handleFileChange('weekly', e, el)} />
+                          </label>
+                        </div>
+                      </>
+                    ) : (
+                      <label class="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 transition-colors">
+                        <LuImage class="w-10 h-10 text-slate-300 mb-2" />
+                        <span class="text-xs font-bold text-slate-400 uppercase">Subir Banner Semanal</span>
+                        <input type="file" class="hidden" accept="image/*" onChange$={(e, el) => handleFileChange('weekly', e, el)} />
+                      </label>
+                    )}
+                    {isUploading.value === 'weekly' && (
+                      <div class="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
+                        <div class="flex flex-col items-center gap-2">
+                          <div class="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                          <span class="text-[10px] font-bold text-orange-600 uppercase">Subiendo...</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div class="space-y-1 max-w-xl">
+                  <label class="text-xs font-bold text-slate-500 uppercase">Enlace del Banner</label>
+                  <input
+                    type="text"
+                    name="home_weekly_offer_link"
+                    value={content.value.home_weekly_offer_link || ''}
+                    placeholder="/productos/oferta-especial"
+                    class="w-full rounded-md border border-slate-300 px-4 py-2.5 text-sm focus:border-orange-500 outline-none transition-colors"
+                  />
+                  <p class="text-[10px] text-slate-400 mt-1">URL a la que redirigirá el banner al hacer clic.</p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
