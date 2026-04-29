@@ -577,14 +577,14 @@ export default component$(() => {
           </div>
 
           {data.value.brands.length > 0 ? (
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-x-12 gap-y-16 items-center justify-items-center">
-              {data.value.brands.map((brand, idx) => (
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 items-center justify-items-center">
+              {data.value.brands.slice(0, 12).map((brand, idx) => (
                 <a
                   key={`${brand.id}-${idx}`}
                   href={getBrandLink(brand.name)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="w-full max-w-[240px] h-[120px] flex items-center justify-center grayscale opacity-50 hover:grayscale-0 hover:opacity-100 hover:scale-105 transition-all duration-500 p-4 group"
+                  class="w-full max-w-[220px] h-[110px] flex items-center justify-center grayscale opacity-60 hover:grayscale-0 hover:opacity-100 hover:scale-110 transition-all duration-300 p-2 group"
                 >
                   <img
                     src={brand.imageUrl}
