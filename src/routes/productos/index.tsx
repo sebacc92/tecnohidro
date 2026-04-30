@@ -312,7 +312,7 @@ export default component$(() => {
                 return (
                   <div key={product.id} class="bg-white rounded-xl border border-slate-200 hover:border-slate-300 overflow-hidden hover:shadow-lg transition-all flex flex-col group">
                     {/* Imagen */}
-                    <div class="aspect-square overflow-hidden bg-slate-50 relative p-6">
+                    <div class="aspect-square overflow-hidden bg-white relative">
                       {product.source === 'meli' && (
                         <div class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 shadow-sm z-20">
                           <LuTag class="w-3 h-3" /> MercadoLibre

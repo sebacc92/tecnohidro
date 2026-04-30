@@ -192,7 +192,7 @@ export default component$(() => {
 
                 return (
                   <div key={product.id} class="bg-white rounded-xl border border-slate-200 hover:shadow-lg transition-all flex flex-col">
-                    <div class="aspect-[4/3] overflow-hidden bg-slate-50 relative">
+                    <div class="aspect-[4/3] overflow-hidden bg-white relative">
                       {product.source === 'meli' && <div class="absolute top-2.5 right-2.5 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 z-20"><LuTag class="w-3 h-3" />ML</div>}
                       {imgs.length > 1 && <span class="absolute top-2.5 left-2.5 bg-black/60 text-white px-2 py-0.5 rounded text-[10px] z-20">{imgs.length} fotos</span>}
                       <ProductImageCarousel images={imgs} productName={product.name} />

@@ -107,7 +107,7 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
 
   return (
     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col group h-full relative">
-      <div class="block aspect-square overflow-hidden bg-slate-100 relative p-6">
+      <div class="block aspect-square overflow-hidden bg-white relative">
         {product.source === 'meli' && (
           <div class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-1 rounded-sm flex items-center gap-1 shadow-sm z-20">
             <LuTag class="w-3 h-3" /> MercadoLibre
@@ -150,17 +150,17 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
                 <span class="text-[11px] text-slate-400 line-through font-medium">${(product.price || 0).toLocaleString('es-AR')}</span>
                 <span class="text-[10px] font-bold text-red-600 uppercase">-{product.discount_percent}%</span>
               </div>
-                  <div class="flex items-end justify-between gap-2">
-                    <div class="flex flex-col flex-1 min-w-0">
-                      <span class="text-2xl font-black text-slate-900 leading-none">
-                        ${(product.discount_price).toLocaleString('es-AR')}
-                      </span>
-                      <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-tighter mt-2">
-                        ¡Ahorrás ${(product.price - product.discount_price).toLocaleString('es-AR')}!
-                      </span>
-                    </div>
-                    <ContactButton productName={product.name} look="primary" size="sm" class="flex-1 !h-10 !text-[11px]" />
-                  </div>
+              <div class="flex flex-col gap-3">
+                <div class="flex flex-col flex-1 min-w-0">
+                  <span class="text-2xl font-black text-slate-900 leading-none">
+                    ${(product.discount_price).toLocaleString('es-AR')}
+                  </span>
+                  <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-tighter mt-2">
+                    ¡Ahorrás ${(product.price - product.discount_price).toLocaleString('es-AR')}!
+                  </span>
+                </div>
+                <ContactButton productName={product.name} look="primary" size="sm" class="w-full !h-10 !text-[11px]" />
+              </div>
             </>
           ) : (
             <div class="flex flex-col gap-3">
@@ -490,19 +490,23 @@ export default component$(() => {
               <h2 class="text-3xl font-bold tracking-tight text-slate-900 mb-2">Oferta de la Semana</h2>
               <p class="text-slate-500">Aprovechá este beneficio exclusivo por tiempo limitado.</p>
             </div>
-            <Link
-              href={data.value.weeklyOffer.link || '/productos'}
+            <div
               class="block relative rounded-2xl overflow-hidden shadow-2xl hover:scale-[1.01] transition-transform duration-500 group"
             >
+              <div class="absolute top-0 left-0 z-20">
+                <div class="bg-orange-600 text-white text-[11px] font-bold px-3 py-1.5 rounded-br-lg shadow-sm flex items-center gap-1.5">
+                  <LuPercent class="w-3 h-3" /> OFERTA SOLO WEB
+                </div>
+              </div>
               <img
                 src={data.value.weeklyOffer.image}
                 alt="Oferta de la Semana"
                 class="w-full h-auto object-cover aspect-[21/9] md:aspect-[25/9]"
               />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-8">
-                <span class="text-white font-bold bg-orange-600 px-6 py-2 rounded-none shadow-lg">Ver Oferta Semanal</span>
+              <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-8 gap-3">
+                <ContactButton productName="la Oferta de la Semana que vi en la página" look="primary" size="md" class="shadow-lg !rounded-none !h-10" />
               </div>
-            </Link>
+            </div>
           </div>
         </section>
       )}
