@@ -133,6 +133,21 @@ export default component$(() => {
 
   return (
     <div class="bg-slate-50 min-h-screen">
+      {/* Full width map at the top */}
+      <div class="w-full h-80 md:h-[450px] bg-slate-200 relative border-b border-slate-200">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2722.0266475454655!2d-57.93811298941308!3d-34.937988165427605!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95a2e8bc3e04c361%3A0x918b8ee8bd16ee20!2sTECNOHIDRO%20S.A.!5e0!3m2!1ses!2sar!4v1777531221261!5m2!1ses!2sar"
+          width="100%"
+          height="100%"
+          style={{ border: 0 }}
+          allowFullscreen={true}
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          title="Ubicación Tecnohidro"
+          class="absolute inset-0"
+        ></iframe>
+      </div>
+
       {/* Header Section */}
       <div class="bg-slate-100 py-16 md:py-24 text-center">
         <div class="container mx-auto px-4">
@@ -267,20 +282,6 @@ export default component$(() => {
         </div>
       </div>
 
-      {/* Full width map */}
-      <div class="w-full h-96 lg:h-[500px] bg-slate-200 relative">
-        <iframe
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2722.0266475454655!2d-57.93811298941308!3d-34.937988165427605!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95a2e8bc3e04c361%3A0x918b8ee8bd16ee20!2sTECNOHIDRO%20S.A.!5e0!3m2!1ses!2sar!4v1777531221261!5m2!1ses!2sar"
-          width="100%"
-          height="100%"
-          style={{ border: 0 }}
-          allowFullscreen={true}
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          title="Ubicación Tecnohidro"
-          class="absolute inset-0"
-        ></iframe>
-      </div>
     </div>
   );
 });
