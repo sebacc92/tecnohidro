@@ -295,6 +295,109 @@ export const useSyncMeliProducts = routeAction$(
   })
 );
 
+export const useSyncSingleMeliProduct = routeAction$(
+  async (data, { env }) => {
+    try {
+      const meliId = data.meliId as string;
+      const userId = '191214085';
+      const accessToken = await getValidMeliToken(env, userId);
+
+      const itemsRes = await fetch(`https://api.mercadolibre.com/items/${meliId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      if (!itemsRes.ok) {
+        if (itemsRes.status === 404) {
+           return { success: false, error: 'Producto no encontrado en MercadoLibre. Verifica el ID.' };
+        }
+        throw new Error('Error al obtener los detalles del producto.');
+      }
+
+      const item = await itemsRes.json();
+      
+      const db = getDb(env);
+      const name = item.title;
+      const price = item.price;
+      const originalPrice = item.original_price;
+      const stock = item.available_quantity;
+      const soldQuantity = item.sold_quantity || 0;
+      const externalLink = item.permalink;
+      const status = item.status;
+      const lastUpdated = item.last_updated;
+
+      const skuAttr = item.attributes?.find((a: any) => a.id === 'SELLER_SKU');
+      const sku = skuAttr ? skuAttr.value_name : null;
+
+      let images: string[] = [];
+      if (item.pictures && item.pictures.length > 0) {
+        images = item.pictures.map((p: any) => p.secure_url);
+      } else if (item.thumbnail) {
+        images = [item.thumbnail.replace('http://', 'https://')];
+      }
+
+      const slugBase = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      const newId = 'prod-meli-' + Math.random().toString(36).substring(2, 6);
+      const slug = slugBase + '-' + newId.slice(-4);
+
+      let isOffer = false;
+      let discountPrice = null;
+      let discountPercent = null;
+      let dbPrice = price;
+
+      if (originalPrice && originalPrice > price) {
+        isOffer = true;
+        dbPrice = originalPrice;
+        discountPrice = price;
+        discountPercent = Math.round((1 - price / originalPrice) * 100);
+      }
+
+      await db.insert(products).values({
+        id: newId,
+        name,
+        slug,
+        sku,
+        price: dbPrice,
+        stock,
+        sold_quantity: soldQuantity,
+        source: 'meli',
+        meli_id: item.id,
+        meli_status: status,
+        last_updated_meli: lastUpdated,
+        external_link: externalLink,
+        images,
+        status: status === 'active' ? 'active' : 'draft',
+        is_offer: isOffer,
+        discount_price: discountPrice,
+        discount_percent: discountPercent
+      }).onConflictDoUpdate({
+        target: products.meli_id,
+        set: {
+          name,
+          sku,
+          price: dbPrice,
+          stock,
+          sold_quantity: soldQuantity,
+          meli_status: status,
+          last_updated_meli: lastUpdated,
+          external_link: externalLink,
+          images,
+          is_offer: isOffer,
+          discount_price: discountPrice,
+          discount_percent: discountPercent
+        }
+      });
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error syncing single product:', error);
+      return { success: false, error: error.message || 'Error al sincronizar con MercadoLibre' };
+    }
+  },
+  zod$({
+    meliId: z.string().min(1, 'Debe ingresar un ID válido'),
+  })
+);
+
 export default component$(() => {
   const data = useProducts();
   const prods = data.value.products;
@@ -305,6 +408,7 @@ export default component$(() => {
   const toggleStatusAction = useToggleStatus();
   const toggleFeaturedAction = useToggleFeatured();
   const syncAction = useSyncMeliProducts();
+  const syncSingleAction = useSyncSingleMeliProduct();
   const discoveryAction = useSyncMeliDiscovery();
   const nav = useNavigate();
 
@@ -350,7 +454,7 @@ export default component$(() => {
         <div class="mb-6 bg-white border border-yellow-200 shadow-sm rounded-xl p-5">
           <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b border-slate-100 pb-2">Sincronización Avanzada con MercadoLibre</h2>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 flex flex-col items-center justify-center text-center">
               <h3 class="font-medium text-slate-700 mb-2">Paso 1: Discovery</h3>
               <p class="text-xs text-slate-500 mb-3">Consulta cuántos productos tienes en MercadoLibre.</p>
@@ -403,7 +507,7 @@ export default component$(() => {
 
             <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200 flex flex-col items-center justify-center text-center relative overflow-hidden">
               <h3 class="font-medium text-yellow-900 mb-2">Paso 3: Sincronización</h3>
-              <p class="text-xs text-yellow-700 mb-3">Descarga los productos en lotes de 50 para no sobrecargar el sistema.</p>
+              <p class="text-xs text-yellow-700 mb-3">Descarga en lotes de 50 para no sobrecargar el sistema.</p>
 
               <Form action={syncAction} spaReset={false} onSubmitCompleted$={() => {
                 if (syncAction.value?.success) {
@@ -427,7 +531,33 @@ export default component$(() => {
               </Form>
               {totalSyncedSession.value > 0 && (
                 <div class="text-xs text-green-700 mt-3 font-bold bg-green-100 px-3 py-1.5 rounded-full inline-block border border-green-200 shadow-sm">
-                  ✓ {totalSyncedSession.value} productos importados/actualizados hoy.
+                  ✓ {totalSyncedSession.value} importados.
+                </div>
+              )}
+            </div>
+
+            <div class="bg-cyan-50 p-4 rounded-lg border border-cyan-200 flex flex-col items-center justify-center text-center relative overflow-hidden">
+              <h3 class="font-medium text-cyan-900 mb-2">Paso 4: Sincronizar ID</h3>
+              <p class="text-xs text-cyan-700 mb-3">Sincroniza un solo producto usando su ID de ML (ej. MLA1234).</p>
+              <Form action={syncSingleAction} spaReset={true} class="w-full flex flex-col gap-2">
+                <input
+                  type="text"
+                  name="meliId"
+                  placeholder="ID MercadoLibre..."
+                  class="w-full text-sm border-cyan-300 rounded p-1.5 outline-none focus:border-cyan-500 text-center uppercase"
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={syncSingleAction.isRunning}
+                  class="bg-cyan-600 hover:bg-cyan-700 text-white shadow-sm px-4 py-2 rounded font-bold transition-colors disabled:opacity-50"
+                >
+                  {syncSingleAction.isRunning ? 'Importando...' : 'Importar ID'}
+                </button>
+              </Form>
+              {syncSingleAction.value && (
+                <div class={`text-[10px] mt-2 font-bold px-2 py-1 rounded-full inline-block border shadow-sm ${syncSingleAction.value.success ? 'text-green-700 bg-green-100 border-green-200' : 'text-red-700 bg-red-100 border-red-200'}`}>
+                  {syncSingleAction.value.success ? '✓ Importado' : '✗ ' + syncSingleAction.value.error}
                 </div>
               )}
             </div>

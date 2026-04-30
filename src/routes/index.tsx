@@ -579,12 +579,12 @@ export default component$(() => {
                   href={getBrandLink(brand.name)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="w-full max-w-[220px] h-[110px] flex items-center justify-center grayscale opacity-60 hover:grayscale-0 hover:opacity-100 hover:scale-110 transition-all duration-300 p-2 group"
+                  class="w-full max-w-[220px] h-[110px] flex items-center justify-center hover:scale-110 transition-all duration-300 group"
                 >
                   <img
                     src={brand.imageUrl}
                     alt={brand.name}
-                    class="max-h-full max-w-full object-contain filter drop-shadow-sm group-hover:drop-shadow-md transition-all"
+                    class="max-h-full max-w-full object-contain transition-all"
                     loading="lazy"
                   />
                 </a>
