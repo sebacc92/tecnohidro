@@ -18,10 +18,14 @@ export const products = sqliteTable('products', {
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(),
   description: text('description'),
+  sku: text('sku'),
   price: integer('price'), // store as cents or use real for float, typically integer is better for currency
   stock: integer('stock').default(0),
+  sold_quantity: integer('sold_quantity').default(0),
   source: text('source', { enum: ['cms', 'meli'] }).notNull().default('cms'),
-  meli_id: text('meli_id'),
+  meli_id: text('meli_id').unique(),
+  meli_status: text('meli_status', { enum: ['active', 'paused', 'closed'] }),
+  last_updated_meli: text('last_updated_meli'), // timestamp string from MELI
   external_link: text('external_link'),
   images: text('images', { mode: 'json' }).$type<string[]>(), // JSON array of image URLs
   category_id: text('category_id').references(() => categories.id),

@@ -2,7 +2,7 @@ import { component$, useSignal } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, Link, useLocation } from '@builder.io/qwik-city';
 import { getDb } from '~/db/client';
 import { products, categories } from '~/db/schema';
-import { eq, like, or, and, inArray } from 'drizzle-orm';
+import { eq, like, or, and, inArray, desc, sql } from 'drizzle-orm';
 import { ContactButton } from '~/components/ContactButton';
 import { LuFilter, LuTag, LuChevronDown, LuLayoutGrid, LuList, LuCheck, LuPercent } from '@qwikest/icons/lucide';
 import { ProductImageCarousel } from '~/components/ProductImageCarousel';
@@ -47,6 +47,18 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
       conditions.push(eq(products.is_offer, true));
     }
 
+    const page = parseInt(url.searchParams.get('page') || '1') || 1;
+    const limit = 24;
+    const offset = (page - 1) * limit;
+
+    const countQuery = db.select({ count: sql<number>`count(*)` }).from(products);
+    if (conditions.length > 0) {
+      countQuery.where(and(...conditions));
+    }
+    const countRes = await countQuery;
+    const totalCount = countRes[0]?.count || 0;
+    const totalPages = Math.ceil(totalCount / limit);
+
     const filteredProducts = await db.select({
       id: products.id,
       name: products.name,
@@ -63,7 +75,10 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
     })
       .from(products)
       .leftJoin(categories, eq(products.category_id, categories.id))
-      .where(and(...conditions));
+      .where(and(...conditions))
+      .orderBy(desc(products.id))
+      .limit(limit)
+      .offset(offset);
 
     return {
       categories: allCategories,
@@ -71,6 +86,9 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
       currentCategory: categorySlug,
       searchQuery: searchQ,
       isOffers,
+      page,
+      totalPages,
+      totalCount
     };
   } catch (error) {
     console.error('Database query error:', error);
@@ -79,6 +97,10 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
       products: [],
       currentCategory: null,
       searchQuery: null,
+      isOffers: false,
+      page: 1,
+      totalPages: 1,
+      totalCount: 0
     };
   }
 });
@@ -87,6 +109,14 @@ export default component$(() => {
   const data = useCatalogData();
   const loc = useLocation();
   const viewMode = useSignal<'grid' | 'list'>('grid');
+  const { page, totalPages, totalCount } = data.value;
+
+  // Build base query string for pagination links
+  const buildPageUrl = (p: number) => {
+    const params = new URLSearchParams(loc.url.search);
+    params.set('page', p.toString());
+    return `${loc.url.pathname}?${params.toString()}`;
+  };
 
   const rootCategories = data.value.categories.filter(c => !c.parent_id);
   const getSubcategories = (parentId: string) => data.value.categories.filter(c => c.parent_id === parentId);
@@ -218,6 +248,7 @@ export default component$(() => {
           </div>
 
           {data.value.products.length > 0 ? (
+            <>
             <div class={viewMode.value === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4' : 'flex flex-col gap-3'}>
               {data.value.products.map((product) => {
                 const images = (product.images && Array.isArray(product.images)) ? product.images as string[] : [];
@@ -325,7 +356,7 @@ export default component$(() => {
                                 <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-tighter mt-2">
                                   ¡Ahorrás ${(product.price! - product.discount_price).toLocaleString('es-AR')}!
                                 </span>
-                              </>
+                                </>
                             ) : (
                               <span class="text-2xl font-black text-slate-900 leading-none">${product.price!.toLocaleString('es-AR')}</span>
                             )}
@@ -338,6 +369,53 @@ export default component$(() => {
                 );
               })}
             </div>
+            
+            {/* Pagination UI */}
+            {totalPages > 1 && (
+              <div class="mt-12 flex flex-col items-center gap-4">
+                <div class="text-sm text-slate-500">
+                  Mostrando <span class="font-medium text-slate-900">{(page - 1) * 24 + 1}</span> a <span class="font-medium text-slate-900">{Math.min(page * 24, totalCount)}</span> de <span class="font-medium text-slate-900">{totalCount}</span> productos
+                </div>
+                
+                <div class="flex items-center gap-2">
+                  <Link
+                    href={page > 1 ? buildPageUrl(page - 1) : ''}
+                    class={`px-4 py-2 rounded-lg font-medium transition-colors border ${page <= 1 ? 'border-slate-200 text-slate-400 pointer-events-none' : 'border-cyan-600 text-cyan-600 hover:bg-cyan-50'}`}
+                  >
+                    Anterior
+                  </Link>
+                  
+                  <div class="hidden sm:flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let p = page - 2 + i;
+                      if (page < 3) p = i + 1;
+                      else if (page > totalPages - 2) p = totalPages - 4 + i;
+                      
+                      if (p > 0 && p <= totalPages) {
+                        return (
+                          <Link
+                            key={p}
+                            href={buildPageUrl(p)}
+                            class={`w-10 h-10 flex items-center justify-center rounded-lg text-sm font-bold transition-colors ${page === p ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100 border border-transparent hover:border-slate-200'}`}
+                          >
+                            {p}
+                          </Link>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+
+                  <Link
+                    href={page < totalPages ? buildPageUrl(page + 1) : ''}
+                    class={`px-4 py-2 rounded-lg font-medium transition-colors border ${page >= totalPages ? 'border-slate-200 text-slate-400 pointer-events-none' : 'border-cyan-600 text-cyan-600 hover:bg-cyan-50'}`}
+                  >
+                    Siguiente
+                  </Link>
+                </div>
+              </div>
+            )}
+            </>
           ) : (
             <div class="p-12 text-center text-slate-500 bg-white border border-dashed rounded-lg">
               No se encontraron productos que coincidan con tu búsqueda.

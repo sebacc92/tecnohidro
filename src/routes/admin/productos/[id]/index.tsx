@@ -6,6 +6,41 @@ import { eq } from 'drizzle-orm';
 import { LuArrowLeft, LuSave } from '@qwikest/icons/lucide';
 import { upload } from '@vercel/blob/client';
 import imageCompression from 'browser-image-compression';
+import { getValidMeliToken } from '~/services/meli';
+
+export const useImportMeliDescription = routeAction$(
+  async (data, { env }) => {
+    try {
+      const meliId = data.meliId as string;
+      const productId = data.productId as string;
+      const userId = '191214085';
+      const accessToken = await getValidMeliToken(env, userId);
+
+      const res = await fetch(`https://api.mercadolibre.com/items/${meliId}/description`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      if (!res.ok) throw new Error('No se pudo obtener la descripción de MELI');
+      const descData = await res.json();
+      const plainText = descData.plain_text;
+
+      if (!plainText) throw new Error('El producto no tiene descripción en MELI');
+
+      // Update DB
+      const db = getDb(env);
+      await db.update(products).set({ description: plainText }).where(eq(products.id, productId));
+
+      return { success: true, description: plainText };
+    } catch (error: any) {
+      console.error('Error importing description:', error);
+      return { success: false, error: error.message || 'Error al importar descripción' };
+    }
+  },
+  zod$({
+    meliId: z.string(),
+    productId: z.string(),
+  })
+);
 
 
 export const useProduct = routeLoader$(async (requestEvent) => {
@@ -89,6 +124,7 @@ export const useEditProduct = routeAction$(
 export default component$(() => {
   const data = useProduct();
   const editAction = useEditProduct();
+  const importDescriptionAction = useImportMeliDescription();
   
   const product = data.value.product;
   const cats = data.value.categories;
@@ -103,6 +139,7 @@ export default component$(() => {
   const basePrice = useSignal(product.price || 0);
   const discountPrice = useSignal(product.discount_price || 0);
   const discountPercent = useSignal(product.discount_percent || 0);
+  const descriptionText = useSignal(product.description || '');
 
   let initialExpiresAt = '';
   if (product.offer_expires_at) {
@@ -268,9 +305,44 @@ export default component$(() => {
               </div>
             </div>
 
-            <div class="space-y-1.5">
-              <label for="description" class="text-sm font-medium text-slate-700">Descripción</label>
-              <textarea id="description" name="description" rows={4} class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none resize-none" placeholder="Descripción detallada del producto...">{product.description || ''}</textarea>
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="description" class="text-sm font-medium text-slate-700">Descripción</label>
+                {product.source === 'meli' && product.meli_id && (
+                  <Form action={importDescriptionAction} spaReset={false} onSubmitCompleted$={() => {
+                    if (importDescriptionAction.value?.success) {
+                      descriptionText.value = importDescriptionAction.value.description;
+                    }
+                  }}>
+                    <input type="hidden" name="meliId" value={product.meli_id} />
+                    <input type="hidden" name="productId" value={product.id} />
+                    <button 
+                      type="submit"
+                      disabled={importDescriptionAction.isRunning}
+                      class="text-xs bg-yellow-100 hover:bg-yellow-200 text-yellow-800 font-medium px-3 py-1 rounded transition-colors disabled:opacity-50 flex items-center gap-1"
+                    >
+                      {importDescriptionAction.isRunning ? 'Importando...' : 'Importar de Meli'}
+                    </button>
+                  </Form>
+                )}
+              </div>
+              
+              {importDescriptionAction.value?.error && (
+                <div class="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-100">{importDescriptionAction.value.error}</div>
+              )}
+              {importDescriptionAction.value?.success && (
+                <div class="text-xs text-green-700 bg-green-50 p-2 rounded border border-green-100">¡Descripción importada y guardada!</div>
+              )}
+
+              <textarea 
+                id="description" 
+                name="description" 
+                rows={10} 
+                class="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-cyan-500 focus:ring-cyan-500 outline-none resize-y" 
+                placeholder="Descripción detallada del producto..."
+                value={descriptionText.value}
+                onInput$={(e, el) => descriptionText.value = el.value}
+              />
               {editAction.value?.fieldErrors?.description && <p class="text-xs text-red-600">{editAction.value.fieldErrors.description[0]}</p>}
             </div>
           </div>
@@ -342,50 +414,61 @@ export default component$(() => {
             </div>
             
             {isOffer.value && (
-              <div class="mt-4 p-4 border border-orange-100 bg-orange-50/50 rounded-lg space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div class="space-y-1.5">
-                    <label for="discount_price" class="text-sm font-medium text-orange-800">Precio con Descuento ($)</label>
-                    <input 
-                      type="number" 
-                      id="discount_price" 
-                      name="discount_price" 
-                      min="0" 
-                      step="0.01" 
-                      value={discountPrice.value || ''} 
-                      class="w-full rounded-md border border-orange-200 px-3 py-2 text-sm focus:border-orange-500 focus:ring-orange-500 outline-none" 
-                      placeholder="0.00"
-                      onInput$={(e, el) => calculateFromPrice(parseFloat(el.value) || 0)}
-                    />
+              <div class="mt-4 p-5 border border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50/50 rounded-xl shadow-sm space-y-5 relative overflow-hidden">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-orange-200/50 rounded-full blur-xl pointer-events-none"></div>
+                <div class="absolute -left-4 -bottom-4 w-16 h-16 bg-amber-200/40 rounded-full blur-lg pointer-events-none"></div>
+                
+                <div class="relative grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div class="space-y-1.5 relative">
+                    <label for="discount_price" class="text-xs font-bold text-orange-900 uppercase tracking-wider">Precio de Oferta ($)</label>
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-orange-600 font-bold">$</span>
+                      <input 
+                        type="number" 
+                        id="discount_price" 
+                        name="discount_price" 
+                        min="0" 
+                        step="0.01" 
+                        value={discountPrice.value || ''} 
+                        class="w-full rounded-lg border border-orange-300 bg-white/80 pl-8 pr-3 py-2.5 text-sm font-bold text-orange-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:bg-white outline-none transition-all placeholder:text-orange-300/50" 
+                        placeholder="0.00"
+                        onInput$={(e, el) => calculateFromPrice(parseFloat(el.value) || 0)}
+                      />
+                    </div>
                   </div>
-                  <div class="space-y-1.5">
-                    <label for="discount_percent" class="text-sm font-medium text-orange-800">Porcentaje de Descuento (%)</label>
-                    <input 
-                      type="number" 
-                      id="discount_percent" 
-                      name="discount_percent" 
-                      min="0" 
-                      max="100" 
-                      step="1" 
-                      value={discountPercent.value || ''} 
-                      class="w-full rounded-md border border-orange-200 px-3 py-2 text-sm focus:border-orange-500 focus:ring-orange-500 outline-none" 
-                      placeholder="0"
-                      onInput$={(e, el) => calculateFromPercent(parseInt(el.value) || 0)}
-                    />
+                  <div class="space-y-1.5 relative">
+                    <label for="discount_percent" class="text-xs font-bold text-orange-900 uppercase tracking-wider">Descuento (%)</label>
+                    <div class="relative">
+                      <span class="absolute right-3 top-1/2 -translate-y-1/2 text-orange-600 font-bold">%</span>
+                      <input 
+                        type="number" 
+                        id="discount_percent" 
+                        name="discount_percent" 
+                        min="0" 
+                        max="100" 
+                        step="1" 
+                        value={discountPercent.value || ''} 
+                        class="w-full rounded-lg border border-orange-300 bg-white/80 px-3 py-2.5 text-sm font-bold text-orange-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:bg-white outline-none transition-all placeholder:text-orange-300/50" 
+                        placeholder="0"
+                        onInput$={(e, el) => calculateFromPercent(parseInt(el.value) || 0)}
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div class="pt-2 border-t border-orange-100">
-                  <label for="offer_expires_at" class="block text-sm font-medium text-orange-800 mb-1">Fecha y Hora de Fin de Oferta *</label>
+                <div class="pt-4 border-t border-orange-200/60 relative">
+                  <label for="offer_expires_at" class="block text-xs font-bold text-orange-900 uppercase tracking-wider mb-1.5">Fin de la Oferta *</label>
                   <input 
                     type="datetime-local" 
                     id="offer_expires_at" 
                     name="offer_expires_at" 
                     required={isOffer.value}
                     value={initialExpiresAt}
-                    class="w-full md:w-1/2 rounded-md border border-orange-200 px-3 py-2 text-sm focus:border-orange-500 focus:ring-orange-500 outline-none" 
+                    class="w-full md:w-1/2 rounded-lg border border-orange-300 bg-white/80 px-3 py-2.5 text-sm font-medium focus:border-orange-500 focus:ring-2 focus:ring-orange-200 focus:bg-white outline-none transition-all text-slate-800" 
                   />
-                  <p class="mt-1 text-xs text-orange-600">Al pasar esta fecha, el producto volverá a su precio original automáticamente.</p>
+                  <p class="mt-2 text-[11px] text-orange-800 font-medium flex items-center gap-1.5 bg-orange-100/50 inline-block px-2 py-1 rounded">
+                    <span>⏱</span> El precio volverá a la normalidad al expirar el tiempo.
+                  </p>
                 </div>
               </div>
             )}
