@@ -1,9 +1,14 @@
 import { component$, Slot } from '@builder.io/qwik';
-import { Link, useLocation } from '@builder.io/qwik-city';
-import { LuLayoutDashboard, LuPackage, LuSettings, LuLogOut, LuDroplets, LuTags, LuImage, LuBot, LuMessageSquare } from '@qwikest/icons/lucide';
+import { Link, useLocation, routeLoader$ } from '@builder.io/qwik-city';
+import { LuLayoutDashboard, LuPackage, LuSettings, LuLogOut, LuDroplets, LuTags, LuImage, LuBot, LuMessageSquare, LuUser } from '@qwikest/icons/lucide';
+
+export const useAdminUser = routeLoader$(({ sharedMap }) => {
+  return sharedMap.get('user') as { id: number, username: string, role: string } | undefined;
+});
 
 export default component$(() => {
   const loc = useLocation();
+  const user = useAdminUser();
 
   const navItems = [
     { name: 'Dashboard', href: '/admin/', icon: LuLayoutDashboard },
@@ -47,11 +52,21 @@ export default component$(() => {
           })}
         </nav>
 
-        <div class="p-4 border-t border-slate-800">
-          <button class="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors">
+        <div class="p-4 border-t border-slate-800 space-y-2">
+          {user.value && (
+            <div class="px-3 pb-3 mb-2 border-b border-slate-800">
+              <p class="text-xs text-slate-500 font-medium uppercase">Usuario actual</p>
+              <p class="text-sm text-white font-bold capitalize mt-0.5">{user.value.username}</p>
+            </div>
+          )}
+          <Link href="/admin/perfil" class="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors">
+            <LuUser class="h-5 w-5" />
+            Mi Perfil
+          </Link>
+          <Link href="/admin/logout" class="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-slate-800 rounded-md transition-colors">
             <LuLogOut class="h-5 w-5" />
             Cerrar Sesión
-          </button>
+          </Link>
         </div>
       </aside>
 

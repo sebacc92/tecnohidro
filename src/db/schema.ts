@@ -80,3 +80,12 @@ export const chatMessages = sqliteTable('chat_messages', {
   content: text('content').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
+
+export const users = sqliteTable('users', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  username: text('username').notNull().unique(),
+  password_hash: text('password_hash').notNull(),
+  role: text('role', { enum: ['ADMIN', 'SUPERADMIN'] }).default('ADMIN'),
+  last_login: integer('last_login', { mode: 'timestamp' }),
+});
+
