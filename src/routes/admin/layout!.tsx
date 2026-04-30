@@ -1,6 +1,6 @@
 import { component$, Slot } from '@builder.io/qwik';
 import { Link, useLocation } from '@builder.io/qwik-city';
-import { LuLayoutDashboard, LuPackage, LuSettings, LuLogOut, LuDroplets, LuTags, LuImage } from '@qwikest/icons/lucide';
+import { LuLayoutDashboard, LuPackage, LuSettings, LuLogOut, LuDroplets, LuTags, LuImage, LuBot, LuMessageSquare } from '@qwikest/icons/lucide';
 
 export default component$(() => {
   const loc = useLocation();
@@ -11,6 +11,8 @@ export default component$(() => {
     { name: 'Categorías', href: '/admin/categorias/', icon: LuTags },
     { name: 'Marcas', href: '/admin/marcas/', icon: LuImage },
     { name: 'Contenido Web', href: '/admin/contenido/', icon: LuSettings },
+    { name: 'Asistente IA', href: '/admin/asistente/', icon: LuBot },
+    { name: 'Auditoría Chat', href: '/admin/auditoria/', icon: LuMessageSquare },
   ];
 
   return (
