@@ -25,7 +25,7 @@ export const WhatsAppButton = component$<WhatsAppButtonProps>(
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
-        class="group fixed bottom-6 left-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] shadow-xl transition-transform duration-300 ease-in-out hover:scale-110 sm:h-16 sm:w-16"
+        class="group fixed bottom-24 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] shadow-xl transition-transform duration-300 ease-in-out hover:scale-110 sm:bottom-28 sm:h-16 sm:w-16"
         aria-label="Chat en WhatsApp"
       >
         <svg
