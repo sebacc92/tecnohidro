@@ -398,7 +398,7 @@ export const useHomeData = routeLoader$(async ({ env }) => {
       .from(products)
       .leftJoin(categories, eq(products.category_id, categories.id))
       .where(and(eq(products.status, 'active'), eq(products.is_offer, true)))
-      .limit(4);
+      .limit(5);
 
     const allBrands = await db.select().from(brands);
 
@@ -512,7 +512,7 @@ export default component$(() => {
       )}
 
       {/* ════════════════════════════════════════════════
-          SECCIÓN 3: OFERTAS RELÁMPAGO (Grilla de 4)
+          SECCIÓN 3: OFERTAS RELÁMPAGO (Grilla de 5)
       ════════════════════════════════════════════════ */}
       {data.value.offers.length > 0 && (
         <section class="py-16 bg-slate-50">
