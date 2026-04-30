@@ -5,6 +5,7 @@ import { products, categories, siteContent, brands, instagramPosts } from '../db
 import { eq, isNull, desc, and } from 'drizzle-orm';
 import { SocialFeed } from '../components/SocialFeed';
 import { ContactButton } from '../components/ContactButton';
+import { AddToCartButton } from '../components/cart/add-to-cart-button';
 import { LuChevronLeft, LuChevronRight, LuTruck, LuPackage, LuPercent, LuTag } from '@qwikest/icons/lucide';
 import MediosDePagoImg from '~/media/medios-de-pago.webp?jsx'
 
@@ -105,6 +106,15 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
     ? product.images[0]
     : 'https://placehold.co/400x400/e2e8f0/475569?text=Sin+Imagen';
 
+  const cartProduct = {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    sku: product.sku || null,
+    price: isOffer && product.discount_price ? product.discount_price : (product.price || null),
+    image: imageUrl,
+  };
+
   return (
     <div class="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col group h-full relative">
       <div class="block aspect-square overflow-hidden bg-white relative">
@@ -159,7 +169,7 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
                     ¡Ahorrás ${(product.price - product.discount_price).toLocaleString('es-AR')}!
                   </span>
                 </div>
-                <ContactButton productName={product.name} look="primary" size="sm" class="w-full !h-10 !text-[11px]" />
+                <AddToCartButton product={cartProduct} class="w-full !h-10 !text-[11px]" />
               </div>
             </>
           ) : (
@@ -167,7 +177,7 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
               <span class="text-2xl font-black text-slate-900">
                 ${(product.price || 0).toLocaleString('es-AR')}
               </span>
-              <ContactButton productName={product.name} look="primary" size="sm" class="w-full !h-10 !text-[11px]" />
+              <AddToCartButton product={cartProduct} class="w-full !h-10 !text-[11px]" />
             </div>
           )}
         </div>

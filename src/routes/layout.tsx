@@ -7,6 +7,8 @@ import { Header } from '../components/ui/header';
 import { Footer } from '../components/ui/footer';
 import { WhatsAppButton } from '../components/ui/whatsapp-button';
 import { Chatbot } from '../components/chatbot/chatbot';
+import { CartProvider } from '~/context/cart';
+import { CartDrawer } from '~/components/cart/cart-drawer';
 
 export const onGet: RequestHandler = async ({ cacheControl }) => {
   // Control caching for this request for best performance and to reduce hosting costs:
@@ -26,14 +28,17 @@ export const useChatbotAvatar = routeLoader$(async ({ env }) => {
 export default component$(() => {
   const chatbotAvatar = useChatbotAvatar();
   return (
-    <div class="flex min-h-screen flex-col font-sans bg-slate-50">
-      <Header />
-      <main class="flex-1">
-        <Slot />
-      </main>
-      <Footer />
-      <WhatsAppButton />
-      <Chatbot avatarUrl={chatbotAvatar.value} />
-    </div>
+    <CartProvider>
+      <div class="flex min-h-screen flex-col font-sans bg-slate-50">
+        <Header />
+        <main class="flex-1">
+          <Slot />
+        </main>
+        <Footer />
+        <WhatsAppButton />
+        <Chatbot avatarUrl={chatbotAvatar.value} />
+        <CartDrawer whatsappNumber="5492214636161" />
+      </div>
+    </CartProvider>
   );
 });

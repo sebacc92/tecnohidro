@@ -3,7 +3,7 @@ import { type DocumentHead, routeLoader$, Link, useLocation } from '@builder.io/
 import { getDb } from '~/db/client';
 import { products, categories } from '~/db/schema';
 import { eq, like, or, and, inArray, desc, sql } from 'drizzle-orm';
-import { ContactButton } from '~/components/ContactButton';
+import { AddToCartButton } from '~/components/cart/add-to-cart-button';
 import { LuFilter, LuTag, LuChevronDown, LuLayoutGrid, LuList, LuCheck, LuPercent } from '@qwikest/icons/lucide';
 import { ProductImageCarousel } from '~/components/ProductImageCarousel';
 import { ShareButton } from '~/components/ui/share-button';
@@ -71,6 +71,7 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
       is_offer: products.is_offer,
       discount_price: products.discount_price,
       discount_percent: products.discount_percent,
+      sku: products.sku,
       categoryName: categories.name,
     })
       .from(products)
@@ -249,172 +250,181 @@ export default component$(() => {
 
           {data.value.products.length > 0 ? (
             <>
-            <div class={viewMode.value === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4' : 'flex flex-col gap-3'}>
-              {data.value.products.map((product) => {
-                const images = (product.images && Array.isArray(product.images)) ? product.images as string[] : [];
-                const firstImage = images.length > 0 ? images[0] : 'https://placehold.co/400x400/e2e8f0/475569?text=Sin+Imagen';
-                const hasPrice = product.price != null && product.price > 0;
-                const inStock = product.stock != null && product.stock > 0;
+              <div class={viewMode.value === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4' : 'flex flex-col gap-3'}>
+                {data.value.products.map((product) => {
+                  const images = (product.images && Array.isArray(product.images)) ? product.images as string[] : [];
+                  const firstImage = images.length > 0 ? images[0] : 'https://placehold.co/400x400/e2e8f0/475569?text=Sin+Imagen';
+                  const hasPrice = product.price != null && product.price > 0;
+                  const inStock = product.stock != null && product.stock > 0;
 
-                /* ═══ VISTA LISTA ═══ */
-                if (viewMode.value === 'list') {
+                  const cartProduct = {
+                    id: product.id,
+                    name: product.name,
+                    slug: product.slug,
+                    sku: product.sku || null,
+                    price: product.is_offer && product.discount_price ? product.discount_price : (product.price || null),
+                    image: firstImage,
+                  };
+
+                  /* ═══ VISTA LISTA ═══ */
+                  if (viewMode.value === 'list') {
+                    return (
+                      <div key={product.id} class="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all flex flex-row overflow-hidden">
+                        {/* Imagen */}
+                        <Link href={`/productos/${product.slug}`} class="relative w-28 sm:w-32 bg-slate-50 flex items-center justify-center overflow-hidden">
+                          {product.source === 'meli' && (
+                            <div class="absolute top-1.5 right-1.5 bg-yellow-400 text-yellow-900 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm z-10">
+                              <LuTag class="w-2.5 h-2.5" /> ML
+                            </div>
+                          )}
+                          <img src={firstImage} alt={product.name} width={128} height={128}
+                            class="w-full h-full object-contain p-2 hover:scale-105 transition-transform duration-300" loading="lazy" />
+                        </Link>
+
+                        {/* Centro: categoría + nombre */}
+                        <div class="flex-1 px-4 flex flex-col justify-center min-w-0 overflow-hidden">
+                          <span class="text-[10px] font-semibold text-orange-600 uppercase tracking-wider mb-0.5 truncate">
+                            {product.categoryName || 'General'}
+                          </span>
+                          <Link href={`/productos/${product.slug}`} class="hover:text-orange-600 transition-colors">
+                            <h3 class="font-semibold text-slate-800 text-sm leading-snug line-clamp-2">
+                              {product.name}
+                            </h3>
+                          </Link>
+                        </div>
+
+                        {/* Derecha: precio + stock + acciones */}
+                        <div style="width: 200px;" class="flex flex-col items-end justify-center gap-1.5 px-4 border-l border-slate-100">
+                          <div class="text-right">
+                            {hasPrice ? (
+                              <span class="text-lg font-bold text-orange-600 block">${product.price!.toLocaleString('es-AR')}</span>
+                            ) : (
+                              <span class="text-xs text-slate-400 block">Consultar precio</span>
+                            )}
+                            {inStock ? (
+                              <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium">
+                                <LuCheck class="w-3 h-3" /> En Stock
+                              </span>
+                            ) : (
+                              <span class="text-[11px] text-amber-600 font-medium">Consultar stock</span>
+                            )}
+                          </div>
+                          <div class="flex items-center gap-1.5 w-full">
+                            <AddToCartButton product={cartProduct} class="flex-1 !h-8 !text-xs" />
+                            <ShareButton product={{ id: product.id, name: product.name }} />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  /* ═══ VISTA GRILLA ═══ */
                   return (
-                    <div key={product.id} class="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all flex flex-row overflow-hidden">
+                    <div key={product.id} class="bg-white rounded-xl border border-slate-200 hover:border-slate-300 overflow-hidden hover:shadow-lg transition-all flex flex-col group">
                       {/* Imagen */}
-                      <Link href={`/productos/${product.slug}`} class="relative w-28 sm:w-32 bg-slate-50 flex items-center justify-center overflow-hidden">
+                      <div class="aspect-square overflow-hidden bg-white relative">
                         {product.source === 'meli' && (
-                          <div class="absolute top-1.5 right-1.5 bg-yellow-400 text-yellow-900 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm z-10">
-                            <LuTag class="w-2.5 h-2.5" /> ML
+                          <div class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 shadow-sm z-20">
+                            <LuTag class="w-3 h-3" /> MercadoLibre
                           </div>
                         )}
-                        <img src={firstImage} alt={product.name} width={128} height={128}
-                          class="w-full h-full object-contain p-2 hover:scale-105 transition-transform duration-300" loading="lazy" />
-                      </Link>
+                        {product.is_offer && (
+                          <div class="absolute top-2 left-2 z-20">
+                            <div class="bg-orange-600 text-white text-[10px] font-bold px-2 py-1 rounded-sm shadow-sm flex items-center gap-1 w-fit">
+                              <LuPercent class="w-3 h-3" /> OFERTA
+                            </div>
+                          </div>
+                        )}
+                        {images.length > 1 && !product.is_offer && (
+                          <span class="absolute top-2.5 left-2.5 bg-black/60 text-white px-2 py-0.5 rounded text-[10px] font-medium backdrop-blur-sm z-20">
+                            {images.length} fotos
+                          </span>
+                        )}
+                        <ProductImageCarousel images={images} productName={product.name} />
+                      </div>
 
-                      {/* Centro: categoría + nombre */}
-                      <div class="flex-1 px-4 flex flex-col justify-center min-w-0 overflow-hidden">
-                        <span class="text-[10px] font-semibold text-orange-600 uppercase tracking-wider mb-0.5 truncate">
+                      {/* Info */}
+                      <div class="p-3 flex flex-col flex-1">
+                        <span class="text-[10px] font-semibold text-orange-600 uppercase tracking-wider mb-1">
                           {product.categoryName || 'General'}
                         </span>
                         <Link href={`/productos/${product.slug}`} class="hover:text-orange-600 transition-colors">
-                          <h3 class="font-semibold text-slate-800 text-sm leading-snug line-clamp-2">
+                          <h3 class="font-semibold text-slate-800 leading-snug mb-2 line-clamp-2 text-[13px]">
                             {product.name}
                           </h3>
                         </Link>
-                      </div>
-
-                      {/* Derecha: precio + stock + acciones */}
-                      <div style="width: 200px;" class="flex flex-col items-end justify-center gap-1.5 px-4 border-l border-slate-100">
-                        <div class="text-right">
-                          {hasPrice ? (
-                            <span class="text-lg font-bold text-orange-600 block">${product.price!.toLocaleString('es-AR')}</span>
-                          ) : (
-                            <span class="text-xs text-slate-400 block">Consultar precio</span>
+                        <div class="mt-auto">
+                          {hasPrice && (
+                            <div class="flex flex-col mb-3">
+                              {product.is_offer && product.discount_price && product.discount_price > 0 ? (
+                                <>
+                                  <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[11px] text-slate-400 line-through font-medium">${(product.price || 0).toLocaleString('es-AR')}</span>
+                                    <span class="text-[10px] font-bold text-red-600 uppercase">-{product.discount_percent}% OFF</span>
+                                  </div>
+                                  <span class="text-2xl font-black text-slate-900 leading-none">${product.discount_price.toLocaleString('es-AR')}</span>
+                                  <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-tighter mt-2">
+                                    ¡Ahorrás ${(product.price! - product.discount_price).toLocaleString('es-AR')}!
+                                  </span>
+                                </>
+                              ) : (
+                                <span class="text-2xl font-black text-slate-900 leading-none">${product.price!.toLocaleString('es-AR')}</span>
+                              )}
+                            </div>
                           )}
-                          {inStock ? (
-                            <span class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium">
-                              <LuCheck class="w-3 h-3" /> En Stock
-                            </span>
-                          ) : (
-                            <span class="text-[11px] text-amber-600 font-medium">Consultar stock</span>
-                          )}
-                        </div>
-                        <div class="flex items-center gap-1.5 w-full">
-                          <ContactButton productName={product.name} look="primary" size="sm" class="flex-1 !h-8 !text-xs" />
-                          <ShareButton product={{ id: product.id, name: product.name }} />
+                          <AddToCartButton product={cartProduct} class="w-full !h-8 !text-xs" />
                         </div>
                       </div>
                     </div>
                   );
-                }
-
-                /* ═══ VISTA GRILLA ═══ */
-                return (
-                  <div key={product.id} class="bg-white rounded-xl border border-slate-200 hover:border-slate-300 overflow-hidden hover:shadow-lg transition-all flex flex-col group">
-                    {/* Imagen */}
-                    <div class="aspect-square overflow-hidden bg-white relative">
-                      {product.source === 'meli' && (
-                        <div class="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 shadow-sm z-20">
-                          <LuTag class="w-3 h-3" /> MercadoLibre
-                        </div>
-                      )}
-                      {product.is_offer && (
-                        <div class="absolute top-2 left-2 z-20">
-                          <div class="bg-orange-600 text-white text-[10px] font-bold px-2 py-1 rounded-sm shadow-sm flex items-center gap-1 w-fit">
-                            <LuPercent class="w-3 h-3" /> OFERTA
-                          </div>
-                        </div>
-                      )}
-                      {images.length > 1 && !product.is_offer && (
-                        <span class="absolute top-2.5 left-2.5 bg-black/60 text-white px-2 py-0.5 rounded text-[10px] font-medium backdrop-blur-sm z-20">
-                          {images.length} fotos
-                        </span>
-                      )}
-                      <ProductImageCarousel images={images} productName={product.name} />
-                    </div>
-
-                    {/* Info */}
-                    <div class="p-3 flex flex-col flex-1">
-                      <span class="text-[10px] font-semibold text-orange-600 uppercase tracking-wider mb-1">
-                        {product.categoryName || 'General'}
-                      </span>
-                      <Link href={`/productos/${product.slug}`} class="hover:text-orange-600 transition-colors">
-                        <h3 class="font-semibold text-slate-800 leading-snug mb-2 line-clamp-2 text-[13px]">
-                          {product.name}
-                        </h3>
-                      </Link>
-                      <div class="mt-auto">
-                        {hasPrice && (
-                          <div class="flex flex-col mb-3">
-                            {product.is_offer && product.discount_price && product.discount_price > 0 ? (
-                              <>
-                                <div class="flex items-center gap-2 mb-1">
-                                  <span class="text-[11px] text-slate-400 line-through font-medium">${(product.price || 0).toLocaleString('es-AR')}</span>
-                                  <span class="text-[10px] font-bold text-red-600 uppercase">-{product.discount_percent}% OFF</span>
-                                </div>
-                                <span class="text-2xl font-black text-slate-900 leading-none">${product.discount_price.toLocaleString('es-AR')}</span>
-                                <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-tighter mt-2">
-                                  ¡Ahorrás ${(product.price! - product.discount_price).toLocaleString('es-AR')}!
-                                </span>
-                                </>
-                            ) : (
-                              <span class="text-2xl font-black text-slate-900 leading-none">${product.price!.toLocaleString('es-AR')}</span>
-                            )}
-                          </div>
-                        )}
-                        <ContactButton productName={product.name} look="primary" size="sm" class="w-full !h-8 !text-xs" />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-            {/* Pagination UI */}
-            {totalPages > 1 && (
-              <div class="mt-12 flex flex-col items-center gap-4">
-                <div class="text-sm text-slate-500">
-                  Mostrando <span class="font-medium text-slate-900">{(page - 1) * 24 + 1}</span> a <span class="font-medium text-slate-900">{Math.min(page * 24, totalCount)}</span> de <span class="font-medium text-slate-900">{totalCount}</span> productos
-                </div>
-                
-                <div class="flex items-center gap-2">
-                  <Link
-                    href={page > 1 ? buildPageUrl(page - 1) : ''}
-                    class={`px-4 py-2 rounded-lg font-medium transition-colors border ${page <= 1 ? 'border-slate-200 text-slate-400 pointer-events-none' : 'border-cyan-600 text-cyan-600 hover:bg-cyan-50'}`}
-                  >
-                    Anterior
-                  </Link>
-                  
-                  <div class="hidden sm:flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let p = page - 2 + i;
-                      if (page < 3) p = i + 1;
-                      else if (page > totalPages - 2) p = totalPages - 4 + i;
-                      
-                      if (p > 0 && p <= totalPages) {
-                        return (
-                          <Link
-                            key={p}
-                            href={buildPageUrl(p)}
-                            class={`w-10 h-10 flex items-center justify-center rounded-lg text-sm font-bold transition-colors ${page === p ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100 border border-transparent hover:border-slate-200'}`}
-                          >
-                            {p}
-                          </Link>
-                        );
-                      }
-                      return null;
-                    })}
-                  </div>
-
-                  <Link
-                    href={page < totalPages ? buildPageUrl(page + 1) : ''}
-                    class={`px-4 py-2 rounded-lg font-medium transition-colors border ${page >= totalPages ? 'border-slate-200 text-slate-400 pointer-events-none' : 'border-cyan-600 text-cyan-600 hover:bg-cyan-50'}`}
-                  >
-                    Siguiente
-                  </Link>
-                </div>
+                })}
               </div>
-            )}
+
+              {/* Pagination UI */}
+              {totalPages > 1 && (
+                <div class="mt-12 flex flex-col items-center gap-4">
+                  <div class="text-sm text-slate-500">
+                    Mostrando <span class="font-medium text-slate-900">{(page - 1) * 24 + 1}</span> a <span class="font-medium text-slate-900">{Math.min(page * 24, totalCount)}</span> de <span class="font-medium text-slate-900">{totalCount}</span> productos
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <Link
+                      href={page > 1 ? buildPageUrl(page - 1) : ''}
+                      class={`px-4 py-2 rounded-lg font-medium transition-colors border ${page <= 1 ? 'border-slate-200 text-slate-400 pointer-events-none' : 'border-cyan-600 text-cyan-600 hover:bg-cyan-50'}`}
+                    >
+                      Anterior
+                    </Link>
+
+                    <div class="hidden sm:flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let p = page - 2 + i;
+                        if (page < 3) p = i + 1;
+                        else if (page > totalPages - 2) p = totalPages - 4 + i;
+
+                        if (p > 0 && p <= totalPages) {
+                          return (
+                            <Link
+                              key={p}
+                              href={buildPageUrl(p)}
+                              class={`w-10 h-10 flex items-center justify-center rounded-lg text-sm font-bold transition-colors ${page === p ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100 border border-transparent hover:border-slate-200'}`}
+                            >
+                              {p}
+                            </Link>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+
+                    <Link
+                      href={page < totalPages ? buildPageUrl(page + 1) : ''}
+                      class={`px-4 py-2 rounded-lg font-medium transition-colors border ${page >= totalPages ? 'border-slate-200 text-slate-400 pointer-events-none' : 'border-cyan-600 text-cyan-600 hover:bg-cyan-50'}`}
+                    >
+                      Siguiente
+                    </Link>
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             <div class="p-12 text-center text-slate-500 bg-white border border-dashed rounded-lg">

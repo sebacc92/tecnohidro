@@ -3,6 +3,7 @@ import { Link, useLocation } from '@builder.io/qwik-city';
 import { LuMenu, LuX, LuFacebook, LuInstagram, LuLinkedin, LuPhone } from '@qwikest/icons/lucide';
 import Logo from '~/media/tecnohidro.png?jsx';
 import { LiveSearch } from '../LiveSearch';
+import { CartButton } from '../cart/cart-button';
 
 
 export const Header = component$(() => {
@@ -76,14 +77,17 @@ export const Header = component$(() => {
             </a>
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <button
-            class="lg:hidden p-2 text-slate-600 hover:text-orange-500 transition-colors border border-slate-100"
-            onClick$={() => (isMenuOpen.value = !isMenuOpen.value)}
-            aria-label="Toggle menu"
-          >
-            {isMenuOpen.value ? <LuX class="h-7 w-7" /> : <LuMenu class="h-7 w-7" />}
-          </button>
+          <div class="flex items-center gap-2 pl-4 border-l border-slate-100">
+            <CartButton />
+            {/* Mobile Menu Toggle */}
+            <button
+              class="lg:hidden p-2 text-slate-600 hover:text-orange-500 transition-colors border border-slate-100 rounded-md"
+              onClick$={() => (isMenuOpen.value = !isMenuOpen.value)}
+              aria-label="Toggle menu"
+            >
+              {isMenuOpen.value ? <LuX class="h-7 w-7" /> : <LuMenu class="h-7 w-7" />}
+            </button>
+          </div>
         </div>
       </div>
 

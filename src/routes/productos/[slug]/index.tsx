@@ -4,7 +4,7 @@ import { getDb } from '../../../db/client';
 import { products, categories } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 import { Breadcrumb } from '../../../components/ui/breadcrumb/breadcrumb';
-import { ContactButton } from '../../../components/ContactButton';
+import { AddToCartButton } from '../../../components/cart/add-to-cart-button';
 import { buttonVariants } from '../../../components/ui/button/button';
 import { LuCheck, LuExternalLink, LuTag } from '@qwikest/icons/lucide';
 import { ShareButton } from '../../../components/ui/share-button';
@@ -26,6 +26,7 @@ export const useProductDetail = routeLoader$(async (requestEvent) => {
         images: products.images,
         source: products.source,
         external_link: products.external_link,
+        sku: products.sku,
         categoryId: products.category_id,
         is_offer: products.is_offer,
         discount_price: products.discount_price,
@@ -83,6 +84,15 @@ export default component$(() => {
   const images = Array.isArray(product.images) ? product.images as string[] : [];
   const hasPrice = product.price != null && product.price > 0;
   const inStock = product.stock != null && product.stock > 0;
+
+  const cartProduct = {
+    id: product.id,
+    name: product.name,
+    slug: product.slug,
+    sku: product.sku || null,
+    price: product.is_offer && product.discount_price ? product.discount_price : (product.price || null),
+    image: images.length > 0 ? images[0] : null,
+  };
 
   return (
     <div class="container mx-auto px-4 md:px-8 py-8 md:py-12">
@@ -222,7 +232,7 @@ export default component$(() => {
                 )}
               </div>
               <div class="flex flex-col sm:flex-row gap-3">
-                <ContactButton productName={product.name} look="primary" size="lg" class="flex-1" />
+                <AddToCartButton product={cartProduct} class="flex-1 !h-12 !text-base" />
                 <ShareButton product={{ id: product.id, name: product.name }} />
               </div>
               {product.source === 'meli' && product.external_link && (
