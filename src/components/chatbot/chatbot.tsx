@@ -5,7 +5,7 @@ interface Message {
   content: string;
 }
 
-export const Chatbot = component$(() => {
+export const Chatbot = component$((props: { avatarUrl?: string }) => {
   const state = useStore({
     isOpen: false,
     isLoading: false,
@@ -106,6 +106,8 @@ export const Chatbot = component$(() => {
            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
            </svg>
+        ) : props.avatarUrl ? (
+          <img src={props.avatarUrl} alt="Chatbot" class="w-full h-full rounded-full object-cover" />
         ) : (
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
             <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.76c0-4.43 3.65-8.08 8.08-8.08h3.33c4.43 0 8.08 3.65 8.08 8.08s-3.65 8.08-8.08 8.08H7.5A5.25 5.25 0 012.25 15.6zm10.74-2.5h.01M9.75 10.25h.01M14.25 10.25h.01" />
@@ -118,7 +120,18 @@ export const Chatbot = component$(() => {
           
           {/* Header */}
           <div class="bg-slate-900 text-white p-4 flex items-center gap-3">
-             <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+             <div class="relative">
+               {props.avatarUrl ? (
+                 <img src={props.avatarUrl} alt="Asistente" class="w-10 h-10 rounded-full object-cover border border-slate-700" />
+               ) : (
+                 <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-slate-400">
+                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                   </svg>
+                 </div>
+               )}
+               <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse"></div>
+             </div>
              <div>
                <h3 class="font-semibold text-sm">Asistente Tecnohidro</h3>
                <p class="text-[10px] text-slate-300">Soporte Técnico & Ventas</p>

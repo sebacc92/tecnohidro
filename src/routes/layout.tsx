@@ -1,5 +1,8 @@
 import { component$, Slot } from '@builder.io/qwik';
-import { type RequestHandler } from '@builder.io/qwik-city';
+import { type RequestHandler, routeLoader$ } from '@builder.io/qwik-city';
+import { getDb } from '~/db/client';
+import { siteContent } from '~/db/schema';
+import { eq } from 'drizzle-orm';
 import { Header } from '../components/ui/header';
 import { Footer } from '../components/ui/footer';
 import { WhatsAppButton } from '../components/ui/whatsapp-button';
@@ -14,7 +17,14 @@ export const onGet: RequestHandler = async ({ cacheControl }) => {
   });
 };
 
+export const useChatbotAvatar = routeLoader$(async ({ env }) => {
+  const db = getDb(env);
+  const result = await db.select().from(siteContent).where(eq(siteContent.key, 'ai_avatar_url')).limit(1);
+  return result.length > 0 ? result[0].value : '';
+});
+
 export default component$(() => {
+  const chatbotAvatar = useChatbotAvatar();
   return (
     <div class="flex min-h-screen flex-col font-sans bg-slate-50">
       <Header />
@@ -23,7 +33,7 @@ export default component$(() => {
       </main>
       <Footer />
       <WhatsAppButton />
-      <Chatbot />
+      <Chatbot avatarUrl={chatbotAvatar.value} />
     </div>
   );
 });
