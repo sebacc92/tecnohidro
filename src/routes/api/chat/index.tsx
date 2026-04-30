@@ -72,6 +72,7 @@ export const onPost: RequestHandler = async (requestEvent) => {
 
 CONOCIMIENTO INSTITUCIONAL:
 - Identidad: Distribuidora líder de insumos para obras de agua, gas y cloacas.
+- Ubicación: Av. 72 e/14 y 15 nº 970, B1900 La Plata, Buenos Aires.
 - Especialización: Línea Infraestructura, Línea Domiciliaria y Herramientas profesionales.
 - Logística: Proveemos a instaladores, consorcios y particulares. 
 - Marcas principales con las que trabajamos: Genebre, Tigre, JuntaMas, Latyn, Pluvius, Wavin, Saladillo, Waterplast, Bosch, Irimo, Barovo, Kushiro.

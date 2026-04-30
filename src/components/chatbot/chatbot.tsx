@@ -139,7 +139,7 @@ export const Chatbot = component$(() => {
                   class={[
                     "max-w-[85%] rounded-2xl px-4 py-2 text-sm shadow-sm",
                     msg.role === 'user' 
-                      ? "bg-primary-600 text-white rounded-br-none" 
+                      ? "bg-orange-600 text-white rounded-br-none" 
                       : "bg-white border border-slate-100 text-slate-800 rounded-bl-none"
                   ]}
                 >
@@ -170,7 +170,7 @@ export const Chatbot = component$(() => {
                 type="text"
                 bind:value={inputValue}
                 placeholder="Escribe tu consulta..."
-                class="flex-1 bg-slate-50 text-sm rounded-full px-4 py-2 border border-slate-200 focus:outline-none focus:border-primary-600 focus:ring-1 focus:ring-primary-600 transition-colors"
+                class="flex-1 bg-slate-50 text-slate-900 text-sm rounded-full px-4 py-2 border border-slate-200 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors"
                 disabled={state.isLoading}
               />
               <button
