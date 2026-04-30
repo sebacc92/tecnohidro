@@ -3,7 +3,7 @@ import { type DocumentHead, routeLoader$, routeAction$, Form, z, zod$ } from '@b
 import { getDb } from '~/db/client';
 import { siteContent } from '~/db/schema';
 import { eq } from 'drizzle-orm';
-import { LuSave, LuCheckCircle2, LuImage, LuTrash2, LuLayout, LuQuote } from '@qwikest/icons/lucide';
+import { LuSave, LuCheckCircle2, LuImage, LuTrash2, LuLayout, LuQuote, LuUsers, LuFilm, LuPlus } from '@qwikest/icons/lucide';
 import { upload } from '@vercel/blob/client';
 import imageCompression from 'browser-image-compression';
 
@@ -53,6 +53,10 @@ export const useSaveContent = routeAction$(
       await updateOrInsert('home_weekly_offer_image', data.home_weekly_offer_image || '');
       await updateOrInsert('home_weekly_offer_link', data.home_weekly_offer_link || '');
 
+      // Save Nosotros fields
+      await updateOrInsert('nosotros_gallery', data.nosotros_gallery || '[]');
+      await updateOrInsert('nosotros_reel_video', data.nosotros_reel_video || '');
+
       return { success: true };
     } catch (error) {
       console.error('Error saving content:', error);
@@ -68,13 +72,15 @@ export const useSaveContent = routeAction$(
     home_highlight_phrase_5: z.string().optional(),
     home_weekly_offer_image: z.string().optional(),
     home_weekly_offer_link: z.string().optional(),
+    nosotros_gallery: z.string().optional(),
+    nosotros_reel_video: z.string().optional(),
   })
 );
 
 export default component$(() => {
   const content = useSiteContent();
   const saveAction = useSaveContent();
-  const activeTab = useSignal<'portada' | 'frases' | 'ofertas'>('portada');
+  const activeTab = useSignal<'portada' | 'frases' | 'ofertas' | 'nosotros'>('portada');
   const isUploading = useSignal<number | string | null>(null);
 
   // Parse existing hero slides
@@ -109,35 +115,64 @@ export default component$(() => {
 
   const weeklyOfferImage = useSignal(content.value.home_weekly_offer_image || '');
 
+  // Nosotros signals
+  let initialGallery: string[] = [];
+  try {
+    initialGallery = JSON.parse(content.value.nosotros_gallery || '[]');
+  } catch { initialGallery = []; }
+  
+  // Fill with empty strings to have exactly 12 slots
+  const galleryArray = Array(12).fill('');
+  initialGallery.forEach((url, i) => { if (i < 12) galleryArray[i] = url; });
+  const nosotrosGallery = useSignal<string[]>(galleryArray);
+  const nosotrosReelVideo = useSignal(content.value.nosotros_reel_video || '');
+
   const handleFileChange = $(async (idx: number | string, event: Event, element: HTMLInputElement) => {
     const file = element.files?.[0];
     if (!file) return;
 
     isUploading.value = idx;
     try {
-      const options = {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 1920,
-        useWebWorker: true,
-        fileType: 'image/webp' as const,
-        initialQuality: 0.8,
-      };
-      const compressedBlob = await imageCompression(file, options);
       const uniqueId = Math.random().toString(36).substring(2, 8);
-      const newFileName = typeof idx === 'number' ? `hero-slide-${idx}-${uniqueId}.webp` : `weekly-offer-${uniqueId}.webp`;
-      const compressedFile = new File([compressedBlob], newFileName, { type: 'image/webp' });
+      
+      if (file.type.startsWith('image/')) {
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+          fileType: 'image/webp' as const,
+          initialQuality: 0.8,
+        };
+        const compressedBlob = await imageCompression(file, options);
+        const newFileName = typeof idx === 'number' ? `hero-slide-${idx}-${uniqueId}.webp` : `upload-${uniqueId}.webp`;
+        const compressedFile = new File([compressedBlob], newFileName, { type: 'image/webp' });
 
-      const blob = await upload(newFileName, compressedFile, {
-        access: 'public',
-        handleUploadUrl: '/api/upload',
-      });
+        const blob = await upload(newFileName, compressedFile, {
+          access: 'public',
+          handleUploadUrl: '/api/upload',
+        });
 
-      if (typeof idx === 'number') {
-        const updated = [...slides.value];
-        updated[idx] = { ...updated[idx], url: blob.url };
-        slides.value = updated;
-      } else if (idx === 'weekly') {
-        weeklyOfferImage.value = blob.url;
+        if (typeof idx === 'number') {
+          const updated = [...slides.value];
+          updated[idx] = { ...updated[idx], url: blob.url };
+          slides.value = updated;
+        } else if (idx === 'weekly') {
+          weeklyOfferImage.value = blob.url;
+        } else if (typeof idx === 'string' && idx.startsWith('nosotros-gallery-')) {
+          const gIdx = parseInt(idx.split('-')[2]);
+          const updated = [...nosotrosGallery.value];
+          updated[gIdx] = blob.url;
+          nosotrosGallery.value = updated;
+        }
+      } else if (file.type.startsWith('video/')) {
+        const newFileName = `nosotros-reel-${uniqueId}${file.name.substring(file.name.lastIndexOf('.'))}`;
+        const blob = await upload(newFileName, file, {
+          access: 'public',
+          handleUploadUrl: '/api/upload',
+        });
+        if (idx === 'nosotros-video') {
+          nosotrosReelVideo.value = blob.url;
+        }
       }
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -209,6 +244,16 @@ export default component$(() => {
           </div>
           {activeTab.value === 'frases' && <div class="absolute bottom-0 left-0 w-full h-1 bg-orange-500 rounded-full" />}
         </button>
+        <button
+          onClick$={() => (activeTab.value = 'nosotros')}
+          class={`pb-4 px-2 text-sm font-bold tracking-wide uppercase transition-all relative ${activeTab.value === 'nosotros' ? 'text-orange-600' : 'text-slate-400 hover:text-slate-600'
+            }`}
+        >
+          <div class="flex items-center gap-2">
+            <LuUsers class="w-4 h-4" /> Nosotros
+          </div>
+          {activeTab.value === 'nosotros' && <div class="absolute bottom-0 left-0 w-full h-1 bg-orange-500 rounded-full" />}
+        </button>
       </div>
 
       {saveAction.value?.success && (
@@ -224,6 +269,8 @@ export default component$(() => {
       <Form action={saveAction} class="space-y-8">
         <input type="hidden" name="home_hero_slides" value={JSON.stringify(slides.value.filter(s => s.url))} />
         <input type="hidden" name="home_weekly_offer_image" value={weeklyOfferImage.value} />
+        <input type="hidden" name="nosotros_gallery" value={JSON.stringify(nosotrosGallery.value.filter(url => url))} />
+        <input type="hidden" name="nosotros_reel_video" value={nosotrosReelVideo.value} />
 
         {activeTab.value === 'portada' && (
           <div class="space-y-6">
@@ -413,6 +460,98 @@ export default component$(() => {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab.value === 'nosotros' && (
+          <div class="space-y-8">
+            {/* Galería Nosotros */}
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="font-bold text-slate-800">Galería de Imágenes (Página Nosotros)</h2>
+                <p class="text-xs text-slate-500 mt-1">Sube hasta 12 imágenes para mostrar en la galería de la sección "Nosotros".</p>
+              </div>
+              <div class="p-6">
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {nosotrosGallery.value.map((url, i) => (
+                    <div key={i} class="relative aspect-square rounded-lg overflow-hidden border-2 border-dashed border-slate-200 bg-slate-50 group">
+                      {url ? (
+                        <>
+                          <img src={url} class="w-full h-full object-cover" />
+                          <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <label class="cursor-pointer bg-white text-slate-900 p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
+                              <LuImage class="w-4 h-4" />
+                              <input type="file" class="hidden" accept="image/*" onChange$={(e, el) => handleFileChange(`nosotros-gallery-${i}`, e, el)} />
+                            </label>
+                            <button
+                              type="button"
+                              onClick$={() => {
+                                const updated = [...nosotrosGallery.value];
+                                updated[i] = '';
+                                nosotrosGallery.value = updated;
+                              }}
+                              class="bg-red-500 text-white p-2 rounded-full shadow-lg hover:scale-110 transition-transform"
+                            >
+                              <LuTrash2 class="w-4 h-4" />
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <label class="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 transition-colors">
+                          <LuPlus class="w-6 h-6 text-slate-300 mb-1" />
+                          <span class="text-[10px] font-bold text-slate-400 uppercase">Subir</span>
+                          <input type="file" class="hidden" accept="image/*" onChange$={(e, el) => handleFileChange(`nosotros-gallery-${i}`, e, el)} />
+                        </label>
+                      )}
+                      {isUploading.value === `nosotros-gallery-${i}` && (
+                        <div class="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
+                          <div class="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Reel Institucional */}
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="font-bold text-slate-800">Video / Reel Institucional</h2>
+                <p class="text-xs text-slate-500 mt-1">Sube un video vertical para la sección de "Nuestro Espacio".</p>
+              </div>
+              <div class="p-6">
+                <div class="max-w-md">
+                  <div class="relative aspect-[9/16] w-full max-w-[250px] mx-auto rounded-2xl overflow-hidden border-2 border-dashed border-slate-200 bg-slate-50 group">
+                    {nosotrosReelVideo.value ? (
+                      <>
+                        <video src={nosotrosReelVideo.value} class="w-full h-full object-cover" />
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <label class="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-lg font-bold text-sm shadow-xl hover:scale-105 transition-transform">
+                            Cambiar Video
+                            <input type="file" class="hidden" accept="video/*" onChange$={(e, el) => handleFileChange('nosotros-video', e, el)} />
+                          </label>
+                        </div>
+                      </>
+                    ) : (
+                      <label class="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 transition-colors p-4 text-center">
+                        <LuFilm class="w-10 h-10 text-slate-300 mb-2" />
+                        <span class="text-xs font-bold text-slate-400 uppercase">Subir Video Vertical (Reel)</span>
+                        <input type="file" class="hidden" accept="video/*" onChange$={(e, el) => handleFileChange('nosotros-video', e, el)} />
+                      </label>
+                    )}
+                    {isUploading.value === 'nosotros-video' && (
+                      <div class="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center">
+                        <div class="flex flex-col items-center gap-2">
+                          <div class="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                          <span class="text-[10px] font-bold text-orange-600 uppercase">Subiendo Video...</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}

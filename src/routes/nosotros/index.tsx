@@ -1,9 +1,35 @@
 import { component$ } from '@builder.io/qwik';
-import { type DocumentHead, Link } from '@builder.io/qwik-city';
+import { type DocumentHead, Link, routeLoader$ } from '@builder.io/qwik-city';
 import { LuBuilding2, LuPackage, LuClock } from '@qwikest/icons/lucide';
 import { buttonVariants } from '../../components/ui/button/button';
+import { getDb } from '~/db/client';
+import { siteContent } from '~/db/schema';
+import { inArray } from 'drizzle-orm';
+
+export const useNosotrosContent = routeLoader$(async ({ env }) => {
+  const db = getDb(env);
+  const data = await db.select().from(siteContent).where(
+    inArray(siteContent.key, ['nosotros_gallery', 'nosotros_reel_video'])
+  );
+
+  const content: Record<string, any> = {
+    gallery: [],
+    video: ''
+  };
+
+  for (const item of data) {
+    if (item.key === 'nosotros_gallery') {
+      try { content.gallery = JSON.parse(item.value); } catch { content.gallery = []; }
+    } else if (item.key === 'nosotros_reel_video') {
+      content.video = item.value;
+    }
+  }
+
+  return content;
+});
 
 export default component$(() => {
+  const content = useNosotrosContent();
   return (
     <div class="bg-white">
       {/* Hero Section */}
@@ -44,23 +70,28 @@ export default component$(() => {
               </p>
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-              <img
-                src="https://placehold.co/600x800/f8fafc/94a3b8?text=Foto+Histórica/Fundadores"
-                alt="Historia de Tecnohidro"
-                class="rounded-xl object-cover w-full h-full aspect-[3/4] shadow-md"
-              />
-              <div class="grid grid-rows-2 gap-4">
-                <img
-                  src="https://placehold.co/600x400/f8fafc/94a3b8?text=Mostrador/Atención"
-                  alt="Atención al cliente"
-                  class="rounded-xl object-cover w-full h-full shadow-md"
-                />
-                <img
-                  src="https://placehold.co/600x400/f8fafc/94a3b8?text=Flota/Entregas"
-                  alt="Logística y entregas"
-                  class="rounded-xl object-cover w-full h-full shadow-md"
-                />
+            <div class="flex justify-center lg:justify-end">
+              <div class="relative aspect-[9/16] w-full max-w-[350px] rounded-[3rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.3)] border-[12px] border-slate-900 bg-slate-900">
+                {content.value.video ? (
+                  <video
+                    src={content.value.video}
+                    class="w-full h-full object-cover"
+                    controls
+                    loop
+                    muted
+                    playsInline
+                  />
+                ) : (
+                  <div class="absolute inset-0 bg-slate-800 flex items-center justify-center flex-col gap-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="text-slate-400 font-medium p-4 text-center text-sm">[Video Institucional próximamente]</p>
+                  </div>
+                )}
+                {/* Estética de botón de celular opcional */}
+                <div class="absolute top-4 left-1/2 -translate-x-1/2 w-16 h-1 bg-slate-800 rounded-full"></div>
               </div>
             </div>
           </div>
@@ -105,24 +136,7 @@ export default component$(() => {
         </div>
       </section>
 
-      {/* Reel Institucional */}
-      <section class="py-20 bg-slate-900 text-white">
-        <div class="container mx-auto px-4 md:px-8 text-center">
-          <div class="max-w-3xl mx-auto mb-10">
-            <h2 class="text-3xl font-bold mb-4">Nuestro Espacio</h2>
-            <p class="text-slate-300">Conoce nuestras oficinas, mostrador y depósito desde adentro.</p>
-          </div>
-          <div class="max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl aspect-video bg-black relative flex items-center justify-center border border-slate-700">
-             <div class="absolute inset-0 bg-slate-800 flex items-center justify-center flex-col gap-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p class="text-slate-400 font-medium">[Espacio reservado para Video / Reel Institucional]</p>
-             </div>
-          </div>
-        </div>
-      </section>
+
 
       {/* Galería de Imágenes */}
       <section class="py-20 bg-white">
@@ -132,17 +146,30 @@ export default component$(() => {
             <p class="text-lg text-slate-600">Un recorrido visual por nuestras obras, entregas e instalaciones.</p>
           </div>
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
-              <div key={item} class="aspect-square bg-slate-100 rounded-xl overflow-hidden group cursor-pointer relative shadow-sm border border-slate-100">
-                <img
-                  src={`https://placehold.co/600x600/f8fafc/94a3b8?text=Foto+${item}`}
-                  alt={`Galería de Tecnohidro ${item}`}
-                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  loading="lazy"
-                />
-                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-              </div>
-            ))}
+            {content.value.gallery.length > 0 ? (
+              content.value.gallery.map((url: string, i: number) => (
+                <div key={i} class="aspect-square bg-slate-100 rounded-xl overflow-hidden group cursor-pointer relative shadow-sm border border-slate-100">
+                  <img
+                    src={url}
+                    alt={`Galería de Tecnohidro ${i + 1}`}
+                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                </div>
+              ))
+            ) : (
+              [1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
+                <div key={item} class="aspect-square bg-slate-100 rounded-xl overflow-hidden group cursor-pointer relative shadow-sm border border-slate-100">
+                  <img
+                    src={`https://placehold.co/600x600/f8fafc/94a3b8?text=Foto+${item}`}
+                    alt={`Galería de Tecnohidro ${item}`}
+                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-50"
+                    loading="lazy"
+                  />
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>

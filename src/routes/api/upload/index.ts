@@ -12,7 +12,15 @@ export const onPost: RequestHandler = async ({ request, env, json }) => {
         // En un entorno real, aquí validarías que el usuario sea administrador
         // para prevenir subidas públicas sin autorización.
         return {
-          allowedContentTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+          allowedContentTypes: [
+            'image/jpeg', 
+            'image/png', 
+            'image/gif', 
+            'image/webp',
+            'video/mp4',
+            'video/quicktime',
+            'video/webm'
+          ],
           tokenPayload: JSON.stringify({
             // optional metadata
           }),
