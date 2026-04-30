@@ -270,7 +270,7 @@ export default component$(() => {
       {/* Full width map */}
       <div class="w-full h-96 lg:h-[500px] bg-slate-200 relative">
         <iframe
-          src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d26165.862291253154!2d-57.934515!3d-34.938238!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95a2e8be78dbe745%3A0x42a9e3e0e0a5b92c!2sAberturas%20Costa!5e0!3m2!1ses-419!2sus!4v1776987501854!5m2!1ses-419!2sus"
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2722.0266475454655!2d-57.93811298941308!3d-34.937988165427605!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95a2e8bc3e04c361%3A0x918b8ee8bd16ee20!2sTECNOHIDRO%20S.A.!5e0!3m2!1ses!2sar!4v1777531221261!5m2!1ses!2sar"
           width="100%"
           height="100%"
           style={{ border: 0 }}

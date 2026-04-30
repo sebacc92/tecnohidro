@@ -25,7 +25,7 @@ export const Header = component$(() => {
       <div class="container mx-auto px-4 xl:px-8 h-24 grid grid-cols-[auto_1fr_auto] items-center gap-4 lg:gap-8">
         {/* Left: Logo */}
         <Link href="/" class="flex items-center shrink-0">
-          <Logo class="h-9 lg:h-11 xl:h-14 w-auto" />
+          <Logo class="h-11 lg:h-13 xl:h-16 w-auto" />
         </Link>
 
         <div class="hidden lg:flex items-center justify-center min-w-0">
@@ -37,7 +37,7 @@ export const Header = component$(() => {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      class={`px-1.5 xl:px-4 py-2 text-[11px] xl:text-[15px] font-bold uppercase tracking-wide xl:tracking-[0.12em] transition-all duration-300 relative group whitespace-nowrap ${isActive ? 'text-orange-600' : 'text-slate-600 hover:text-orange-600'
+                      class={`px-1.5 xl:px-4 py-2 text-[11px] lg:text-[14px] xl:text-[15px] font-bold uppercase tracking-wide xl:tracking-[0.12em] transition-all duration-300 relative group whitespace-nowrap ${isActive ? 'text-orange-600' : 'text-slate-600 hover:text-orange-600'
                         }`}
                     >
                       {link.label}
@@ -59,7 +59,7 @@ export const Header = component$(() => {
             </div>
             <div class="flex flex-col leading-none">
               <span class="hidden 2xl:block text-[10px] uppercase text-slate-400 tracking-wider mb-1">Llamanos</span>
-              <span class="text-[11px] xl:text-sm">221 457-1111</span>
+              <span class="text-[11px] lg:text-sm xl:text-sm">221 457-1111</span>
             </div>
           </a>
 

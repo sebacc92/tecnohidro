@@ -12,7 +12,7 @@ export const Footer = component$(() => {
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <Link href="/" class="inline-flex items-center mb-4">
-              <Logo class="h-12 w-auto" />
+              <Logo class="h-9 md:h-12 w-auto" />
             </Link>
             <p class="text-slate-300 text-sm max-w-xs mb-6">
               Distribuidora líder en insumos de agua, gas y cloacas para profesionales e industrias.

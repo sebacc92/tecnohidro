@@ -4,6 +4,7 @@ import { getDb } from '../db/client';
 import { products, categories, siteContent, brands, instagramPosts } from '../db/schema';
 import { eq, isNull, desc, and } from 'drizzle-orm';
 import { SocialFeed } from '../components/SocialFeed';
+import { ContactButton } from '../components/ContactButton';
 import { LuChevronLeft, LuChevronRight, LuTruck, LuPackage, LuPercent, LuTag } from '@qwikest/icons/lucide';
 import MediosDePagoImg from '~/media/medios-de-pago.webp?jsx'
 
@@ -149,34 +150,24 @@ export const ProductCard = component$(({ product, isOffer = false }: { product: 
                 <span class="text-[11px] text-slate-400 line-through font-medium">${(product.price || 0).toLocaleString('es-AR')}</span>
                 <span class="text-[10px] font-bold text-red-600 uppercase">-{product.discount_percent}%</span>
               </div>
-              <div class="flex items-end justify-between">
-                <div class="flex flex-col">
-                  <span class="text-2xl font-black text-slate-900 leading-none">
-                    ${(product.discount_price).toLocaleString('es-AR')}
-                  </span>
-                  <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-tighter mt-2">
-                    ¡Ahorrás ${(product.price - product.discount_price).toLocaleString('es-AR')}!
-                  </span>
-                </div>
-                <Link
-                  href={`/productos/${product.slug}`}
-                  class="p-2 bg-orange-600 text-white rounded-none hover:bg-slate-900 transition-all shadow-md mb-1"
-                >
-                  <LuChevronRight class="w-5 h-5" />
-                </Link>
-              </div>
+                  <div class="flex items-end justify-between gap-2">
+                    <div class="flex flex-col flex-1 min-w-0">
+                      <span class="text-2xl font-black text-slate-900 leading-none">
+                        ${(product.discount_price).toLocaleString('es-AR')}
+                      </span>
+                      <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-tighter mt-2">
+                        ¡Ahorrás ${(product.price - product.discount_price).toLocaleString('es-AR')}!
+                      </span>
+                    </div>
+                    <ContactButton productName={product.name} look="primary" size="sm" class="flex-1 !h-10 !text-[11px]" />
+                  </div>
             </>
           ) : (
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col gap-3">
               <span class="text-2xl font-black text-slate-900">
                 ${(product.price || 0).toLocaleString('es-AR')}
               </span>
-              <Link
-                href={`/productos/${product.slug}`}
-                class="p-2 bg-orange-600 text-white rounded-none hover:bg-slate-900 transition-all shadow-md"
-              >
-                <LuChevronRight class="w-5 h-5" />
-              </Link>
+              <ContactButton productName={product.name} look="primary" size="sm" class="w-full !h-10 !text-[11px]" />
             </div>
           )}
         </div>

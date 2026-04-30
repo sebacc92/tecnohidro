@@ -87,13 +87,18 @@ export const Chatbot = component$(() => {
   return (
     <>
       {!state.isOpen && (
-        <span class="fixed z-30 w-14 h-14 bottom-6 right-6 bg-primary-500/40 rounded-full animate-pulse shadow-[0_0_15px_rgba(234,88,12,0.6)] opacity-75 pointer-events-none sm:h-16 sm:w-16"></span>
+        <>
+          <span class="fixed z-30 w-14 h-14 bottom-6 right-6 bg-orange-500/40 rounded-full animate-ping pointer-events-none sm:h-16 sm:w-16"></span>
+          <span class="fixed z-30 w-14 h-14 bottom-6 right-6 bg-orange-400/20 rounded-full animate-pulse shadow-[0_0_20px_rgba(249,115,22,0.4)] pointer-events-none sm:h-16 sm:w-16"></span>
+        </>
       )}
       <button
         onClick$={() => (state.isOpen = !state.isOpen)}
         class={[
-          "fixed z-40 p-3 rounded-full shadow-2xl transition-all duration-300 hover:scale-105 active:scale-95 flex items-center justify-center border border-slate-200 cursor-pointer",
-          state.isOpen ? "bg-slate-900 text-white w-12 h-12 bottom-6 right-6 sm:h-14 sm:w-14" : "bg-white text-orange-600 w-14 h-14 bottom-6 right-6 sm:h-16 sm:w-16" 
+          "fixed z-40 p-3 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer",
+          state.isOpen 
+            ? "bg-slate-900 text-white w-12 h-12 bottom-6 right-6 sm:h-14 sm:w-14 border border-slate-700" 
+            : "bg-white text-orange-600 w-14 h-14 bottom-6 right-6 sm:h-16 sm:w-16 border-2 border-orange-100 hover:border-orange-500" 
         ]}
         aria-label="Abrir asistente virtual"
       >

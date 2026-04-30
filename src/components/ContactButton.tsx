@@ -1,6 +1,5 @@
 import { component$ } from '@builder.io/qwik';
 import { buttonVariants } from './ui/button/button';
-import { LuMessageCircle } from '@qwikest/icons/lucide';
 import { Link } from '@builder.io/qwik-city';
 import { cn } from '@qwik-ui/utils';
 
@@ -12,18 +11,17 @@ interface ContactButtonProps {
 }
 
 export const ContactButton = component$<ContactButtonProps>(({ productName, class: className, look = 'primary', size = 'md' }) => {
-  const message = `Hola, estoy interesado en el producto: ${productName}. ¿Me podrían brindar más información?`;
-  const whatsappUrl = `https://wa.me/5492214636161?text=${encodeURIComponent(message)}`; 
+  const message = `Hola, quiero comprar el producto: ${productName}. ¿Cómo podemos coordinar?`;
+  const whatsappUrl = `https://wa.me/5492214636161?text=${encodeURIComponent(message)}`;
 
   return (
     <Link
       href={whatsappUrl}
       target="_blank"
       rel="noopener noreferrer"
-      class={cn(buttonVariants({ look, size }), className)}
+      class={cn(buttonVariants({ look, size }), "font-bold uppercase tracking-wider", className)}
     >
-      <LuMessageCircle class="mr-2 h-5 w-5" />
-      Consultar ahora
+      Comprar
     </Link>
   );
 });
