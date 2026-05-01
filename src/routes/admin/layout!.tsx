@@ -63,10 +63,10 @@ export default component$(() => {
             <LuUser class="h-5 w-5" />
             Mi Perfil
           </Link>
-          <Link href="/admin/logout" class="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-slate-800 rounded-md transition-colors">
+          <a href="/admin/logout" class="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-slate-800 rounded-md transition-colors">
             <LuLogOut class="h-5 w-5" />
             Cerrar Sesión
-          </Link>
+          </a>
         </div>
       </aside>
 

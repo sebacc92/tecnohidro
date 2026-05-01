@@ -13,11 +13,11 @@ export const onRequest: RequestHandler = async ({ url, cookie, redirect, sharedM
     return;
   }
 
-  const isLoginRoute = url.pathname === '/admin/login' || url.pathname === '/admin/login/';
+  const isLoginRoute = url.pathname.startsWith('/admin/login');
   const sessionCookie = cookie.get('auth_session');
 
   if (!sessionCookie && !isLoginRoute) {
-    throw redirect(302, '/admin/login');
+    throw redirect(302, '/admin/login/');
   }
 
   if (sessionCookie) {
@@ -26,7 +26,7 @@ export const onRequest: RequestHandler = async ({ url, cookie, redirect, sharedM
     
     if (isNaN(userId)) {
       cookie.delete('auth_session', { path: '/' });
-      if (!isLoginRoute) throw redirect(302, '/admin/login');
+      if (!isLoginRoute) throw redirect(302, '/admin/login/');
       return;
     }
 
@@ -34,7 +34,7 @@ export const onRequest: RequestHandler = async ({ url, cookie, redirect, sharedM
     
     if (userRows.length === 0) {
       cookie.delete('auth_session', { path: '/' });
-      if (!isLoginRoute) throw redirect(302, '/admin/login');
+      if (!isLoginRoute) throw redirect(302, '/admin/login/');
       return;
     }
 
@@ -42,7 +42,7 @@ export const onRequest: RequestHandler = async ({ url, cookie, redirect, sharedM
     sharedMap.set('user', user);
 
     if (isLoginRoute) {
-      throw redirect(302, '/admin');
+      throw redirect(302, '/admin/');
     }
   }
 };
