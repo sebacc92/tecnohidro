@@ -23,10 +23,10 @@ export const Header = component$(() => {
   return (
     <header class="sticky top-0 z-50 w-full bg-white shadow-md">
       {/* Main Header Container */}
-      <div class="container mx-auto px-4 xl:px-8 h-24 grid grid-cols-[auto_1fr_auto] items-center gap-4 lg:gap-8">
+      <div class="container mx-auto px-4 xl:px-8 h-20 lg:h-24 flex justify-between items-center gap-2 lg:grid lg:grid-cols-[auto_1fr_auto] lg:gap-8">
         {/* Left: Logo */}
-        <Link href="/" class="flex items-center shrink-0">
-          <Logo class="h-11 lg:h-13 xl:h-16 w-auto" />
+        <Link href="/" class="flex items-center shrink min-w-0">
+          <Logo class="h-8 sm:h-10 lg:h-12 xl:h-16 w-auto object-contain max-w-full" />
         </Link>
 
         <div class="hidden lg:flex items-center justify-center min-w-0">
