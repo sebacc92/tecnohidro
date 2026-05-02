@@ -1,9 +1,9 @@
 import { component$, useSignal } from '@builder.io/qwik';
-import { type DocumentHead, routeLoader$ } from '@builder.io/qwik-city';
+import { type DocumentHead, routeLoader$, routeAction$, Form, zod$, z } from '@builder.io/qwik-city';
 import { getDb } from '~/db/client';
 import { chatSessions, chatMessages } from '~/db/schema';
 import { desc, eq } from 'drizzle-orm';
-import { LuMessageSquare, LuClock, LuUser, LuBot } from '@qwikest/icons/lucide';
+import { LuMessageSquare, LuClock, LuUser, LuBot, LuTrash2, LuAlertCircle, LuCheckCircle2 } from '@qwikest/icons/lucide';
 
 // Interface for typed data
 interface ChatMessage {
@@ -49,20 +49,56 @@ export const useAuditLogs = routeLoader$(async ({ env }) => {
   return sessionsWithMessages;
 });
 
+export const useDeleteChatAction = routeAction$(
+  async (data, { env }) => {
+    try {
+      const db = getDb(env);
+      // Delete messages first due to FK constraints (even if not explicitly cascaded in sqlite, it's safer)
+      await db.delete(chatMessages).where(eq(chatMessages.sessionId, data.id));
+      await db.delete(chatSessions).where(eq(chatSessions.id, data.id));
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting chat session:', error);
+      return { success: false, error: 'No se pudo eliminar la sesión de chat.' };
+    }
+  },
+  zod$({
+    id: z.string(),
+  })
+);
+
 export default component$(() => {
   const sessions = useAuditLogs();
+  const deleteAction = useDeleteChatAction();
   const selectedSessionId = useSignal<string | null>(null);
 
   const selectedSession = sessions.value.find(s => s.id === selectedSessionId.value);
 
   return (
     <div class="max-w-6xl mx-auto h-[calc(100vh-8rem)] flex flex-col">
-      <div class="mb-6 shrink-0">
-        <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <LuMessageSquare class="w-8 h-8 text-cyan-600" />
-          Auditoría de Chat
-        </h1>
-        <p class="text-slate-500 mt-1">Historial de conversaciones entre usuarios y el Asistente IA.</p>
+      <div class="mb-6 shrink-0 flex justify-between items-end">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <LuMessageSquare class="w-8 h-8 text-cyan-600" />
+            Auditoría de Chat
+          </h1>
+          <p class="text-slate-500 mt-1">Historial de conversaciones entre usuarios y el Asistente IA.</p>
+        </div>
+        
+        <div class="flex flex-col items-end gap-2">
+          {deleteAction.value?.success && (
+            <div class="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 text-xs font-medium animate-in fade-in slide-in-from-top-1">
+              <LuCheckCircle2 class="w-4 h-4" />
+              Chat eliminado exitosamente
+            </div>
+          )}
+          {deleteAction.value?.error && (
+            <div class="flex items-center gap-2 text-red-600 bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 text-xs font-medium animate-in fade-in slide-in-from-top-1">
+              <LuAlertCircle class="w-4 h-4" />
+              {deleteAction.value.error}
+            </div>
+          )}
+        </div>
       </div>
 
       <div class="flex-1 flex gap-6 min-h-0">
@@ -76,29 +112,56 @@ export default component$(() => {
               <p class="text-sm text-slate-400 p-4 text-center">No hay conversaciones registradas.</p>
             ) : (
               sessions.value.map((session) => (
-                <button
-                  key={session.id}
-                  onClick$={() => selectedSessionId.value = session.id}
-                  class={`w-full text-left p-3 rounded-lg transition-colors border ${
-                    selectedSessionId.value === session.id 
-                      ? 'bg-cyan-50 border-cyan-200' 
-                      : 'border-transparent hover:bg-slate-50'
-                  }`}
-                >
-                  <div class="flex items-center justify-between mb-1">
-                    <span class="text-xs font-mono text-slate-500 truncate w-32">{session.id}</span>
-                    <span class="text-[10px] text-slate-400 flex items-center gap-1">
-                      <LuClock class="w-3 h-3" />
-                      {new Date(session.lastActive).toLocaleDateString('es-AR', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                  <p class="text-sm text-slate-700 truncate">
-                    {session.messages.find(m => m.role === 'user')?.content || 'Sin mensajes de usuario'}
-                  </p>
-                  <p class="text-[10px] text-slate-400 mt-1">
-                    {session.messages.length} mensajes
-                  </p>
-                </button>
+                <div key={session.id} class="relative group">
+                  <button
+                    onClick$={() => selectedSessionId.value = session.id}
+                    class={`w-full text-left p-3 rounded-lg transition-colors border ${
+                      selectedSessionId.value === session.id 
+                        ? 'bg-cyan-50 border-cyan-200' 
+                        : 'border-transparent hover:bg-slate-50'
+                    }`}
+                  >
+                    <div class="flex items-center justify-between mb-1">
+                      <span class="text-xs font-mono text-slate-500 truncate w-32">{session.id}</span>
+                      <span class="text-[10px] text-slate-400 flex items-center gap-1">
+                        <LuClock class="w-3 h-3" />
+                        {new Date(session.lastActive).toLocaleDateString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <p class="text-sm text-slate-700 truncate pr-6">
+                      {session.messages.find(m => m.role === 'user')?.content || 'Sin mensajes de usuario'}
+                    </p>
+                    <p class="text-[10px] text-slate-400 mt-1">
+                      {session.messages.length} mensajes
+                    </p>
+                  </button>
+
+                  <Form 
+                    action={deleteAction} 
+                    class="absolute right-2 bottom-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onSubmitCompleted$={() => {
+                      if (deleteAction.value?.success && selectedSessionId.value === session.id) {
+                        selectedSessionId.value = null;
+                      }
+                    }}
+                  >
+                    <input type="hidden" name="id" value={session.id} />
+                    <button
+                      type="submit"
+                      class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                      title="Eliminar chat"
+                      preventdefault:click
+                      stoppropagation:click
+                      onClick$={async (e, el) => {
+                        if (confirm(`¿Estás seguro de eliminar este chat permanentemente? Se borrarán ${session.messages.length} mensajes.`)) {
+                          (el.closest('form') as HTMLFormElement).requestSubmit();
+                        }
+                      }}
+                    >
+                      <LuTrash2 class="w-4 h-4" />
+                    </button>
+                  </Form>
+                </div>
               ))
             )}
           </div>
