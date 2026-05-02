@@ -142,7 +142,7 @@ export default component$(() => {
                 <div class="w-16 h-16 bg-primary-100 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <LuPackage class="w-8 h-8" />
                 </div>
-                <h3 class="text-4xl font-extrabold text-slate-900 mb-2">+10.000</h3>
+                <h3 class="text-4xl font-extrabold text-slate-900 mb-2">+500</h3>
                 <p class="text-slate-500 font-medium uppercase tracking-wide text-sm">Artículos en Stock</p>
               </div>
 
