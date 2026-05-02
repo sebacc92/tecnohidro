@@ -5,7 +5,7 @@ import { products, categories } from '../../../db/schema';
 import { eq, and, inArray, desc, sql } from 'drizzle-orm';
 import { Breadcrumb } from '../../../components/ui/breadcrumb/breadcrumb';
 import { ContactButton } from '../../../components/ContactButton';
-import { LuCheck, LuExternalLink, LuTag, LuLayoutGrid, LuList, LuFilter, LuChevronDown } from '@qwikest/icons/lucide';
+import { LuCheck, LuExternalLink, LuTag, LuLayoutGrid, LuList, LuFilter, LuChevronDown, LuStar } from '@qwikest/icons/lucide';
 import { ProductImageCarousel } from '../../../components/ProductImageCarousel';
 import { ShareButton } from '../../../components/ui/share-button';
 
@@ -76,8 +76,12 @@ export default component$(() => {
   }
 
   const { category, parentCategory, allCategories, products: prods, page, totalPages, totalCount } = data.value;
-  const rootCats = allCategories.filter((c) => !c.parent_id);
-  const getSubs = (pid: string) => allCategories.filter((c) => c.parent_id === pid);
+  const rootCats = allCategories
+    .filter((c) => !c.parent_id)
+    .sort((a, b) => ((a.sort_order ?? 0) - (b.sort_order ?? 0)) || a.name.localeCompare(b.name));
+  const getSubs = (pid: string) => allCategories
+    .filter((c) => c.parent_id === pid)
+    .sort((a, b) => ((a.sort_order ?? 0) - (b.sort_order ?? 0)) || a.name.localeCompare(b.name));
 
   const buildPageUrl = (p: number) => {
     const params = new URLSearchParams(loc.url.search);
@@ -151,6 +155,25 @@ export default component$(() => {
                 );
               })}
             </ul>
+
+            <div class="mt-8 mb-4 border-t pt-6">
+              <div class="flex items-center gap-2 mb-4 text-slate-800 font-semibold border-b pb-3">
+                <LuStar class="h-5 w-5" />
+                <h2>Especiales</h2>
+              </div>
+              <ul class="space-y-2">
+                <li>
+                  <Link href="/productos?destacados=true" class="block py-1.5 px-3 rounded-md transition-colors text-sm text-slate-600 hover:bg-slate-50">
+                    Productos Destacados
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/productos?ofertas=true" class="block py-1.5 px-3 rounded-md transition-colors text-sm text-slate-600 hover:bg-slate-50">
+                    Ofertas Relámpago
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
         </aside>
 

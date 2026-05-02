@@ -4,7 +4,7 @@ import { getDb } from '~/db/client';
 import { products, categories } from '~/db/schema';
 import { eq, like, or, and, inArray, desc, sql } from 'drizzle-orm';
 import { AddToCartButton } from '~/components/cart/add-to-cart-button';
-import { LuFilter, LuTag, LuChevronDown, LuLayoutGrid, LuList, LuCheck, LuPercent } from '@qwikest/icons/lucide';
+import { LuFilter, LuTag, LuChevronDown, LuLayoutGrid, LuList, LuCheck, LuPercent, LuStar } from '@qwikest/icons/lucide';
 import { ProductImageCarousel } from '~/components/ProductImageCarousel';
 import { ShareButton } from '~/components/ui/share-button';
 
@@ -16,6 +16,7 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
   const categorySlug = url.searchParams.get('category');
   const searchQ = url.searchParams.get('q');
   const isOffers = url.searchParams.get('ofertas') === 'true';
+  const isFeatured = url.searchParams.get('destacados') === 'true';
 
   try {
     const db = getDb(requestEvent.env);
@@ -45,6 +46,10 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
 
     if (isOffers) {
       conditions.push(eq(products.is_offer, true));
+    }
+
+    if (isFeatured) {
+      conditions.push(eq(products.is_featured, true));
     }
 
     const page = parseInt(url.searchParams.get('page') || '1') || 1;
@@ -87,6 +92,7 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
       currentCategory: categorySlug,
       searchQuery: searchQ,
       isOffers,
+      isFeatured,
       page,
       totalPages,
       totalCount
@@ -99,6 +105,7 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
       currentCategory: null,
       searchQuery: null,
       isOffers: false,
+      isFeatured: false,
       page: 1,
       totalPages: 1,
       totalCount: 0
@@ -119,15 +126,19 @@ export default component$(() => {
     return `${loc.url.pathname}?${params.toString()}`;
   };
 
-  const rootCategories = data.value.categories.filter(c => !c.parent_id);
-  const getSubcategories = (parentId: string) => data.value.categories.filter(c => c.parent_id === parentId);
+  const rootCategories = data.value.categories
+    .filter(c => !c.parent_id)
+    .sort((a, b) => ((a.sort_order ?? 0) - (b.sort_order ?? 0)) || a.name.localeCompare(b.name));
+  const getSubcategories = (parentId: string) => data.value.categories
+    .filter(c => c.parent_id === parentId)
+    .sort((a, b) => ((a.sort_order ?? 0) - (b.sort_order ?? 0)) || a.name.localeCompare(b.name));
 
   return (
     <div class="container mx-auto px-4 md:px-8 py-12">
       <div class="mb-8 border-b pb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 class="text-3xl md:text-4xl font-bold text-slate-900">
-            {data.value.isOffers ? 'Ofertas Relámpago' : 'Catálogo de Productos'}
+            {data.value.isOffers ? 'Ofertas Relámpago' : data.value.isFeatured ? 'Productos Destacados' : 'Catálogo de Productos'}
           </h1>
           {data.value.searchQuery && (
             <p class="text-slate-500 mt-2">
@@ -211,6 +222,31 @@ export default component$(() => {
                 );
               })}
             </ul>
+
+            <div class="mt-8 mb-4 border-t pt-6">
+              <div class="flex items-center gap-2 mb-4 text-slate-800 font-semibold border-b pb-3">
+                <LuStar class="h-5 w-5" />
+                <h2>Especiales</h2>
+              </div>
+              <ul class="space-y-2">
+                <li>
+                  <Link
+                    href="/productos?destacados=true"
+                    class={`block py-1.5 px-3 rounded-md transition-colors text-sm ${data.value.isFeatured ? 'bg-orange-50 text-orange-700 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}
+                  >
+                    Productos Destacados
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/productos?ofertas=true"
+                    class={`block py-1.5 px-3 rounded-md transition-colors text-sm ${data.value.isOffers ? 'bg-red-50 text-red-700 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}
+                  >
+                    Ofertas Relámpago
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
         </aside>
 
