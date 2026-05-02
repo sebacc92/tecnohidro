@@ -1,6 +1,6 @@
-import { component$ } from '@builder.io/qwik';
+import { component$, useSignal, $ } from '@builder.io/qwik';
 import { type DocumentHead, Link, routeLoader$ } from '@builder.io/qwik-city';
-import { LuBuilding2, LuPackage, LuClock } from '@qwikest/icons/lucide';
+import { LuBuilding2, LuPackage, LuClock, LuX, LuChevronLeft, LuChevronRight } from '@qwikest/icons/lucide';
 import { buttonVariants } from '../../components/ui/button/button';
 import { getDb } from '~/db/client';
 import { siteContent } from '~/db/schema';
@@ -9,12 +9,14 @@ import { inArray } from 'drizzle-orm';
 export const useNosotrosContent = routeLoader$(async ({ env }) => {
   const db = getDb(env);
   const data = await db.select().from(siteContent).where(
-    inArray(siteContent.key, ['nosotros_gallery', 'nosotros_reel_video'])
+    inArray(siteContent.key, ['nosotros_gallery', 'nosotros_reel_video', 'nosotros_hero_image', 'nosotros_video_preview'])
   );
 
   const content: Record<string, any> = {
     gallery: [],
-    video: ''
+    video: '',
+    heroImage: '',
+    videoPreview: ''
   };
 
   for (const item of data) {
@@ -22,6 +24,10 @@ export const useNosotrosContent = routeLoader$(async ({ env }) => {
       try { content.gallery = JSON.parse(item.value); } catch { content.gallery = []; }
     } else if (item.key === 'nosotros_reel_video') {
       content.video = item.value;
+    } else if (item.key === 'nosotros_hero_image') {
+      content.heroImage = item.value;
+    } else if (item.key === 'nosotros_video_preview') {
+      content.videoPreview = item.value;
     }
   }
 
@@ -30,13 +36,28 @@ export const useNosotrosContent = routeLoader$(async ({ env }) => {
 
 export default component$(() => {
   const content = useNosotrosContent();
+  const selectedImageIndex = useSignal<number | null>(null);
+
+  const nextImage = $(() => {
+    if (selectedImageIndex.value === null) return;
+    const galleryLength = content.value.gallery.length > 0 ? content.value.gallery.length : 8;
+    selectedImageIndex.value = (selectedImageIndex.value + 1) % galleryLength;
+  });
+
+  const prevImage = $(() => {
+    if (selectedImageIndex.value === null) return;
+    const galleryLength = content.value.gallery.length > 0 ? content.value.gallery.length : 8;
+    selectedImageIndex.value = (selectedImageIndex.value - 1 + galleryLength) % galleryLength;
+  });
+
   return (
-    <div class="bg-white">
-      {/* Hero Section */}
+    <>
+      <div class="bg-white">
+        {/* Hero Section */}
       <section class="relative bg-slate-900 text-white overflow-hidden">
         <div class="absolute inset-0 z-0 opacity-30">
           <img
-            src="https://placehold.co/1920x600/1e293b/334155?text=Imagen+Local+o+Depósito"
+            src={content.value.heroImage || "https://placehold.co/1920x600/1e293b/334155?text=Imagen+Local+o+Depósito"}
             alt="Frente del local Tecnohidro"
             class="w-full h-full object-cover"
           />
@@ -80,6 +101,7 @@ export default component$(() => {
                     loop
                     muted
                     playsInline
+                    poster={content.value.videoPreview}
                   />
                 ) : (
                   <div class="absolute inset-0 bg-slate-800 flex items-center justify-center flex-col gap-4">
@@ -148,7 +170,11 @@ export default component$(() => {
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {content.value.gallery.length > 0 ? (
               content.value.gallery.map((url: string, i: number) => (
-                <div key={i} class="aspect-square bg-slate-100 rounded-xl overflow-hidden group cursor-pointer relative shadow-sm border border-slate-100">
+                <div 
+                  key={i} 
+                  onClick$={() => selectedImageIndex.value = i}
+                  class="aspect-square bg-slate-100 rounded-xl overflow-hidden group cursor-pointer relative shadow-sm border border-slate-100"
+                >
                   <img
                     src={url}
                     alt={`Galería de Tecnohidro ${i + 1}`}
@@ -159,8 +185,12 @@ export default component$(() => {
                 </div>
               ))
             ) : (
-              [1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
-                <div key={item} class="aspect-square bg-slate-100 rounded-xl overflow-hidden group cursor-pointer relative shadow-sm border border-slate-100">
+              [1, 2, 3, 4, 5, 6, 7, 8].map((item, idx) => (
+                <div 
+                  key={item} 
+                  onClick$={() => selectedImageIndex.value = idx}
+                  class="aspect-square bg-slate-100 rounded-xl overflow-hidden group cursor-pointer relative shadow-sm border border-slate-100"
+                >
                   <img
                     src={`https://placehold.co/600x600/f8fafc/94a3b8?text=Foto+${item}`}
                     alt={`Galería de Tecnohidro ${item}`}
@@ -200,6 +230,56 @@ export default component$(() => {
         3. Carrusel de proyectos/obras emblemáticas abastecidas.
       */}
     </div>
+
+      {/* Lightbox Modal */}
+      {selectedImageIndex.value !== null && (
+        <div 
+          class="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm transition-all duration-300 animate-in fade-in"
+          onClick$={() => selectedImageIndex.value = null}
+        >
+          {/* Close Button */}
+          <button 
+            onClick$={() => selectedImageIndex.value = null}
+            class="absolute top-6 right-6 text-white/70 hover:text-white transition-colors z-10 p-2"
+          >
+            <LuX class="w-8 h-8" />
+          </button>
+
+          {/* Navigation Arrows */}
+          <button 
+            onClick$={(e) => { e.stopPropagation(); prevImage(); }}
+            class="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-all hover:scale-110 p-4 z-10"
+          >
+            <LuChevronLeft class="w-10 h-10 md:w-16 md:h-16" />
+          </button>
+
+          <button 
+            onClick$={(e) => { e.stopPropagation(); nextImage(); }}
+            class="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-all hover:scale-110 p-4 z-10"
+          >
+            <LuChevronRight class="w-10 h-10 md:w-16 md:h-16" />
+          </button>
+
+          {/* Image Container */}
+          <div 
+            class="relative max-w-[90vw] max-h-[85vh] flex items-center justify-center animate-in zoom-in-95 duration-300"
+            onClick$={(e) => e.stopPropagation()}
+          >
+            <img 
+              src={content.value.gallery.length > 0 
+                ? content.value.gallery[selectedImageIndex.value!] 
+                : `https://placehold.co/1200x1200/f8fafc/94a3b8?text=Foto+${selectedImageIndex.value! + 1}`
+              }
+              alt="Vista ampliada"
+              class="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            />
+            <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 text-white/60 text-sm font-medium">
+              {selectedImageIndex.value! + 1} / {content.value.gallery.length > 0 ? content.value.gallery.length : 8}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 });
 
