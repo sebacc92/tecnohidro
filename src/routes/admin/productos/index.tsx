@@ -2,7 +2,7 @@ import { component$, $, useSignal, useTask$ } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, routeAction$, Link, Form, z, zod$, useNavigate } from '@builder.io/qwik-city';
 import { getDb } from '~/db/client';
 import { products, categories } from '~/db/schema';
-import { eq, desc, sql, like, or, and } from 'drizzle-orm';
+import { eq, desc, asc, sql, like, or, and } from 'drizzle-orm';
 import { LuPlus, LuTrash2, LuImage, LuTag, LuShoppingCart, LuClipboardEdit, LuRefreshCw, LuStar, LuSearch, LuX } from '@qwikest/icons/lucide';
 import { getValidMeliToken } from '~/services/meli';
 
@@ -26,6 +26,20 @@ export const useProducts = routeLoader$(async (requestEvent) => {
     );
     conditions = conditions ? and(conditions, searchCond) : searchCond;
   }
+
+  const categoryFilter = requestEvent.url.searchParams.get('category');
+  if (categoryFilter) {
+    const catCond = eq(products.category_id, categoryFilter);
+    conditions = conditions ? and(conditions, catCond) : catCond;
+  }
+
+  const featuredFilter = requestEvent.url.searchParams.get('featured');
+  if (featuredFilter === 'true') {
+    const featCond = eq(products.is_featured, true);
+    conditions = conditions ? and(conditions, featCond) : featCond;
+  }
+
+  const sortOrder = requestEvent.url.searchParams.get('sort') || 'newest';
 
   const page = parseInt(requestEvent.url.searchParams.get('page') || '1') || 1;
   const limit = 20;
@@ -61,12 +75,29 @@ export const useProducts = routeLoader$(async (requestEvent) => {
     query.where(conditions);
   }
 
-  const data = await query.orderBy(desc(products.id)).limit(limit).offset(offset);
+  let orderByClause: any = desc(products.id);
+  if (sortOrder === 'price_asc') {
+    orderByClause = asc(products.price);
+  } else if (sortOrder === 'price_desc') {
+    orderByClause = desc(products.price);
+  } else if (sortOrder === 'sales_desc') {
+    orderByClause = desc(products.sold_quantity);
+  } else if (sortOrder === 'name_asc') {
+    orderByClause = asc(products.name);
+  }
+
+  const data = await query.orderBy(orderByClause).limit(limit).offset(offset);
+
+  const allCategories = await db.select({ id: categories.id, name: categories.name }).from(categories).orderBy(categories.name);
 
   return {
     products: data,
+    categories: allCategories,
     sourceFilter: sourceFilter || 'all',
     searchTerm: searchTerm || '',
+    categoryFilter: categoryFilter || '',
+    featuredFilter: featuredFilter || '',
+    sortOrder,
     page,
     totalPages,
     totalCount
@@ -411,8 +442,12 @@ export const useSyncSingleMeliProduct = routeAction$(
 export default component$(() => {
   const data = useProducts();
   const prods = data.value.products;
+  const categoriesList = data.value.categories;
   const sourceFilter = data.value.sourceFilter;
   const searchTerm = data.value.searchTerm;
+  const categoryFilter = data.value.categoryFilter;
+  const featuredFilter = data.value.featuredFilter;
+  const sortOrder = data.value.sortOrder;
   const { page, totalPages, totalCount } = data.value;
 
   const deleteAction = useDeleteProduct();
@@ -450,12 +485,12 @@ export default component$(() => {
     cleanup(() => clearTimeout(timeout));
   });
 
-  const handleFilter = $((source: string) => {
+  const updateParams = $((key: string, value: string) => {
     const params = new URLSearchParams(window.location.search);
-    if (source === 'all') {
-      params.delete('source');
+    if (value && value !== 'all') {
+      params.set(key, value);
     } else {
-      params.set('source', source);
+      params.delete(key);
     }
     params.set('page', '1');
     nav(`/admin/productos?${params.toString()}`);
@@ -638,25 +673,61 @@ export default component$(() => {
         </div>
       )}
 
-      <div class="mb-6 flex gap-2 border-b border-slate-200">
-        <button
-          onClick$={() => handleFilter('all')}
-          class={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${sourceFilter === 'all' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-        >
-          Todos
-        </button>
-        <button
-          onClick$={() => handleFilter('cms')}
-          class={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${sourceFilter === 'cms' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-        >
-          Solo CMS
-        </button>
-        <button
-          onClick$={() => handleFilter('meli')}
-          class={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${sourceFilter === 'meli' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-        >
-          Solo MercadoLibre
-        </button>
+      <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-2">
+        <div class="flex gap-2">
+          <button
+            onClick$={() => updateParams('source', 'all')}
+            class={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${sourceFilter === 'all' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          >
+            Todos
+          </button>
+          <button
+            onClick$={() => updateParams('source', 'cms')}
+            class={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${sourceFilter === 'cms' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          >
+            Solo CMS
+          </button>
+          <button
+            onClick$={() => updateParams('source', 'meli')}
+            class={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${sourceFilter === 'meli' ? 'border-cyan-600 text-cyan-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+          >
+            Solo MercadoLibre
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <select
+            value={categoryFilter}
+            onChange$={(e) => updateParams('category', (e.target as HTMLSelectElement).value)}
+            class="text-sm bg-white border-slate-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 py-1.5"
+          >
+            <option value="">Todas las Categorías</option>
+            {categoriesList.map((cat) => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
+
+          <select
+            value={featuredFilter}
+            onChange$={(e) => updateParams('featured', (e.target as HTMLSelectElement).value)}
+            class="text-sm bg-white border-slate-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 py-1.5"
+          >
+            <option value="">Todos los Productos</option>
+            <option value="true">Solo Destacados</option>
+          </select>
+
+          <select
+            value={sortOrder}
+            onChange$={(e) => updateParams('sort', (e.target as HTMLSelectElement).value)}
+            class="text-sm bg-white border-slate-300 rounded-md shadow-sm focus:border-cyan-500 focus:ring-cyan-500 py-1.5 font-medium text-slate-700"
+          >
+            <option value="newest">Más Recientes</option>
+            <option value="price_asc">Menor Precio</option>
+            <option value="price_desc">Mayor Precio</option>
+            <option value="sales_desc">Más Vendidos</option>
+            <option value="name_asc">Nombre (A-Z)</option>
+          </select>
+        </div>
       </div>
 
       {deleteAction.value?.error && (
@@ -686,9 +757,8 @@ export default component$(() => {
                 <th class="px-6 py-3 font-medium">Precio</th>
                 <th class="px-6 py-3 font-medium">Stock/Ventas</th>
                 <th class="px-6 py-3 font-medium">Fuente</th>
-                <th class="px-6 py-3 font-medium">Estado</th>
-                <th class="px-6 py-3 font-medium text-center">Destacado</th>
                 <th class="px-6 py-3 font-medium text-center">Activo</th>
+                <th class="px-6 py-3 font-medium text-center">Destacado</th>
                 <th class="px-6 py-3 font-medium text-right">Acciones</th>
               </tr>
             </thead>
@@ -752,26 +822,6 @@ export default component$(() => {
                           {product.source.toUpperCase()}
                         </span>
                       </td>
-                      <td class="px-6 py-3 text-xs">
-                        {product.source === 'meli' && product.meli_status ? (
-                          <span class={`inline-flex items-center px-2 py-0.5 rounded-full font-medium border ${product.meli_status === 'active' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'}`}>
-                            {product.meli_status}
-                          </span>
-                        ) : '-'}
-                      </td>
-                      <td class="px-6 py-3 text-center">
-                        <Form action={toggleFeaturedAction} spaReset={false}>
-                          <input type="hidden" name="id" value={product.id} />
-                          <input type="hidden" name="is_featured" value={product.is_featured ? 'false' : 'true'} />
-                          <button
-                            type="submit"
-                            title={product.is_featured ? 'Quitar destacado' : 'Destacar'}
-                            class="focus:outline-none transition-transform hover:scale-110"
-                          >
-                            <LuStar class={`w-5 h-5 ${product.is_featured ? 'fill-yellow-400 text-yellow-500' : 'text-slate-300'}`} />
-                          </button>
-                        </Form>
-                      </td>
                       <td class="px-6 py-3 text-center">
                         <Form action={toggleStatusAction} spaReset={false}>
                           <input type="hidden" name="id" value={product.id} />
@@ -786,6 +836,19 @@ export default component$(() => {
                               aria-hidden="true"
                               class={`pointer-events-none absolute left-0 inline-block h-5 w-5 transform rounded-full border border-slate-200 bg-white shadow ring-0 transition-transform duration-200 ease-in-out ${product.status === 'active' ? 'translate-x-4' : 'translate-x-0'}`}
                             />
+                          </button>
+                        </Form>
+                      </td>
+                      <td class="px-6 py-3 text-center">
+                        <Form action={toggleFeaturedAction} spaReset={false}>
+                          <input type="hidden" name="id" value={product.id} />
+                          <input type="hidden" name="is_featured" value={product.is_featured ? 'false' : 'true'} />
+                          <button
+                            type="submit"
+                            title={product.is_featured ? 'Quitar destacado' : 'Destacar'}
+                            class="focus:outline-none transition-transform hover:scale-110"
+                          >
+                            <LuStar class={`w-5 h-5 ${product.is_featured ? 'fill-yellow-400 text-yellow-500' : 'text-slate-300'}`} />
                           </button>
                         </Form>
                       </td>
@@ -826,8 +889,8 @@ export default component$(() => {
             Mostrando página <span class="font-medium text-slate-900">{page}</span> de <span class="font-medium text-slate-900">{totalPages}</span> ({totalCount} productos)
           </div>
           <div class="flex items-center gap-2">
-            <Link
-              href={`/admin/productos?page=${page > 1 ? page - 1 : 1}${sourceFilter !== 'all' ? `&source=${sourceFilter}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`}
+            <Link 
+              href={`/admin/productos?page=${page > 1 ? page - 1 : 1}${sourceFilter !== 'all' ? `&source=${sourceFilter}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}${categoryFilter ? `&category=${categoryFilter}` : ''}${featuredFilter ? `&featured=${featuredFilter}` : ''}${sortOrder !== 'newest' ? `&sort=${sortOrder}` : ''}`}
               class={`px-3 py-1.5 rounded text-sm font-medium border ${page <= 1 ? 'border-slate-100 text-slate-300 pointer-events-none' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
             >
               Anterior
@@ -844,7 +907,7 @@ export default component$(() => {
                   return (
                     <Link
                       key={p}
-                      href={`/admin/productos?page=${p}${sourceFilter !== 'all' ? `&source=${sourceFilter}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`}
+                      href={`/admin/productos?page=${p}${sourceFilter !== 'all' ? `&source=${sourceFilter}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}${categoryFilter ? `&category=${categoryFilter}` : ''}${featuredFilter ? `&featured=${featuredFilter}` : ''}${sortOrder !== 'newest' ? `&sort=${sortOrder}` : ''}`}
                       class={`w-8 h-8 flex items-center justify-center rounded text-sm font-medium ${page === p ? 'bg-cyan-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
                     >
                       {p}
@@ -855,8 +918,8 @@ export default component$(() => {
               })}
             </div>
 
-            <Link
-              href={`/admin/productos?page=${page < totalPages ? page + 1 : totalPages}${sourceFilter !== 'all' ? `&source=${sourceFilter}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`}
+            <Link 
+              href={`/admin/productos?page=${page < totalPages ? page + 1 : totalPages}${sourceFilter !== 'all' ? `&source=${sourceFilter}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}${categoryFilter ? `&category=${categoryFilter}` : ''}${featuredFilter ? `&featured=${featuredFilter}` : ''}${sortOrder !== 'newest' ? `&sort=${sortOrder}` : ''}`}
               class={`px-3 py-1.5 rounded text-sm font-medium border ${page >= totalPages ? 'border-slate-100 text-slate-300 pointer-events-none' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
             >
               Siguiente

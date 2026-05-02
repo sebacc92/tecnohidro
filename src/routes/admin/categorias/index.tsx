@@ -1,8 +1,8 @@
 import { component$, useSignal, useComputed$, useStore, $, type QRL } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, routeAction$, z, zod$ } from '@builder.io/qwik-city';
 import { getDb } from '~/db/client';
-import { categories } from '~/db/schema';
-import { eq } from 'drizzle-orm';
+import { categories, products } from '~/db/schema';
+import { eq, sql } from 'drizzle-orm';
 import {
   LuPlus, LuTrash2, LuPencil, LuChevronRight, LuChevronDown,
   LuEye, LuEyeOff, LuSearch, LuX, LuCheck, LuFolder, LuFolderOpen,
@@ -53,11 +53,22 @@ export const useDeleteCategory = routeAction$(
   async (data, { env }) => {
     try {
       const db = getDb(env);
+      
+      const subcatsCount = await db.select({ count: sql<number>`count(*)` }).from(categories).where(eq(categories.parent_id, data.id));
+      if (subcatsCount[0].count > 0) {
+        return { success: false, error: `No se puede eliminar: contiene ${subcatsCount[0].count} subcategoría(s).` };
+      }
+
+      const prodCount = await db.select({ count: sql<number>`count(*)` }).from(products).where(eq(products.category_id, data.id));
+      if (prodCount[0].count > 0) {
+        return { success: false, error: `No se puede eliminar: tiene ${prodCount[0].count} producto(s) asociado(s).` };
+      }
+
       await db.delete(categories).where(eq(categories.id, data.id));
       return { success: true };
     } catch (e) {
       console.error(e);
-      return { success: false, error: 'No se puede eliminar. Puede tener productos asociados.' };
+      return { success: false, error: 'No se puede eliminar debido a un error de base de datos.' };
     }
   },
   zod$({ id: z.string() })
