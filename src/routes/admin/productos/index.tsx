@@ -432,7 +432,7 @@ export default component$(() => {
 
   useTask$(({ track, cleanup }) => {
     const value = track(() => searchInput.value);
-    
+
     // Don't trigger if it's the same as the current URL param
     if (value === searchTerm) return;
 
@@ -459,10 +459,6 @@ export default component$(() => {
     }
     params.set('page', '1');
     nav(`/admin/productos?${params.toString()}`);
-  });
-
-  const handleSearch = $((event: Event) => {
-    event.preventDefault();
   });
 
   return (
@@ -830,7 +826,7 @@ export default component$(() => {
             Mostrando página <span class="font-medium text-slate-900">{page}</span> de <span class="font-medium text-slate-900">{totalPages}</span> ({totalCount} productos)
           </div>
           <div class="flex items-center gap-2">
-            <Link 
+            <Link
               href={`/admin/productos?page=${page > 1 ? page - 1 : 1}${sourceFilter !== 'all' ? `&source=${sourceFilter}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`}
               class={`px-3 py-1.5 rounded text-sm font-medium border ${page <= 1 ? 'border-slate-100 text-slate-300 pointer-events-none' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
             >
@@ -859,7 +855,7 @@ export default component$(() => {
               })}
             </div>
 
-            <Link 
+            <Link
               href={`/admin/productos?page=${page < totalPages ? page + 1 : totalPages}${sourceFilter !== 'all' ? `&source=${sourceFilter}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`}
               class={`px-3 py-1.5 rounded text-sm font-medium border ${page >= totalPages ? 'border-slate-100 text-slate-300 pointer-events-none' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
             >
