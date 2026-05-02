@@ -624,17 +624,19 @@ export default component$(() => {
             </div>
             <div class="bg-white p-8 rounded-xl shadow-sm border-2 border-orange-500 flex flex-col hover:shadow-md transition-shadow">
               <LuPackage class="w-10 h-10 text-orange-600 mb-4" />
-              <h3 class="text-xl font-bold mb-3">Envíos Gratis</h3>
+              <h3 class="text-xl font-bold mb-3">Envío Gratis</h3>
               <p class="text-slate-600 leading-relaxed">
-                Envío gratis en compras con envíos de Mercado Libre a partir de $70.000
+                Envío sin cargo en el <b>Gran La Plata</b> para compras con entrega dentro de las <b>24 hs</b>.
               </p>
             </div>
             <div class="bg-white p-8 rounded-xl shadow-sm border-2 border-orange-500 flex flex-col hover:shadow-md transition-shadow">
               <LuPercent class="w-10 h-10 text-orange-600 mb-4" />
-              <h3 class="text-xl font-bold mb-3">Promociones con tarjeta de crédito</h3>
-              <p class="text-slate-600 leading-relaxed mb-6">
-                6 Cuotas sin interés, Banco Provincia, Presencial en el local.
-              </p>
+              <h3 class="text-xl font-bold mb-3">Promociones con Tarjetas</h3>
+              <div class="text-slate-600 text-sm space-y-2 mb-6">
+                <p>• <strong>4 cuotas</strong> con Banco Provincia.</p>
+                <p>• <strong>3 cuotas sin interés</strong> con Mercado Pago (QR en el local).</p>
+                <p>• <strong>3 cuotas sin interés</strong> con tarjetas bancarizadas excepto Provincia (miércoles y sábados).</p>
+              </div>
               <div class="mt-auto">
                 <MediosDePagoImg />
               </div>
