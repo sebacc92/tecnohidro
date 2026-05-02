@@ -197,7 +197,7 @@ export default component$(() => {
                 const inStock = product.stock != null && product.stock > 0;
 
                 if (viewMode.value === 'list') return (
-                  <div key={product.id} class="bg-white rounded-xl border border-slate-200 hover:shadow-md transition-all flex flex-row overflow-hidden">
+                  <div key={`list-${product.id}`} class="bg-white rounded-xl border border-slate-200 hover:shadow-md transition-all flex flex-row overflow-hidden">
                     <Link href={`/productos/${product.slug}`} class="w-28 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
                       <img src={firstImg} alt={product.name} width={112} height={112} class="w-full h-full object-contain p-2" loading="lazy" />
                     </Link>
@@ -214,7 +214,7 @@ export default component$(() => {
                 );
 
                 return (
-                  <div key={product.id} class="bg-white rounded-xl border border-slate-200 hover:shadow-lg transition-all flex flex-col">
+                  <div key={`grid-${product.id}`} class="bg-white rounded-xl border border-slate-200 hover:shadow-lg transition-all flex flex-col">
                     <div class="aspect-[4/3] overflow-hidden bg-white relative">
                       {product.source === 'meli' && <div class="absolute top-2.5 right-2.5 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 z-20"><LuTag class="w-3 h-3" />ML</div>}
                       {imgs.length > 1 && <span class="absolute top-2.5 left-2.5 bg-black/60 text-white px-2 py-0.5 rounded text-[10px] z-20">{imgs.length} fotos</span>}

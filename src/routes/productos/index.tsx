@@ -305,9 +305,9 @@ export default component$(() => {
                   /* ═══ VISTA LISTA ═══ */
                   if (viewMode.value === 'list') {
                     return (
-                      <div key={product.id} class="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all flex flex-row overflow-hidden">
+                      <div key={`list-${product.id}`} class="bg-white rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all flex flex-row overflow-hidden">
                         {/* Imagen */}
-                        <Link href={`/productos/${product.slug}`} class="relative w-28 sm:w-32 bg-slate-50 flex items-center justify-center overflow-hidden">
+                        <Link href={`/productos/${product.slug}`} class="relative w-28 sm:w-32 bg-slate-50 flex items-center justify-center overflow-hidden shrink-0">
                           {product.source === 'meli' && (
                             <div class="absolute top-1.5 right-1.5 bg-yellow-400 text-yellow-900 text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm z-10">
                               <LuTag class="w-2.5 h-2.5" /> ML
@@ -330,7 +330,7 @@ export default component$(() => {
                         </div>
 
                         {/* Derecha: precio + stock + acciones */}
-                        <div style="width: 200px;" class="flex flex-col items-end justify-center gap-1.5 px-4 border-l border-slate-100">
+                        <div style="width: 200px;" class="flex flex-col items-end justify-center gap-1.5 px-4 border-l border-slate-100 shrink-0">
                           <div class="text-right">
                             {hasPrice ? (
                               <span class="text-lg font-bold text-orange-600 block">${product.price!.toLocaleString('es-AR')}</span>
@@ -356,7 +356,7 @@ export default component$(() => {
 
                   /* ═══ VISTA GRILLA ═══ */
                   return (
-                    <div key={product.id} class="bg-white rounded-xl border border-slate-200 hover:border-slate-300 overflow-hidden hover:shadow-lg transition-all flex flex-col group">
+                    <div key={`grid-${product.id}`} class="bg-white rounded-xl border border-slate-200 hover:border-slate-300 overflow-hidden hover:shadow-lg transition-all flex flex-col group">
                       {/* Imagen */}
                       <div class="aspect-square overflow-hidden bg-white relative">
                         {product.source === 'meli' && (
