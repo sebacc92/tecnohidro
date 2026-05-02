@@ -1,21 +1,30 @@
-import { component$, $, useSignal } from '@builder.io/qwik';
+import { component$, $, useSignal, useTask$ } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, routeAction$, Link, Form, z, zod$, useNavigate } from '@builder.io/qwik-city';
 import { getDb } from '~/db/client';
 import { products, categories } from '~/db/schema';
-import { eq, desc, sql } from 'drizzle-orm';
-import { LuPlus, LuTrash2, LuImage, LuTag, LuShoppingCart, LuClipboardEdit, LuRefreshCw, LuStar } from '@qwikest/icons/lucide';
+import { eq, desc, sql, like, or, and } from 'drizzle-orm';
+import { LuPlus, LuTrash2, LuImage, LuTag, LuShoppingCart, LuClipboardEdit, LuRefreshCw, LuStar, LuSearch, LuX } from '@qwikest/icons/lucide';
 import { getValidMeliToken } from '~/services/meli';
 
 
 export const useProducts = routeLoader$(async (requestEvent) => {
   const db = getDb(requestEvent.env);
   const sourceFilter = requestEvent.url.searchParams.get('source');
+  const searchTerm = requestEvent.url.searchParams.get('search');
 
-  let conditions = undefined;
+  let conditions: any = undefined;
   if (sourceFilter === 'cms') {
     conditions = eq(products.source, 'cms');
   } else if (sourceFilter === 'meli') {
     conditions = eq(products.source, 'meli');
+  }
+
+  if (searchTerm) {
+    const searchCond = or(
+      like(products.name, `%${searchTerm}%`),
+      like(products.sku, `%${searchTerm}%`)
+    );
+    conditions = conditions ? and(conditions, searchCond) : searchCond;
   }
 
   const page = parseInt(requestEvent.url.searchParams.get('page') || '1') || 1;
@@ -57,6 +66,7 @@ export const useProducts = routeLoader$(async (requestEvent) => {
   return {
     products: data,
     sourceFilter: sourceFilter || 'all',
+    searchTerm: searchTerm || '',
     page,
     totalPages,
     totalCount
@@ -308,13 +318,13 @@ export const useSyncSingleMeliProduct = routeAction$(
 
       if (!itemsRes.ok) {
         if (itemsRes.status === 404) {
-           return { success: false, error: 'Producto no encontrado en MercadoLibre. Verifica el ID.' };
+          return { success: false, error: 'Producto no encontrado en MercadoLibre. Verifica el ID.' };
         }
         throw new Error('Error al obtener los detalles del producto.');
       }
 
       const item = await itemsRes.json();
-      
+
       const db = getDb(env);
       const name = item.title;
       const price = item.price;
@@ -402,6 +412,7 @@ export default component$(() => {
   const data = useProducts();
   const prods = data.value.products;
   const sourceFilter = data.value.sourceFilter;
+  const searchTerm = data.value.searchTerm;
   const { page, totalPages, totalCount } = data.value;
 
   const deleteAction = useDeleteProduct();
@@ -417,38 +428,100 @@ export default component$(() => {
   const syncSort = useSignal('sold_quantity_desc');
   const currentScrollId = useSignal<string | null>(null);
   const totalSyncedSession = useSignal(0);
+  const searchInput = useSignal(searchTerm);
+
+  useTask$(({ track, cleanup }) => {
+    const value = track(() => searchInput.value);
+    
+    // Don't trigger if it's the same as the current URL param
+    if (value === searchTerm) return;
+
+    const timeout = setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      if (value) {
+        params.set('search', value);
+      } else {
+        params.delete('search');
+      }
+      params.set('page', '1');
+      nav(`/admin/productos?${params.toString()}`);
+    }, 600);
+
+    cleanup(() => clearTimeout(timeout));
+  });
 
   const handleFilter = $((source: string) => {
+    const params = new URLSearchParams(window.location.search);
     if (source === 'all') {
-      nav('/admin/productos');
+      params.delete('source');
     } else {
-      nav(`/admin/productos?source=${source}`);
+      params.set('source', source);
     }
+    params.set('page', '1');
+    nav(`/admin/productos?${params.toString()}`);
+  });
+
+  const handleSearch = $((event: Event) => {
+    event.preventDefault();
   });
 
   return (
-    <div class="max-w-7xl mx-auto">
+    <div class="max-w-full px-4 md:px-8">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h1 class="text-2xl font-bold text-slate-900">Productos</h1>
           <p class="text-slate-500">Gestiona el catálogo de artículos disponibles.</p>
         </div>
-        <div class="flex items-center gap-3">
-          <button
-            onClick$={() => showSyncPanel.value = !showSyncPanel.value}
-            class={`px-4 py-2.5 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 ${showSyncPanel.value ? 'bg-slate-200 text-slate-800' : 'bg-yellow-500 hover:bg-yellow-600 text-white'}`}
-          >
-            <LuRefreshCw class="h-4 w-4" />
-            Sincronizar Meli
-          </button>
-          <Link
-            href="/admin/productos/nuevo"
-            class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors flex items-center gap-2"
-          >
-            <LuPlus class="h-4 w-4" /> Nuevo Producto
-          </Link>
+        <div class="flex flex-col md:flex-row md:items-center gap-4">
+          <div class="relative flex-1 max-w-md">
+            <input
+              type="text"
+              bind:value={searchInput}
+              placeholder="Buscar por nombre o SKU..."
+              class="w-full pl-10 pr-10 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+            />
+            <LuSearch class="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+            {searchInput.value && (
+              <button
+                onClick$={() => searchInput.value = ''}
+                class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 transition-colors"
+                title="Limpiar búsqueda"
+              >
+                <LuX class="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button
+              onClick$={() => showSyncPanel.value = !showSyncPanel.value}
+              class={`px-4 py-2.5 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 ${showSyncPanel.value ? 'bg-slate-200 text-slate-800' : 'bg-yellow-500 hover:bg-yellow-600 text-white'}`}
+            >
+              <LuRefreshCw class="h-4 w-4" />
+              Sincronizar Meli
+            </button>
+            <Link
+              href="/admin/productos/nuevo"
+              class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm transition-colors flex items-center gap-2"
+            >
+              <LuPlus class="h-4 w-4" /> Nuevo Producto
+            </Link>
+          </div>
         </div>
       </div>
+
+      {searchTerm && (
+        <div class="mb-4 flex items-center gap-2 text-sm text-slate-600 bg-slate-100 w-fit px-3 py-1 rounded-full border border-slate-200 animate-in fade-in slide-in-from-left-2 duration-300">
+          <LuTag class="w-3.5 h-3.5 text-cyan-600" />
+          <span>Filtrando por: <strong class="text-slate-900">"{searchTerm}"</strong></span>
+          <button
+            onClick$={() => searchInput.value = ''}
+            class="ml-1 hover:text-red-500 transition-colors"
+          >
+            <LuX class="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {showSyncPanel.value && (
         <div class="mb-6 bg-white border border-yellow-200 shadow-sm rounded-xl p-5">
@@ -617,7 +690,7 @@ export default component$(() => {
                 <th class="px-6 py-3 font-medium">Precio</th>
                 <th class="px-6 py-3 font-medium">Stock/Ventas</th>
                 <th class="px-6 py-3 font-medium">Fuente</th>
-                <th class="px-6 py-3 font-medium">Estado Meli</th>
+                <th class="px-6 py-3 font-medium">Estado</th>
                 <th class="px-6 py-3 font-medium text-center">Destacado</th>
                 <th class="px-6 py-3 font-medium text-center">Activo</th>
                 <th class="px-6 py-3 font-medium text-right">Acciones</th>
@@ -758,24 +831,24 @@ export default component$(() => {
           </div>
           <div class="flex items-center gap-2">
             <Link 
-              href={`/admin/productos?page=${page > 1 ? page - 1 : 1}${sourceFilter !== 'all' ? `&source=${sourceFilter}` : ''}`}
+              href={`/admin/productos?page=${page > 1 ? page - 1 : 1}${sourceFilter !== 'all' ? `&source=${sourceFilter}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`}
               class={`px-3 py-1.5 rounded text-sm font-medium border ${page <= 1 ? 'border-slate-100 text-slate-300 pointer-events-none' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
             >
               Anterior
             </Link>
-            
+
             <div class="hidden sm:flex items-center gap-1">
               {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                 // Show windows of pages around current page
                 let p = page - 2 + i;
                 if (page < 3) p = i + 1;
                 else if (page > totalPages - 2) p = totalPages - 4 + i;
-                
+
                 if (p > 0 && p <= totalPages) {
                   return (
                     <Link
                       key={p}
-                      href={`/admin/productos?page=${p}${sourceFilter !== 'all' ? `&source=${sourceFilter}` : ''}`}
+                      href={`/admin/productos?page=${p}${sourceFilter !== 'all' ? `&source=${sourceFilter}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`}
                       class={`w-8 h-8 flex items-center justify-center rounded text-sm font-medium ${page === p ? 'bg-cyan-600 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
                     >
                       {p}
@@ -787,7 +860,7 @@ export default component$(() => {
             </div>
 
             <Link 
-              href={`/admin/productos?page=${page < totalPages ? page + 1 : totalPages}${sourceFilter !== 'all' ? `&source=${sourceFilter}` : ''}`}
+              href={`/admin/productos?page=${page < totalPages ? page + 1 : totalPages}${sourceFilter !== 'all' ? `&source=${sourceFilter}` : ''}${searchTerm ? `&search=${searchTerm}` : ''}`}
               class={`px-3 py-1.5 rounded text-sm font-medium border ${page >= totalPages ? 'border-slate-100 text-slate-300 pointer-events-none' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
             >
               Siguiente
