@@ -668,7 +668,7 @@ export const head: DocumentHead = {
   meta: [
     {
       name: 'description',
-      content: 'Distribuidores mayoristas especializados en agua potable, cloaca, desagües pluviales y gas. Más de 40 años de experiencia.',
+      content: 'Distribuidores mayoristas especializados en agua potable, cloaca, desagües pluviales y gas. Más de 25 años de experiencia.',
     },
   ],
 };

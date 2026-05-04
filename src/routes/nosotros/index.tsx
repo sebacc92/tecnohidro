@@ -84,7 +84,7 @@ export default component$(() => {
                   <strong>Tecnohidro S.A.</strong> es la continuación de un proyecto familiar creado con mucho esfuerzo, cultura de trabajo y honestidad. Estos valores se vieron remunerados en nuestros inicios gracias a la confianza que por los años 70 nos brindaron nuestros proveedores, quienes hoy en día continúan colaborando con nosotros.
                 </p>
                 <p>
-                  Con esos cimientos y respaldados por más de <strong>40 años de experiencia</strong> en el sector, logramos posicionarnos como los principales referentes en el rubro de la distribución de materiales para la construcción, reparación y ampliación de Redes de Agua Potable, Cloaca, Desagües Pluviales y Gas.
+                  Con esos cimientos y respaldados por más de <strong>25 años de experiencia</strong> en el sector, logramos posicionarnos como los principales referentes en el rubro de la distribución de materiales para la construcción, reparación y ampliación de Redes de Agua Potable, Cloaca, Desagües Pluviales y Gas.
                 </p>
                 <p>
                   Nos caracterizamos por ser referencia de calidad, ofreciendo una excelente relación calidad/precio, entrega inmediata y, sobre todo, responsabilidad con los compromisos asumidos con nuestros clientes y colaboradores tanto en la venta como en la post-venta.
@@ -134,7 +134,7 @@ export default component$(() => {
                 <div class="w-16 h-16 bg-primary-100 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <LuClock class="w-8 h-8" />
                 </div>
-                <h3 class="text-4xl font-extrabold text-slate-900 mb-2">+40</h3>
+                <h3 class="text-4xl font-extrabold text-slate-900 mb-2">+25</h3>
                 <p class="text-slate-500 font-medium uppercase tracking-wide text-sm">Años de Experiencia</p>
               </div>
 
@@ -287,7 +287,7 @@ export const head: DocumentHead = {
   meta: [
     {
       name: 'description',
-      content: 'Con más de 40 años de experiencia, somos distribuidores líderes de materiales para redes de agua, cloaca y gas.',
+      content: 'Con más de 25 años de experiencia, somos distribuidores líderes de materiales para redes de agua, cloaca y gas.',
     },
   ],
 };
