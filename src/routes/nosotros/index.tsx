@@ -9,7 +9,21 @@ import { inArray } from 'drizzle-orm';
 export const useNosotrosContent = routeLoader$(async ({ env }) => {
   const db = getDb(env);
   const data = await db.select().from(siteContent).where(
-    inArray(siteContent.key, ['nosotros_gallery', 'nosotros_reel_video', 'nosotros_hero_image', 'nosotros_video_preview'])
+    inArray(siteContent.key, [
+      'nosotros_gallery',
+      'nosotros_reel_video',
+      'nosotros_hero_image',
+      'nosotros_video_preview',
+      'nosotros_hero_title',
+      'nosotros_hero_subtitle',
+      'nosotros_history_title',
+      'nosotros_history_p1',
+      'nosotros_history_p2',
+      'nosotros_history_p3',
+      'nosotros_stats_years',
+      'nosotros_stats_items',
+      'nosotros_stats_meters'
+    ])
   );
 
   const content: Record<string, any> = {
@@ -28,6 +42,8 @@ export const useNosotrosContent = routeLoader$(async ({ env }) => {
       content.heroImage = item.value;
     } else if (item.key === 'nosotros_video_preview') {
       content.videoPreview = item.value;
+    } else {
+      content[item.key] = item.value;
     }
   }
 
@@ -65,11 +81,12 @@ export default component$(() => {
           <div class="container relative z-10 mx-auto px-4 py-24 md:py-32 md:px-8">
             <div class="max-w-3xl">
               <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">
-                Sobre Tecnohidro S.A.
+                {content.value.nosotros_hero_title || 'Sobre Tecnohidro S.A.'}
               </h1>
-              <p class="text-xl text-slate-300 leading-relaxed font-light">
-                Somos distribuidores de materiales para la construcción de Redes de infraestructura de Agua, Cloaca y Gas para obra pública y privada, con ventas por mayor y menor.
-              </p>
+              <p
+                class="text-xl text-slate-300 leading-relaxed font-light"
+                dangerouslySetInnerHTML={content.value.nosotros_hero_subtitle || 'Somos distribuidores de materiales para la construcción de Redes de infraestructura de Agua, Cloaca y Gas para obra pública y privada, con ventas por mayor y menor.'}
+              />
             </div>
           </div>
         </section>
@@ -79,16 +96,21 @@ export default component$(() => {
           <div class="container mx-auto px-4 md:px-8">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               <div class="space-y-6 text-slate-600 leading-relaxed text-lg">
-                <h2 class="text-3xl font-bold text-slate-900 mb-8 tracking-tight">Nuestra Historia</h2>
-                <p>
-                  <strong>Tecnohidro S.A.</strong> es la continuación de un proyecto familiar creado con mucho esfuerzo, cultura de trabajo y honestidad. Estos valores se vieron remunerados en nuestros inicios gracias a la confianza que por los años 70 nos brindaron nuestros proveedores, quienes hoy en día continúan colaborando con nosotros.
-                </p>
-                <p>
-                  Con esos cimientos y respaldados por más de <strong>25 años de experiencia</strong> en el sector, logramos posicionarnos como los principales referentes en el rubro de la distribución de materiales para la construcción, reparación y ampliación de Redes de Agua Potable, Cloaca, Desagües Pluviales y Gas.
-                </p>
-                <p>
-                  Nos caracterizamos por ser referencia de calidad, ofreciendo una excelente relación calidad/precio, entrega inmediata y, sobre todo, responsabilidad con los compromisos asumidos con nuestros clientes y colaboradores tanto en la venta como en la post-venta.
-                </p>
+                <h2 class="text-3xl font-bold text-slate-900 mb-8 tracking-tight">
+                  {content.value.nosotros_history_title || 'Nuestra Historia'}
+                </h2>
+                <div
+                  class="prose prose-slate prose-lg max-w-none"
+                  dangerouslySetInnerHTML={content.value.nosotros_history_p1 || '<strong>Tecnohidro S.A.</strong> es la continuación de un proyecto familiar creado con mucho esfuerzo, cultura de trabajo y honestidad. Estos valores se vieron remunerados en nuestros inicios gracias a la confianza que por los años 70 nos brindaron nuestros proveedores, quienes hoy en día continúan colaborando con nosotros.'}
+                />
+                <div
+                  class="prose prose-slate prose-lg max-w-none"
+                  dangerouslySetInnerHTML={content.value.nosotros_history_p2 || 'Con esos cimientos y respaldados por más de 25 años de experiencia en el sector, logramos posicionarnos como los principales referentes en el rubro de la distribución de materiales para la construcción, reparación y ampliación de Redes de Agua Potable, Cloaca, Desagües Pluviales y Gas.'}
+                />
+                <div
+                  class="prose prose-slate prose-lg max-w-none"
+                  dangerouslySetInnerHTML={content.value.nosotros_history_p3 || 'Nos caracterizamos por ser referencia de calidad, ofreciendo una excelente relación calidad/precio, entrega inmediata y, sobre todo, responsabilidad con los compromisos asumidos con nuestros clientes y colaboradores tanto en la venta como en la post-venta.'}
+                />
               </div>
 
               <div class="flex justify-center lg:justify-end">
@@ -134,7 +156,7 @@ export default component$(() => {
                 <div class="w-16 h-16 bg-primary-100 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <LuClock class="w-8 h-8" />
                 </div>
-                <h3 class="text-4xl font-extrabold text-slate-900 mb-2">+25</h3>
+                <h3 class="text-4xl font-extrabold text-slate-900 mb-2">{content.value.nosotros_stats_years || '+25'}</h3>
                 <p class="text-slate-500 font-medium uppercase tracking-wide text-sm">Años de Experiencia</p>
               </div>
 
@@ -142,7 +164,7 @@ export default component$(() => {
                 <div class="w-16 h-16 bg-primary-100 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <LuPackage class="w-8 h-8" />
                 </div>
-                <h3 class="text-4xl font-extrabold text-slate-900 mb-2">+500</h3>
+                <h3 class="text-4xl font-extrabold text-slate-900 mb-2">{content.value.nosotros_stats_items || '+500'}</h3>
                 <p class="text-slate-500 font-medium uppercase tracking-wide text-sm">Artículos en Stock</p>
               </div>
 
@@ -150,7 +172,7 @@ export default component$(() => {
                 <div class="w-16 h-16 bg-primary-100 text-primary-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <LuBuilding2 class="w-8 h-8" />
                 </div>
-                <h3 class="text-4xl font-extrabold text-slate-900 mb-2">+2.000</h3>
+                <h3 class="text-4xl font-extrabold text-slate-900 mb-2">{content.value.nosotros_stats_meters || '+2.000'}</h3>
                 <p class="text-slate-500 font-medium uppercase tracking-wide text-sm">Metros Cuadrados</p>
               </div>
             </div>

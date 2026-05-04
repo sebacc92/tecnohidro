@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm';
 import { LuSave, LuCheckCircle2, LuImage, LuTrash2, LuLayout, LuQuote, LuUsers, LuFilm, LuPlus } from '@qwikest/icons/lucide';
 import { upload } from '@vercel/blob/client';
 import imageCompression from 'browser-image-compression';
+import { RichTextEditor } from '~/components/ui/RichTextEditor';
 
 interface Slide {
   url: string;
@@ -59,6 +60,16 @@ export const useSaveContent = routeAction$(
       await updateOrInsert('nosotros_gallery', data.nosotros_gallery || '[]');
       await updateOrInsert('nosotros_reel_video', data.nosotros_reel_video || '');
 
+      await updateOrInsert('nosotros_hero_title', data.nosotros_hero_title || '');
+      await updateOrInsert('nosotros_hero_subtitle', data.nosotros_hero_subtitle || '');
+      await updateOrInsert('nosotros_history_title', data.nosotros_history_title || '');
+      await updateOrInsert('nosotros_history_p1', data.nosotros_history_p1 || '');
+      await updateOrInsert('nosotros_history_p2', data.nosotros_history_p2 || '');
+      await updateOrInsert('nosotros_history_p3', data.nosotros_history_p3 || '');
+      await updateOrInsert('nosotros_stats_years', data.nosotros_stats_years || '');
+      await updateOrInsert('nosotros_stats_items', data.nosotros_stats_items || '');
+      await updateOrInsert('nosotros_stats_meters', data.nosotros_stats_meters || '');
+
       return { success: true };
     } catch (error) {
       console.error('Error saving content:', error);
@@ -78,6 +89,15 @@ export const useSaveContent = routeAction$(
     nosotros_video_preview: z.string().optional(),
     nosotros_gallery: z.string().optional(),
     nosotros_reel_video: z.string().optional(),
+    nosotros_hero_title: z.string().optional(),
+    nosotros_hero_subtitle: z.string().optional(),
+    nosotros_history_title: z.string().optional(),
+    nosotros_history_p1: z.string().optional(),
+    nosotros_history_p2: z.string().optional(),
+    nosotros_history_p3: z.string().optional(),
+    nosotros_stats_years: z.string().optional(),
+    nosotros_stats_items: z.string().optional(),
+    nosotros_stats_meters: z.string().optional(),
   })
 );
 
@@ -478,6 +498,107 @@ export default component$(() => {
 
         {activeTab.value === 'nosotros' && (
           <div class="space-y-8">
+            {/* Textos Principales Nosotros */}
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="font-bold text-slate-800">Textos Principales (Hero)</h2>
+                <p class="text-xs text-slate-500 mt-1">Modifica los títulos y descripciones del encabezado.</p>
+              </div>
+              <div class="p-6 space-y-4">
+                <div class="space-y-1">
+                  <label class="text-xs font-bold text-slate-500 uppercase">Título Hero</label>
+                  <input
+                    type="text"
+                    name="nosotros_hero_title"
+                    value={content.value.nosotros_hero_title || 'Sobre Tecnohidro S.A.'}
+                    class="w-full rounded-md border border-slate-300 px-4 py-2.5 text-sm focus:border-orange-500 outline-none transition-colors"
+                  />
+                </div>
+                <RichTextEditor
+                  label="Subtítulo Hero"
+                  name="nosotros_hero_subtitle"
+                  value={content.value.nosotros_hero_subtitle || 'Somos distribuidores de materiales para la construcción de Redes de infraestructura de Agua, Cloaca y Gas para obra pública y privada, con ventas por mayor y menor.'}
+                />
+              </div>
+            </div>
+
+            {/* Historia Nosotros */}
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="font-bold text-slate-800">Sección Historia</h2>
+                <p class="text-xs text-slate-500 mt-1">Contenido de la sección de historia y valores.</p>
+              </div>
+              <div class="p-6 space-y-6">
+                <div class="space-y-1">
+                  <label class="text-xs font-bold text-slate-500 uppercase">Título de Historia</label>
+                  <input
+                    type="text"
+                    name="nosotros_history_title"
+                    value={content.value.nosotros_history_title || 'Nuestra Historia'}
+                    class="w-full rounded-md border border-slate-300 px-4 py-2.5 text-sm focus:border-orange-500 outline-none transition-colors"
+                  />
+                </div>
+                
+                <RichTextEditor
+                  label="Párrafo 1"
+                  name="nosotros_history_p1"
+                  value={content.value.nosotros_history_p1 || '<strong>Tecnohidro S.A.</strong> es la continuación de un proyecto familiar creado con mucho esfuerzo, cultura de trabajo y honestidad. Estos valores se vieron remunerados en nuestros inicios gracias a la confianza que por los años 70 nos brindaron nuestros proveedores, quienes hoy en día continúan colaborando con nosotros.'}
+                />
+
+                <RichTextEditor
+                  label="Párrafo 2"
+                  name="nosotros_history_p2"
+                  value={content.value.nosotros_history_p2 || 'Con esos cimientos y respaldados por más de 25 años de experiencia en el sector, logramos posicionarnos como los principales referentes en el rubro de la distribución de materiales para la construcción, reparación y ampliación de Redes de Agua Potable, Cloaca, Desagües Pluviales y Gas.'}
+                />
+
+                <RichTextEditor
+                  label="Párrafo 3"
+                  name="nosotros_history_p3"
+                  value={content.value.nosotros_history_p3 || 'Nos caracterizamos por ser referencia de calidad, ofreciendo una excelente relación calidad/precio, entrega inmediata y, sobre todo, responsabilidad con los compromisos asumidos con nuestros clientes y colaboradores tanto en la venta como en la post-venta.'}
+                />
+              </div>
+            </div>
+
+            {/* Estadísticas Nosotros */}
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="font-bold text-slate-800">Contadores y Estadísticas</h2>
+                <p class="text-xs text-slate-500 mt-1">Modifica los números destacados que aparecen en la página.</p>
+              </div>
+              <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="space-y-1">
+                  <label class="text-xs font-bold text-slate-500 uppercase">Años de Experiencia</label>
+                  <input
+                    type="text"
+                    name="nosotros_stats_years"
+                    value={content.value.nosotros_stats_years || '+25'}
+                    placeholder="+25"
+                    class="w-full rounded-md border border-slate-300 px-4 py-2.5 text-sm focus:border-orange-500 outline-none transition-colors"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-xs font-bold text-slate-500 uppercase">Artículos en Stock</label>
+                  <input
+                    type="text"
+                    name="nosotros_stats_items"
+                    value={content.value.nosotros_stats_items || '+500'}
+                    placeholder="+500"
+                    class="w-full rounded-md border border-slate-300 px-4 py-2.5 text-sm focus:border-orange-500 outline-none transition-colors"
+                  />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-xs font-bold text-slate-500 uppercase">Metros Cuadrados</label>
+                  <input
+                    type="text"
+                    name="nosotros_stats_meters"
+                    value={content.value.nosotros_stats_meters || '+2.000'}
+                    placeholder="+2.000"
+                    class="w-full rounded-md border border-slate-300 px-4 py-2.5 text-sm focus:border-orange-500 outline-none transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Imagen Principal Nosotros */}
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
               <div class="p-6 border-b border-slate-100 bg-slate-50/50">
