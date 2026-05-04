@@ -95,10 +95,10 @@ export const Chatbot = component$((props: { avatarUrl?: string }) => {
       <button
         onClick$={() => (state.isOpen = !state.isOpen)}
         class={[
-          "fixed z-40 p-3 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer",
+          "fixed z-40 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 flex items-center justify-center cursor-pointer",
           state.isOpen 
-            ? "bg-slate-900 text-white w-12 h-12 bottom-6 right-6 sm:h-14 sm:w-14 border border-slate-700" 
-            : "bg-white text-orange-600 w-14 h-14 bottom-6 right-6 sm:h-16 sm:w-16 border-2 border-orange-100 hover:border-orange-500" 
+            ? "bg-slate-900 text-white w-12 h-12 bottom-6 right-6 sm:h-14 sm:w-14 border border-slate-700 p-3" 
+            : `bg-white text-orange-600 w-14 h-14 bottom-6 right-6 sm:h-16 sm:w-16 border-2 border-orange-100 hover:border-orange-500 ${props.avatarUrl ? 'p-0 overflow-hidden' : 'p-3'}` 
         ]}
         aria-label="Abrir asistente virtual"
       >
