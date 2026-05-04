@@ -462,6 +462,7 @@ export const useHomeData = routeLoader$(async ({ env }) => {
       offers: offerProducts,
       brands: allBrands,
       instagramPosts: mappedIgPosts,
+      content: contentMap,
     };
   } catch (error) {
     console.error('Database query error:', error);
@@ -474,6 +475,7 @@ export const useHomeData = routeLoader$(async ({ env }) => {
       brands: [],
       instagramPosts: [],
       weeklyOffer: { image: '', link: '' },
+      content: {},
     };
   }
 });
@@ -616,27 +618,31 @@ export default component$(() => {
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="bg-white p-8 rounded-xl shadow-sm border-2 border-orange-500 flex flex-col hover:shadow-md transition-shadow">
               <LuTruck class="w-10 h-10 text-orange-600 mb-4" />
-              <h3 class="text-xl font-bold mb-3">Envíos a todo el país</h3>
-              <p class="text-slate-600 leading-relaxed">
-                Elegí la forma de entrega que prefieras ¡y listo!<br /><br />
-                Aseguramos tu entrega con envíos de Mercado Libre.
-              </p>
+              <h3 class="text-xl font-bold mb-3">{data.value.content['home_benefit_1_title'] || 'Envíos a todo el país'}</h3>
+              <div
+                class="text-slate-600 leading-relaxed prose-sm"
+                dangerouslySetInnerHTML={data.value.content['home_benefit_1_desc'] || 'Elegí la forma de entrega que prefieras ¡y listo!<br /><br />Aseguramos tu entrega con envíos de Mercado Libre.'}
+              />
             </div>
             <div class="bg-white p-8 rounded-xl shadow-sm border-2 border-orange-500 flex flex-col hover:shadow-md transition-shadow">
               <LuPackage class="w-10 h-10 text-orange-600 mb-4" />
-              <h3 class="text-xl font-bold mb-3">Envío Gratis</h3>
-              <p class="text-slate-600 leading-relaxed">
-                Envío sin cargo en el <b>Gran La Plata</b> para compras con entrega dentro de las <b>24 hs</b>.
-              </p>
+              <h3 class="text-xl font-bold mb-3">{data.value.content['home_benefit_2_title'] || 'Envío Gratis'}</h3>
+              <div
+                class="text-slate-600 leading-relaxed prose-sm"
+                dangerouslySetInnerHTML={data.value.content['home_benefit_2_desc'] || 'Envío sin cargo en el <b>Gran La Plata</b> para compras con entrega dentro de las <b>24 hs</b>.'}
+              />
             </div>
             <div class="bg-white p-8 rounded-xl shadow-sm border-2 border-orange-500 flex flex-col hover:shadow-md transition-shadow">
               <LuPercent class="w-10 h-10 text-orange-600 mb-4" />
-              <h3 class="text-xl font-bold mb-3">Promociones con Tarjetas</h3>
-              <div class="text-slate-600 text-sm space-y-2 mb-6">
-                <p>• <strong>4 cuotas</strong> con Banco Provincia.</p>
-                <p>• <strong>3 cuotas sin interés</strong> con Mercado Pago (QR en el local).</p>
-                <p>• <strong>3 cuotas sin interés</strong> con tarjetas bancarizadas excepto Provincia (miércoles y sábados).</p>
-              </div>
+              <h3 class="text-xl font-bold mb-3">{data.value.content['home_benefit_3_title'] || 'Promociones con Tarjetas'}</h3>
+              <div
+                class="text-slate-600 text-sm space-y-2 mb-6"
+                dangerouslySetInnerHTML={data.value.content['home_benefit_3_desc'] || `
+                  <p>• <strong>4 cuotas</strong> con Banco Provincia.</p>
+                  <p>• <strong>3 cuotas sin interés</strong> con Mercado Pago (QR en el local).</p>
+                  <p>• <strong>3 cuotas sin interés</strong> con tarjetas bancarizadas excepto Provincia (miércoles y sábados).</p>
+                `}
+              />
               <div class="mt-auto">
                 <MediosDePagoImg />
               </div>

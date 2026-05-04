@@ -70,6 +70,12 @@ export const useSaveContent = routeAction$(
       await updateOrInsert('nosotros_stats_items', data.nosotros_stats_items || '');
       await updateOrInsert('nosotros_stats_meters', data.nosotros_stats_meters || '');
 
+      // Save Benefits fields
+      for (let i = 1; i <= 3; i++) {
+        await updateOrInsert(`home_benefit_${i}_title`, (data as any)[`home_benefit_${i}_title`] || '');
+        await updateOrInsert(`home_benefit_${i}_desc`, (data as any)[`home_benefit_${i}_desc`] || '');
+      }
+
       return { success: true };
     } catch (error) {
       console.error('Error saving content:', error);
@@ -98,13 +104,19 @@ export const useSaveContent = routeAction$(
     nosotros_stats_years: z.string().optional(),
     nosotros_stats_items: z.string().optional(),
     nosotros_stats_meters: z.string().optional(),
+    home_benefit_1_title: z.string().optional(),
+    home_benefit_1_desc: z.string().optional(),
+    home_benefit_2_title: z.string().optional(),
+    home_benefit_2_desc: z.string().optional(),
+    home_benefit_3_title: z.string().optional(),
+    home_benefit_3_desc: z.string().optional(),
   })
 );
 
 export default component$(() => {
   const content = useSiteContent();
   const saveAction = useSaveContent();
-  const activeTab = useSignal<'portada' | 'frases' | 'ofertas' | 'nosotros'>('portada');
+  const activeTab = useSignal<'portada' | 'frases' | 'ofertas' | 'nosotros' | 'beneficios'>('portada');
   const isUploading = useSignal<number | string | null>(null);
 
   // Parse existing hero slides
@@ -283,6 +295,17 @@ export default component$(() => {
             <LuUsers class="w-4 h-4" /> Nosotros
           </div>
           {activeTab.value === 'nosotros' && <div class="absolute bottom-0 left-0 w-full h-1 bg-orange-500 rounded-full" />}
+        </button>
+        <button
+          type="button"
+          onClick$={() => (activeTab.value = 'beneficios')}
+          class={`pb-4 px-2 text-sm font-bold tracking-wide uppercase transition-all relative ${activeTab.value === 'beneficios' ? 'text-orange-600' : 'text-slate-400 hover:text-slate-600'
+            }`}
+        >
+          <div class="flex items-center gap-2">
+            <LuCheckCircle2 class="w-4 h-4" /> Beneficios
+          </div>
+          {activeTab.value === 'beneficios' && <div class="absolute bottom-0 left-0 w-full h-1 bg-orange-500 rounded-full" />}
         </button>
       </div>
 
@@ -492,6 +515,94 @@ export default component$(() => {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab.value === 'beneficios' && (
+          <div class="space-y-8">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+              <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="font-bold text-slate-800">Tarjetas de Beneficios (Inicio)</h2>
+                <p class="text-xs text-slate-500 mt-1">Configura las 3 tarjetas que aparecen en la sección de beneficios de la portada.</p>
+              </div>
+              <div class="p-6 space-y-12">
+                {/* Beneficio 1 */}
+                <div class="space-y-4">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded">ITEM 1</span>
+                    <h3 class="font-bold text-slate-700">Envíos</h3>
+                  </div>
+                  <div class="grid grid-cols-1 gap-4">
+                    <div class="space-y-1">
+                      <label class="text-xs font-bold text-slate-500 uppercase">Título</label>
+                      <input
+                        type="text"
+                        name="home_benefit_1_title"
+                        value={content.value.home_benefit_1_title || 'Envíos a todo el país'}
+                        class="w-full rounded-md border border-slate-300 px-4 py-2.5 text-sm focus:border-orange-500 outline-none transition-colors"
+                      />
+                    </div>
+                    <RichTextEditor
+                      label="Descripción"
+                      name="home_benefit_1_desc"
+                      value={content.value.home_benefit_1_desc || 'Elegí la forma de entrega que prefieras ¡y listo!<br /><br />Aseguramos tu entrega con envíos de Mercado Libre.'}
+                    />
+                  </div>
+                </div>
+
+                <hr class="border-slate-100" />
+
+                {/* Beneficio 2 */}
+                <div class="space-y-4">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded">ITEM 2</span>
+                    <h3 class="font-bold text-slate-700">Envío Gratis</h3>
+                  </div>
+                  <div class="grid grid-cols-1 gap-4">
+                    <div class="space-y-1">
+                      <label class="text-xs font-bold text-slate-500 uppercase">Título</label>
+                      <input
+                        type="text"
+                        name="home_benefit_2_title"
+                        value={content.value.home_benefit_2_title || 'Envío Gratis'}
+                        class="w-full rounded-md border border-slate-300 px-4 py-2.5 text-sm focus:border-orange-500 outline-none transition-colors"
+                      />
+                    </div>
+                    <RichTextEditor
+                      label="Descripción"
+                      name="home_benefit_2_desc"
+                      value={content.value.home_benefit_2_desc || 'Envío sin cargo en el <b>Gran La Plata</b> para compras con entrega dentro de las <b>24 hs</b>.'}
+                    />
+                  </div>
+                </div>
+
+                <hr class="border-slate-100" />
+
+                {/* Beneficio 3 */}
+                <div class="space-y-4">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="bg-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded">ITEM 3</span>
+                    <h3 class="font-bold text-slate-700">Pagos</h3>
+                  </div>
+                  <div class="grid grid-cols-1 gap-4">
+                    <div class="space-y-1">
+                      <label class="text-xs font-bold text-slate-500 uppercase">Título</label>
+                      <input
+                        type="text"
+                        name="home_benefit_3_title"
+                        value={content.value.home_benefit_3_title || 'Promociones con Tarjetas'}
+                        class="w-full rounded-md border border-slate-300 px-4 py-2.5 text-sm focus:border-orange-500 outline-none transition-colors"
+                      />
+                    </div>
+                    <RichTextEditor
+                      label="Descripción"
+                      name="home_benefit_3_desc"
+                      value={content.value.home_benefit_3_desc || '<p>• <strong>4 cuotas</strong> con Banco Provincia.</p><p>• <strong>3 cuotas sin interés</strong> con Mercado Pago (QR en el local).</p><p>• <strong>3 cuotas sin interés</strong> con tarjetas bancarizadas excepto Provincia (miércoles y sábados).</p>'}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
