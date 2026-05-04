@@ -26,7 +26,7 @@ export const RichTextEditor = component$(({ value, name, label }: RichTextEditor
     }
   `);
 
-  const containerRef = useSignal<Element>();
+  const containerRef = useSignal<HTMLElement>();
   const inputRef = useSignal<HTMLInputElement>();
 
   // eslint-disable-next-line qwik/no-use-visible-task

@@ -83,7 +83,7 @@ export default component$(() => {
               <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">
                 {content.value.nosotros_hero_title || 'Sobre Tecnohidro S.A.'}
               </h1>
-              <p
+              <div
                 class="text-xl text-slate-300 leading-relaxed font-light"
                 dangerouslySetInnerHTML={content.value.nosotros_hero_subtitle || 'Somos distribuidores de materiales para la construcción de Redes de infraestructura de Agua, Cloaca y Gas para obra pública y privada, con ventas por mayor y menor.'}
               />
