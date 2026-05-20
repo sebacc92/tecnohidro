@@ -46,7 +46,7 @@ export const useSendContactEmail = routeAction$(async (datos, requestEvent) => {
     return fail(500, { message: 'Error de configuración del servidor' });
   }
 
-  const targetEmail = env.get('CONTACT_EMAIL') || 'info@tecnohidro.com.ar';
+  const targetEmail = env.get('CONTACT_EMAIL') || 'ventasweb@tecnohidro.ar';
 
   try {
     const response = await fetch('https://api.resend.com/emails', {
@@ -258,7 +258,7 @@ export default component$(() => {
               <LuMail class="w-7 h-7" />
             </div>
             <h3 class="text-lg font-bold text-slate-800 mb-2">Email</h3>
-            <p class="text-slate-600 text-sm break-all"><a href="mailto:info@tecnohidro.com.ar" class="hover:text-primary-600 transition-colors">info@tecnohidro.com.ar</a></p>
+            <p class="text-slate-600 text-sm break-all"><a href="mailto:ventasweb@tecnohidro.ar" class="hover:text-primary-600 transition-colors">ventasweb@tecnohidro.ar</a></p>
           </div>
 
           {/* Redes Sociales */}

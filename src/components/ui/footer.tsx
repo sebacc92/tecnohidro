@@ -53,7 +53,7 @@ export const Footer = component$(() => {
               </li>
               <li class="flex items-center gap-3">
                 <LuMail class="h-5 w-5 text-primary-400 shrink-0" />
-                <span>info@tecnohidro.com.ar</span>
+                <span>ventasweb@tecnohidro.ar</span>
               </li>
             </ul>
           </div>
