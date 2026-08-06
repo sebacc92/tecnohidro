@@ -1,8 +1,8 @@
 import { component$, $, useSignal, useTask$ } from '@builder.io/qwik';
-import { type DocumentHead, routeLoader$, routeAction$, Link, Form, z, zod$, useNavigate } from '@builder.io/qwik-city';
+import { type DocumentHead, routeLoader$, routeAction$, Link, Form, z, zod$, useNavigate, type RequestEventAction } from '@builder.io/qwik-city';
 import { getDb } from '~/db/client';
 import { products, categories } from '~/db/schema';
-import { eq, desc, asc, sql, like, or, and } from 'drizzle-orm';
+import { eq, desc, asc, sql, like, or, and, isNotNull } from 'drizzle-orm';
 import { LuPlus, LuTrash2, LuImage, LuTag, LuShoppingCart, LuClipboardEdit, LuRefreshCw, LuStar, LuSearch, LuX } from '@qwikest/icons/lucide';
 import { getValidMeliToken } from '~/services/meli';
 
@@ -155,7 +155,7 @@ export const useToggleFeatured = routeAction$(
 );
 
 export const useSyncMeliDiscovery = routeAction$(
-  async (_, { env }) => {
+  async (_, { env }: RequestEventAction) => {
     try {
       const userId = '191214085';
       const accessToken = await getValidMeliToken(env, userId);
@@ -439,6 +439,85 @@ export const useSyncSingleMeliProduct = routeAction$(
   })
 );
 
+export const useSyncMeliPrices = routeAction$(
+  async (_, { env }: RequestEventAction) => {
+    try {
+      const userId = '191214085';
+      const accessToken = await getValidMeliToken(env, userId);
+      const db = getDb(env);
+
+      // Obtener todos los productos cuya fuente es MercadoLibre y tienen meli_id
+      const meliProducts = await db
+        .select({ id: products.id, meli_id: products.meli_id })
+        .from(products)
+        .where(and(eq(products.source, 'meli'), isNotNull(products.meli_id)));
+
+      if (meliProducts.length === 0) {
+        return { success: true, updatedCount: 0, totalCount: 0, message: 'No hay productos vinculados con MercadoLibre.' };
+      }
+
+      const meliIds = meliProducts.map((p) => p.meli_id!).filter(Boolean);
+      let updatedCount = 0;
+      const chunkSize = 20;
+
+      for (let i = 0; i < meliIds.length; i += chunkSize) {
+        const chunkIds = meliIds.slice(i, i + chunkSize).join(',');
+        const itemsRes = await fetch(`https://api.mercadolibre.com/items?ids=${chunkIds}`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+
+        if (!itemsRes.ok) continue;
+        const itemsData = await itemsRes.json();
+
+        for (const result of itemsData) {
+          if (result.code !== 200) continue;
+          const item = result.body;
+
+          const price = item.price;
+          const originalPrice = item.original_price;
+          const status = item.status;
+          const lastUpdated = item.last_updated;
+
+          let isOffer = false;
+          let discountPrice = null;
+          let discountPercent = null;
+          let dbPrice = price;
+
+          if (originalPrice && originalPrice > price) {
+            isOffer = true;
+            dbPrice = originalPrice;
+            discountPrice = price;
+            discountPercent = Math.round((1 - price / originalPrice) * 100);
+          }
+
+          await db
+            .update(products)
+            .set({
+              price: dbPrice,
+              is_offer: isOffer,
+              discount_price: discountPrice,
+              discount_percent: discountPercent,
+              meli_status: status,
+              last_updated_meli: lastUpdated,
+            })
+            .where(eq(products.meli_id, item.id));
+
+          updatedCount++;
+        }
+      }
+
+      return {
+        success: true,
+        updatedCount,
+        totalCount: meliProducts.length
+      };
+    } catch (error: any) {
+      console.error('Error updating Meli prices:', error);
+      return { success: false, error: error.message || 'Error al actualizar precios de MercadoLibre' };
+    }
+  }
+);
+
 export default component$(() => {
   const data = useProducts();
   const prods = data.value.products;
@@ -456,6 +535,7 @@ export default component$(() => {
   const syncAction = useSyncMeliProducts();
   const syncSingleAction = useSyncSingleMeliProduct();
   const discoveryAction = useSyncMeliDiscovery();
+  const updatePricesAction = useSyncMeliPrices();
   const nav = useNavigate();
 
   const showSyncPanel = useSignal(false);
@@ -558,7 +638,7 @@ export default component$(() => {
         <div class="mb-6 bg-white border border-yellow-200 shadow-sm rounded-xl p-5">
           <h2 class="text-lg font-semibold text-slate-800 mb-4 border-b border-slate-100 pb-2">Sincronización Avanzada con MercadoLibre</h2>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
             <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 flex flex-col items-center justify-center text-center">
               <h3 class="font-medium text-slate-700 mb-2">Paso 1: Discovery</h3>
               <p class="text-xs text-slate-500 mb-3">Consulta cuántos productos tienes en MercadoLibre.</p>
@@ -662,6 +742,28 @@ export default component$(() => {
               {syncSingleAction.value && (
                 <div class={`text-[10px] mt-2 font-bold px-2 py-1 rounded-full inline-block border shadow-sm ${syncSingleAction.value.success ? 'text-green-700 bg-green-100 border-green-200' : 'text-red-700 bg-red-100 border-red-200'}`}>
                   {syncSingleAction.value.success ? '✓ Importado' : '✗ ' + syncSingleAction.value.error}
+                </div>
+              )}
+            </div>
+
+            <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-200 flex flex-col items-center justify-center text-center relative overflow-hidden">
+              <h3 class="font-medium text-emerald-900 mb-2">Paso 5: Precios Masivo</h3>
+              <p class="text-xs text-emerald-700 mb-3">Actualiza rápidamente los precios de todos los productos vinculados.</p>
+              <Form action={updatePricesAction} spaReset={false} class="w-full flex flex-col items-center gap-2">
+                <button
+                  type="submit"
+                  disabled={updatePricesAction.isRunning}
+                  class="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm px-3 py-2 rounded font-bold text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                >
+                  <LuRefreshCw class={`h-4 w-4 ${updatePricesAction.isRunning ? 'animate-spin' : ''}`} />
+                  {updatePricesAction.isRunning ? 'Actualizando...' : 'Actualizar Precios'}
+                </button>
+              </Form>
+              {updatePricesAction.value && (
+                <div class={`text-[10px] mt-2 font-bold px-2 py-1 rounded-full inline-block border shadow-sm ${updatePricesAction.value.success ? 'text-emerald-800 bg-emerald-100 border-emerald-300' : 'text-red-700 bg-red-100 border-red-200'}`}>
+                  {updatePricesAction.value.success
+                    ? `✓ ${updatePricesAction.value.updatedCount} / ${updatePricesAction.value.totalCount} actualizados`
+                    : '✗ ' + updatePricesAction.value.error}
                 </div>
               )}
             </div>
