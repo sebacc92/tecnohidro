@@ -6,6 +6,7 @@ interface ShareButtonProps {
   product: {
     id: string;
     name: string;
+    slug: string;
   };
   design?: 'small' | 'large';
 }
@@ -21,7 +22,9 @@ export const ShareButton = component$<ShareButtonProps>(({ product, design = 'sm
   });
 
   const handleShare = $(async () => {
-    const url = `${window.location.origin}/producto/${product.id}/`;
+    // Ruta canónica del producto. Antes apuntaba a /producto/{id}/, una página
+    // duplicada: los links compartidos no acumulaban señal sobre la real.
+    const url = `${window.location.origin}/productos/${product.slug}/`;
     
     if (canShare.value) {
       try {

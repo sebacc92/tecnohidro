@@ -2,7 +2,7 @@ import { component$, useSignal } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, routeAction$, Form, zod$, z } from '@builder.io/qwik-city';
 import { getDb } from '~/db/client';
 import { chatSessions, chatMessages } from '~/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, inArray } from 'drizzle-orm';
 import { LuMessageSquare, LuClock, LuUser, LuBot, LuTrash2, LuAlertCircle, LuCheckCircle2 } from '@qwikest/icons/lucide';
 
 // Interface for typed data
@@ -20,33 +20,44 @@ interface ChatSession {
   messages: ChatMessage[];
 }
 
-export const useAuditLogs = routeLoader$(async ({ env }) => {
+export const useAuditLogs = routeLoader$(async ({ env }): Promise<ChatSession[]> => {
   const db = getDb(env);
-  
+
   // Fetch sessions ordered by last active
   const sessionsData = await db.select()
     .from(chatSessions)
     .orderBy(desc(chatSessions.lastActive))
     .limit(50); // limit to last 50 for performance
 
-  // Fetch all messages for these sessions
-  const sessionsWithMessages: ChatSession[] = [];
+  if (sessionsData.length === 0) return [];
 
-  for (const session of sessionsData) {
-    const msgs = await db.select()
-      .from(chatMessages)
-      .where(eq(chatMessages.sessionId, session.id))
-      .orderBy(chatMessages.createdAt);
+  // Todos los mensajes de las 50 sesiones en una sola consulta. Antes se hacía
+  // un SELECT por sesión dentro del bucle: 50 round-trips a Turso por visita.
+  const allMessages = await db.select()
+    .from(chatMessages)
+    .where(inArray(chatMessages.sessionId, sessionsData.map((s) => s.id)))
+    .orderBy(chatMessages.createdAt);
 
-    sessionsWithMessages.push({
-      id: session.id,
-      createdAt: session.createdAt,
-      lastActive: session.lastActive,
-      messages: msgs as ChatMessage[],
-    });
+  const bySession = new Map<string, ChatMessage[]>();
+  for (const msg of allMessages) {
+    const entry: ChatMessage = {
+      id: msg.id,
+      role: msg.role,
+      content: msg.content,
+      createdAt: msg.createdAt,
+    };
+    const bucket = bySession.get(msg.sessionId);
+    if (bucket) bucket.push(entry);
+    else bySession.set(msg.sessionId, [entry]);
   }
 
-  return sessionsWithMessages;
+  // Se recorre `sessionsData` para conservar el orden por última actividad.
+  return sessionsData.map((session) => ({
+    id: session.id,
+    createdAt: session.createdAt,
+    lastActive: session.lastActive,
+    messages: bySession.get(session.id) ?? [],
+  }));
 });
 
 export const useDeleteChatAction = routeAction$(

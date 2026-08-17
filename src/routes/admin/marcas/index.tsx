@@ -86,7 +86,7 @@ export default component$(() => {
                     <td class="px-6 py-3">
                       <div class="w-16 h-12 rounded bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
                         {brand.imageUrl ? (
-                          <img src={brand.imageUrl} alt={brand.name} class="w-full h-full object-contain p-1" />
+                          <img width={64} height={64} loading="lazy" decoding="async" src={brand.imageUrl} alt={brand.name} class="w-full h-full object-contain p-1" />
                         ) : (
                           <LuImage class="h-5 w-5 text-slate-400" />
                         )}

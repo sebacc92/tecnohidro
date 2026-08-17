@@ -1,0 +1,27 @@
+User-agent: *
+
+# El panel y las APIs no aportan nada a la indexación y cada visita de un bot
+# es una invocación de función sin cachear.
+Disallow: /admin/
+Disallow: /api/
+
+# El catálogo acepta q, page, category, ofertas y destacados: combinadas dan un
+# espacio de URLs prácticamente infinito, y cada variante es un cache miss que
+# dispara una consulta a la base. Se indexan las páginas de categoría, que son
+# estables y cacheables.
+Disallow: /*?q=
+Disallow: /*?page=
+Disallow: /*?ofertas=
+Disallow: /*?destacados=
+Disallow: /productos?
+
+# Rutas de prueba que no deben indexarse.
+Disallow: /demo-meli
+Disallow: /demo-meli-up
+
+Allow: /
+
+# Espacia el rastreo de los bots que respetan la directiva.
+Crawl-delay: 10
+
+Sitemap: https://www.tecnohidro.ar/sitemap.xml

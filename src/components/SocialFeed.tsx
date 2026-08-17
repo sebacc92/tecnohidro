@@ -90,7 +90,10 @@ export const SocialFeed = component$<SocialFeedProps>(({ posts }) => {
               <img
                 src={post.mediaUrl}
                 alt={post.caption || 'Publicación de Instagram Tecnohidro'}
+                width={600}
+                height={600}
                 loading="lazy"
+                decoding="async"
                 class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
 

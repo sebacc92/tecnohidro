@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
 
 import { AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
 
@@ -11,7 +11,10 @@ export const categories = sqliteTable('categories', {
   parent_id: text('parent_id').references((): AnySQLiteColumn => categories.id),
   show_in_menu: integer('show_in_menu', { mode: 'boolean' }).default(true),
   sort_order: integer('sort_order').default(0),
-});
+}, (t) => ({
+  // El menú y los listados filtran por padre y ordenan por sort_order.
+  parentIdx: index('idx_categories_parent').on(t.parent_id, t.sort_order),
+}));
 
 export const products = sqliteTable('products', {
   id: text('id').primaryKey(),
@@ -35,7 +38,15 @@ export const products = sqliteTable('products', {
   offer_expires_at: integer('offer_expires_at', { mode: 'timestamp' }),
   discount_price: integer('discount_price'),
   discount_percent: integer('discount_percent'),
-});
+}, (t) => ({
+  // Home: destacados y ofertas. Sin estos dos se escanea la tabla entera en cada visita.
+  statusFeaturedIdx: index('idx_products_status_featured').on(t.status, t.is_featured),
+  statusOfferIdx: index('idx_products_status_offer').on(t.status, t.is_offer),
+  // Catálogo y páginas de categoría: filtro por rubro + estado.
+  categoryStatusIdx: index('idx_products_category_status').on(t.category_id, t.status),
+  // Listado paginado general (orderBy desc(id) sobre status='active').
+  statusIdx: index('idx_products_status').on(t.status, t.id),
+}));
 
 export const siteContent = sqliteTable('site_content', {
   key: text('key').primaryKey(),
@@ -65,13 +76,19 @@ export const instagramPosts = sqliteTable('instagram_posts', {
   mediaType: text('media_type'),
   caption: text('caption'),
   timestamp: text('timestamp'),
-});
+}, (t) => ({
+  // El home pide los 6 más recientes ordenados por timestamp.
+  timestampIdx: index('idx_instagram_timestamp').on(t.timestamp),
+}));
 
 export const chatSessions = sqliteTable('chat_sessions', {
   id: text('id').primaryKey(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
   lastActive: integer('last_active', { mode: 'timestamp' }).notNull(),
-});
+}, (t) => ({
+  // Auditoría lista las últimas 50 sesiones por actividad.
+  lastActiveIdx: index('idx_chat_sessions_last_active').on(t.lastActive),
+}));
 
 export const chatMessages = sqliteTable('chat_messages', {
   id: text('id').primaryKey(),
@@ -79,7 +96,10 @@ export const chatMessages = sqliteTable('chat_messages', {
   role: text('role', { enum: ['user', 'assistant', 'system'] }).notNull(),
   content: text('content').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
-});
+}, (t) => ({
+  // Auditoría agrupa mensajes por sesión en orden cronológico.
+  sessionIdx: index('idx_chat_messages_session').on(t.sessionId, t.createdAt),
+}));
 
 export const users = sqliteTable('users', {
   id: integer('id').primaryKey({ autoIncrement: true }),

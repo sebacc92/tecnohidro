@@ -24,7 +24,16 @@ export default component$(() => {
         )}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet" />
+        {/*
+          Solo Inter: `global.css` define únicamente --font-sans y no hay un solo
+          uso de font-serif en el proyecto, así que Playfair Display (con sus
+          itálicas y todo el rango 400..900) se descargaba en cada visita sin
+          que nada la usara.
+
+          El rango se acota a 300..900, que cubre desde font-light hasta
+          font-black, los pesos que realmente aparecen en las clases.
+        */}
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..900&display=swap" rel="stylesheet" />
         <RouterHead />
       </head>
       <body lang="en">

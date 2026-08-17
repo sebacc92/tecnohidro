@@ -1,6 +1,7 @@
 import { component$, useSignal } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, Link, useLocation } from '@builder.io/qwik-city';
 import { getDb } from '~/db/client';
+import { getCategories, childCategories } from '~/db/queries';
 import { products, categories } from '~/db/schema';
 import { eq, like, or, and, inArray, desc, sql } from 'drizzle-orm';
 import { AddToCartButton } from '~/components/cart/add-to-cart-button';
@@ -20,7 +21,7 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
 
   try {
     const db = getDb(requestEvent.env);
-    const allCategories = await db.select().from(categories);
+    const allCategories = await getCategories(db);
 
     const conditions = [eq(products.status, 'active')];
 
@@ -29,7 +30,7 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
       const cat = allCategories.find(c => c.slug === categorySlug);
       if (cat) {
         // Find all direct subcategories (assuming 2 levels deep for simple catalog)
-        const subCats = allCategories.filter(c => c.parent_id === cat.id);
+        const subCats = childCategories(allCategories, cat.id);
         const allIdsToMatch = [cat.id, ...subCats.map(c => c.id)];
         conditions.push(inArray(products.category_id, allIdsToMatch));
       }
@@ -56,35 +57,35 @@ export const useCatalogData = routeLoader$(async (requestEvent) => {
     const limit = 24;
     const offset = (page - 1) * limit;
 
-    const countQuery = db.select({ count: sql<number>`count(*)` }).from(products);
-    if (conditions.length > 0) {
-      countQuery.where(and(...conditions));
-    }
-    const countRes = await countQuery;
+    // Conteo y página de resultados en un solo viaje a Turso.
+    const [countRes, filteredProducts] = await db.batch([
+      db.select({ count: sql<number>`count(*)` }).from(products).where(and(...conditions)),
+
+      db.select({
+        id: products.id,
+        name: products.name,
+        slug: products.slug,
+        price: products.price,
+        stock: products.stock,
+        images: products.images,
+        source: products.source,
+        external_link: products.external_link,
+        is_offer: products.is_offer,
+        discount_price: products.discount_price,
+        discount_percent: products.discount_percent,
+        sku: products.sku,
+        categoryName: categories.name,
+      })
+        .from(products)
+        .leftJoin(categories, eq(products.category_id, categories.id))
+        .where(and(...conditions))
+        .orderBy(desc(products.id))
+        .limit(limit)
+        .offset(offset),
+    ]);
+
     const totalCount = countRes[0]?.count || 0;
     const totalPages = Math.ceil(totalCount / limit);
-
-    const filteredProducts = await db.select({
-      id: products.id,
-      name: products.name,
-      slug: products.slug,
-      price: products.price,
-      stock: products.stock,
-      images: products.images,
-      source: products.source,
-      external_link: products.external_link,
-      is_offer: products.is_offer,
-      discount_price: products.discount_price,
-      discount_percent: products.discount_percent,
-      sku: products.sku,
-      categoryName: categories.name,
-    })
-      .from(products)
-      .leftJoin(categories, eq(products.category_id, categories.id))
-      .where(and(...conditions))
-      .orderBy(desc(products.id))
-      .limit(limit)
-      .offset(offset);
 
     return {
       categories: allCategories,
@@ -347,7 +348,7 @@ export default component$(() => {
                           </div>
                           <div class="flex items-center gap-1.5 w-full">
                             <AddToCartButton product={cartProduct} class="flex-1 !h-8 !text-xs" />
-                            <ShareButton product={{ id: product.id, name: product.name }} />
+                            <ShareButton product={{ id: product.id, name: product.name, slug: product.slug }} />
                           </div>
                         </div>
                       </div>

@@ -75,6 +75,11 @@ export default component$(() => {
             <img
               src={content.value.heroImage || "https://placehold.co/1920x600/1e293b/334155?text=Imagen+Local+o+Depósito"}
               alt="Frente del local Tecnohidro"
+              width={1920}
+              height={600}
+              // Fondo del hero: es el LCP de la página, no debe ir en lazy.
+              loading="eager"
+              decoding="async"
               class="w-full h-full object-cover"
             />
           </div>
@@ -199,8 +204,11 @@ export default component$(() => {
                     <img
                       src={url}
                       alt={`Galería de Tecnohidro ${i + 1}`}
+                      width={600}
+                      height={600}
                       class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       loading="lazy"
+                      decoding="async"
                     />
                     <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                   </div>
@@ -215,8 +223,11 @@ export default component$(() => {
                     <img
                       src={`https://placehold.co/600x600/f8fafc/94a3b8?text=Foto+${item}`}
                       alt={`Galería de Tecnohidro ${item}`}
+                      width={600}
+                      height={600}
                       class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-50"
                       loading="lazy"
+                      decoding="async"
                     />
                   </div>
                 ))
@@ -292,6 +303,9 @@ export default component$(() => {
                 : `https://placehold.co/1200x1200/f8fafc/94a3b8?text=Foto+${selectedImageIndex.value! + 1}`
               }
               alt="Vista ampliada"
+              width={1200}
+              height={1200}
+              decoding="async"
               class="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
             />
             <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 text-white/60 text-sm font-medium">

@@ -490,7 +490,7 @@ export default component$(() => {
                   <div class="flex flex-wrap gap-4">
                     {previewUrls.value.map((url, index) => (
                       <div key={index} class="relative group">
-                        <img src={url} class="w-24 h-24 object-cover rounded-lg border-2 border-orange-400" />
+                        <img width={96} height={96} loading="lazy" decoding="async" src={url} class="w-24 h-24 object-cover rounded-lg border-2 border-orange-400" />
                         {!isCompressing.value && (
                           <button
                             type="button"
@@ -511,7 +511,7 @@ export default component$(() => {
                   <div class="flex flex-wrap gap-4">
                     {currentImageUrls.value.map((url: string, index: number) => (
                       <div key={index} class="relative group">
-                        <img src={url} class="w-24 h-24 object-cover rounded-lg border border-slate-200" />
+                        <img width={96} height={96} loading="lazy" decoding="async" src={url} class="w-24 h-24 object-cover rounded-lg border border-slate-200" />
                         <button
                           type="button"
                           onClick$={() => removeExistingImage(index)}

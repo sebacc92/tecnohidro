@@ -142,7 +142,7 @@ export default component$(() => {
                       <div class="mt-auto flex flex-col gap-2">
                         <div class="flex items-center gap-2">
                           <ContactButton productName={product.name} look="primary" size="sm" class="flex-1" />
-                          <ShareButton product={{ id: product.id, name: product.name }} />
+                          <ShareButton product={{ id: product.id, name: product.name, slug: product.slug }} />
                         </div>
                         {product.source === 'meli' && product.external_link && (
                           <a href={product.external_link} target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-1.5 rounded-lg text-sm font-bold bg-yellow-400 text-yellow-900 hover:bg-yellow-500 h-9 px-4 w-full">

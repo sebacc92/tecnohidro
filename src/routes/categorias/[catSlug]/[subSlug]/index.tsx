@@ -1,8 +1,9 @@
 import { component$, useSignal } from '@builder.io/qwik';
-import { type DocumentHead, routeLoader$, Link } from '@builder.io/qwik-city';
+import { type DocumentHead, routeLoader$, Link, useLocation } from '@builder.io/qwik-city';
 import { getDb } from '../../../../db/client';
+import { getCategories, childCategories } from '../../../../db/queries';
 import { products, categories } from '../../../../db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, desc, sql } from 'drizzle-orm';
 import { Breadcrumb } from '../../../../components/ui/breadcrumb/breadcrumb';
 import { ContactButton } from '../../../../components/ContactButton';
 import { LuCheck, LuExternalLink, LuTag, LuLayoutGrid, LuList, LuFilter, LuChevronDown, LuStar } from '@qwikest/icons/lucide';
@@ -13,36 +14,59 @@ export const useSubCategoryData = routeLoader$(async (requestEvent) => {
   const { catSlug, subSlug } = requestEvent.params;
   const db = getDb(requestEvent.env);
   try {
-    const allCategories = await db.select().from(categories);
+    const allCategories = await getCategories(db);
     const parentCat = allCategories.find((c) => c.slug === catSlug && !c.parent_id);
     const subCat = allCategories.find((c) => c.slug === subSlug && c.parent_id === parentCat?.id);
     if (!parentCat || !subCat) { requestEvent.status(404); return null; }
 
-    const grandChildren = allCategories.filter((c) => c.parent_id === subCat.id);
+    const grandChildren = childCategories(allCategories, subCat.id);
     const allIds = [subCat.id, ...grandChildren.map((c) => c.id)];
 
-    const prods = await db
-      .select({
-        id: products.id, name: products.name, slug: products.slug,
-        price: products.price, stock: products.stock, images: products.images,
-        source: products.source, external_link: products.external_link,
-        categoryName: categories.name,
-      })
-      .from(products)
-      .leftJoin(categories, eq(products.category_id, categories.id))
-      .where(and(eq(products.status, 'active'), inArray(products.category_id, allIds)));
+    // Paginado igual que /categorias/[catSlug]: antes esta ruta traía todos los
+    // productos de la subcategoría sin tope. Ningún producto deja de ser
+    // accesible, solo se reparten en páginas de 24 como en el resto del sitio.
+    const page = parseInt(requestEvent.url.searchParams.get('page') || '1') || 1;
+    const limit = 24;
+    const offset = (page - 1) * limit;
+
+    const baseCondition = and(eq(products.status, 'active'), inArray(products.category_id, allIds));
+
+    const [countRes, prods] = await db.batch([
+      db.select({ count: sql<number>`count(*)` }).from(products).where(baseCondition),
+
+      db
+        .select({
+          id: products.id, name: products.name, slug: products.slug,
+          price: products.price, stock: products.stock, images: products.images,
+          source: products.source, external_link: products.external_link,
+          categoryName: categories.name,
+        })
+        .from(products)
+        .leftJoin(categories, eq(products.category_id, categories.id))
+        .where(baseCondition)
+        .orderBy(desc(products.id))
+        .limit(limit)
+        .offset(offset),
+    ]);
+
+    const totalCount = countRes[0]?.count || 0;
+    const totalPages = Math.ceil(totalCount / limit);
 
     return {
       parentCategory: { id: parentCat.id, name: parentCat.name, slug: parentCat.slug },
       subCategory: { id: subCat.id, name: subCat.name, slug: subCat.slug },
       allCategories,
       products: prods,
+      page,
+      totalPages,
+      totalCount,
     };
   } catch (err) { console.error(err); requestEvent.status(500); return null; }
 });
 
 export default component$(() => {
   const data = useSubCategoryData();
+  const loc = useLocation();
   const viewMode = useSignal<'grid' | 'list'>('grid');
 
   if (!data.value) {
@@ -54,13 +78,19 @@ export default component$(() => {
     );
   }
 
-  const { parentCategory, subCategory, allCategories, products: prods } = data.value;
+  const { parentCategory, subCategory, allCategories, products: prods, page, totalPages, totalCount } = data.value;
   const rootCats = allCategories
     .filter((c) => !c.parent_id)
     .sort((a, b) => ((a.sort_order ?? 0) - (b.sort_order ?? 0)) || a.name.localeCompare(b.name));
   const getSubs = (pid: string) => allCategories
     .filter((c) => c.parent_id === pid)
     .sort((a, b) => ((a.sort_order ?? 0) - (b.sort_order ?? 0)) || a.name.localeCompare(b.name));
+
+  const buildPageUrl = (p: number) => {
+    const params = new URLSearchParams(loc.url.search);
+    params.set('page', p.toString());
+    return `${loc.url.pathname}?${params.toString()}`;
+  };
 
   return (
     <div class="container mx-auto px-4 md:px-8 py-12">
@@ -148,6 +178,7 @@ export default component$(() => {
           </div>
 
           {prods.length > 0 ? (
+            <>
             <div class={viewMode.value === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5' : 'flex flex-col gap-3'}>
               {prods.map((product) => {
                 const imgs = Array.isArray(product.images) ? product.images as string[] : [];
@@ -186,7 +217,7 @@ export default component$(() => {
                       <div class="mt-auto flex flex-col gap-2">
                         <div class="flex items-center gap-2">
                           <ContactButton productName={product.name} look="primary" size="sm" class="flex-1" />
-                          <ShareButton product={{ id: product.id, name: product.name }} />
+                          <ShareButton product={{ id: product.id, name: product.name, slug: product.slug }} />
                         </div>
                         {product.source === 'meli' && product.external_link && (
                           <a href={product.external_link} target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-1.5 rounded-lg text-sm font-bold bg-yellow-400 text-yellow-900 hover:bg-yellow-500 h-9 px-4 w-full">
@@ -199,6 +230,53 @@ export default component$(() => {
                 );
               })}
             </div>
+
+            {/* Pagination UI */}
+            {totalPages > 1 && (
+              <div class="mt-12 flex flex-col items-center gap-4">
+                <div class="text-sm text-slate-500">
+                  Mostrando <span class="font-medium text-slate-900">{(page - 1) * 24 + 1}</span> a <span class="font-medium text-slate-900">{Math.min(page * 24, totalCount)}</span> de <span class="font-medium text-slate-900">{totalCount}</span> productos
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <Link
+                    href={page > 1 ? buildPageUrl(page - 1) : ''}
+                    class={`px-4 py-2 rounded-lg font-medium transition-colors border ${page <= 1 ? 'border-slate-200 text-slate-400 pointer-events-none' : 'border-cyan-600 text-cyan-600 hover:bg-cyan-50'}`}
+                  >
+                    Anterior
+                  </Link>
+
+                  <div class="hidden sm:flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let p = page - 2 + i;
+                      if (page < 3) p = i + 1;
+                      else if (page > totalPages - 2) p = totalPages - 4 + i;
+
+                      if (p > 0 && p <= totalPages) {
+                        return (
+                          <Link
+                            key={p}
+                            href={buildPageUrl(p)}
+                            class={`w-10 h-10 flex items-center justify-center rounded-lg text-sm font-bold transition-colors ${page === p ? 'bg-cyan-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-100 border border-transparent hover:border-slate-200'}`}
+                          >
+                            {p}
+                          </Link>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+
+                  <Link
+                    href={page < totalPages ? buildPageUrl(page + 1) : ''}
+                    class={`px-4 py-2 rounded-lg font-medium transition-colors border ${page >= totalPages ? 'border-slate-200 text-slate-400 pointer-events-none' : 'border-cyan-600 text-cyan-600 hover:bg-cyan-50'}`}
+                  >
+                    Siguiente
+                  </Link>
+                </div>
+              </div>
+            )}
+            </>
           ) : (
             <div class="p-12 text-center text-slate-500 bg-white border border-dashed rounded-lg">No se encontraron productos en esta subcategoría.</div>
           )}

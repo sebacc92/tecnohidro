@@ -1,6 +1,7 @@
 import { component$, useSignal } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, Link } from '@builder.io/qwik-city';
 import { getDb } from '../../../db/client';
+import { getCategories } from '../../../db/queries';
 import { products, categories } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 import { Breadcrumb } from '../../../components/ui/breadcrumb/breadcrumb';
@@ -13,9 +14,12 @@ export const useProductDetail = routeLoader$(async (requestEvent) => {
   const { slug } = requestEvent.params;
   try {
     const db = getDb(requestEvent.env);
-    const allCategories = await db.select().from(categories);
 
-    const productRows = await db
+    // En paralelo: con el caché caliente `getCategories` resuelve al instante,
+    // y en frío no serializa contra la consulta del producto.
+    const [allCategories, productRows] = await Promise.all([
+      getCategories(db),
+      db
       .select({
         id: products.id,
         name: products.name,
@@ -37,7 +41,8 @@ export const useProductDetail = routeLoader$(async (requestEvent) => {
       .from(products)
       .leftJoin(categories, eq(products.category_id, categories.id))
       .where(eq(products.slug, slug))
-      .limit(1);
+      .limit(1),
+    ]);
 
     if (productRows.length === 0) {
       requestEvent.status(404);
@@ -151,6 +156,12 @@ export default component$(() => {
                 <img
                   src={images[activeImg.value]}
                   alt={product.name}
+                  width={800}
+                  height={800}
+                  // Imagen principal del producto, siempre sobre el pliegue:
+                  // en lazy retrasaría el LCP de la página.
+                  loading="eager"
+                  decoding="async"
                   class="max-h-full max-w-full object-contain mix-blend-multiply"
                 />
               ) : (
@@ -165,7 +176,7 @@ export default component$(() => {
                     onClick$={() => (activeImg.value = i)}
                     class={`w-16 h-16 rounded-lg border-2 overflow-hidden flex-shrink-0 transition-all ${activeImg.value === i ? 'border-orange-500' : 'border-transparent opacity-60 hover:opacity-100'}`}
                   >
-                    <img src={url} alt={`Imagen ${i + 1}`} class="w-full h-full object-cover" />
+                    <img src={url} alt={`Imagen ${i + 1}`} width={64} height={64} loading="lazy" decoding="async" class="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -233,7 +244,7 @@ export default component$(() => {
               </div>
               <div class="flex flex-col sm:flex-row gap-3">
                 <AddToCartButton product={cartProduct} class="flex-1 !h-12 !text-base" />
-                <ShareButton product={{ id: product.id, name: product.name }} />
+                <ShareButton product={{ id: product.id, name: product.name, slug: product.slug }} />
               </div>
               {product.source === 'meli' && product.external_link && (
                 <a

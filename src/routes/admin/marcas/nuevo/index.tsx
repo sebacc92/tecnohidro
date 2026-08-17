@@ -108,7 +108,7 @@ export default component$(() => {
 
                 {imagePreview.value && (
                   <div class="absolute inset-0 bg-white flex items-center justify-center p-4 z-10">
-                    <img src={imagePreview.value} alt="Preview" class="max-h-full max-w-full object-contain" />
+                    <img width={160} height={160} loading="lazy" decoding="async" src={imagePreview.value} alt="Preview" class="max-h-full max-w-full object-contain" />
                     <button
                       type="button"
                       class="absolute top-2 right-2 bg-red-500 text-white rounded-md p-1.5 hover:bg-red-600 transition-colors shadow-sm"

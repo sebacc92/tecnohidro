@@ -2,7 +2,7 @@ import { component$, useSignal, useVisibleTask$, $ } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, Link } from '@builder.io/qwik-city';
 import { getDb } from '../db/client';
 import { products, categories, siteContent, brands, instagramPosts } from '../db/schema';
-import { eq, isNull, desc, and } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 import { SocialFeed } from '../components/SocialFeed';
 import { ContactButton } from '../components/ContactButton';
 import { AddToCartButton } from '../components/cart/add-to-cart-button';
@@ -252,8 +252,11 @@ export const HeroSlider = component$(({ slides }: { slides: HeroSlide[] }) => {
             <img
               src={slide.url}
               alt={slide.alt || slide.title || 'Slide'}
+              width={1920}
+              height={800}
               class="w-full h-full object-cover"
               loading={idx === 0 ? 'eager' : 'lazy'}
+              decoding="async"
             />
 
             {/* Overlay */}
@@ -367,52 +370,70 @@ export const HighlightCarousel = component$(({ phrases }: { phrases: string[] })
 export const useHomeData = routeLoader$(async ({ env }) => {
   try {
     const db = getDb(env);
-    const contentData = await db.select().from(siteContent);
+
+    // Las cuatro consultas viajan en un solo request HTTP a Turso. Antes eran
+    // seis `await` encadenados: seis round-trips desde el Edge por cada render
+    // del home. La consulta de `featuredCategories` se eliminó porque su
+    // resultado nunca se leía en el render.
+    const [contentData, featuredProducts, offerProducts, allBrands, igPosts] = await db.batch([
+      db.select({ key: siteContent.key, value: siteContent.value }).from(siteContent),
+
+      db.select({
+        id: products.id,
+        name: products.name,
+        slug: products.slug,
+        price: products.price,
+        images: products.images,
+        source: products.source,
+        is_offer: products.is_offer,
+        discount_price: products.discount_price,
+        discount_percent: products.discount_percent,
+        categoryName: categories.name,
+      })
+        .from(products)
+        .leftJoin(categories, eq(products.category_id, categories.id))
+        .where(and(eq(products.status, 'active'), eq(products.is_featured, true)))
+        .limit(8),
+
+      db.select({
+        id: products.id,
+        name: products.name,
+        slug: products.slug,
+        price: products.price,
+        images: products.images,
+        source: products.source,
+        is_offer: products.is_offer,
+        discount_price: products.discount_price,
+        discount_percent: products.discount_percent,
+        offer_expires_at: products.offer_expires_at,
+        categoryName: categories.name,
+      })
+        .from(products)
+        .leftJoin(categories, eq(products.category_id, categories.id))
+        .where(and(eq(products.status, 'active'), eq(products.is_offer, true)))
+        .limit(5),
+
+      // El render ya hacía slice(0, 12), así que se acota en SQL.
+      db.select({ id: brands.id, name: brands.name, imageUrl: brands.imageUrl })
+        .from(brands)
+        .limit(12),
+
+      db.select({
+        id: instagramPosts.id,
+        mediaUrl: instagramPosts.mediaUrl,
+        permalink: instagramPosts.permalink,
+        caption: instagramPosts.caption,
+      })
+        .from(instagramPosts)
+        .orderBy(desc(instagramPosts.timestamp))
+        .limit(6),
+    ]);
+
     const contentMap = contentData.reduce((acc, curr) => {
       acc[curr.key] = curr.value;
       return acc;
     }, {} as Record<string, string>);
 
-    const featuredCategories = await db.select().from(categories).where(isNull(categories.parent_id)).limit(4);
-
-    const featuredProducts = await db.select({
-      id: products.id,
-      name: products.name,
-      slug: products.slug,
-      price: products.price,
-      images: products.images,
-      source: products.source,
-      is_offer: products.is_offer,
-      discount_price: products.discount_price,
-      discount_percent: products.discount_percent,
-      categoryName: categories.name,
-    })
-      .from(products)
-      .leftJoin(categories, eq(products.category_id, categories.id))
-      .where(and(eq(products.status, 'active'), eq(products.is_featured, true)))
-      .limit(8);
-
-    const offerProducts = await db.select({
-      id: products.id,
-      name: products.name,
-      slug: products.slug,
-      price: products.price,
-      images: products.images,
-      source: products.source,
-      is_offer: products.is_offer,
-      discount_price: products.discount_price,
-      discount_percent: products.discount_percent,
-      offer_expires_at: products.offer_expires_at,
-      categoryName: categories.name,
-    })
-      .from(products)
-      .leftJoin(categories, eq(products.category_id, categories.id))
-      .where(and(eq(products.status, 'active'), eq(products.is_offer, true)))
-      .limit(5);
-
-    const allBrands = await db.select().from(brands);
-
-    const igPosts = await db.select().from(instagramPosts).orderBy(desc(instagramPosts.timestamp)).limit(6);
     const mappedIgPosts = igPosts.map((p) => ({
       id: p.id,
       mediaUrl: p.mediaUrl || '',
@@ -457,7 +478,6 @@ export const useHomeData = routeLoader$(async ({ env }) => {
         image: contentMap['home_weekly_offer_image'] || '',
         link: contentMap['home_weekly_offer_link'] || ''
       },
-      categories: featuredCategories,
       products: featuredProducts,
       offers: offerProducts,
       brands: allBrands,
@@ -469,7 +489,6 @@ export const useHomeData = routeLoader$(async ({ env }) => {
     return {
       highlightPhrases: [],
       heroSlides: DEFAULT_HERO_SLIDES.map(s => ({ ...s, title: 'Insumos de Calidad', subtitle: 'Distribuidora líder...', buttonText: 'Ver Catálogo', buttonLink: '/productos' })),
-      categories: [],
       products: [],
       offers: [],
       brands: [],
@@ -513,7 +532,11 @@ export default component$(() => {
               <img
                 src={data.value.weeklyOffer.image}
                 alt="Oferta de la Semana"
+                width={1600}
+                height={576}
                 class="w-full h-auto object-cover aspect-[21/9] md:aspect-[25/9]"
+                loading="lazy"
+                decoding="async"
               />
               <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-8 gap-3">
                 <ContactButton productName="la Oferta de la Semana que vi en la página" look="primary" size="md" class="shadow-lg !rounded-none !h-10" />
@@ -596,8 +619,11 @@ export default component$(() => {
                   <img
                     src={brand.imageUrl}
                     alt={brand.name}
+                    width={220}
+                    height={110}
                     class="max-h-full max-w-full object-contain transition-all"
                     loading="lazy"
+                    decoding="async"
                   />
                 </a>
               ))}

@@ -889,7 +889,7 @@ export default component$(() => {
                           <div class="relative w-10 h-10 rounded-md bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
                             {imageUrl ? (
                               <>
-                                <img src={imageUrl} alt={product.name} class="w-full h-full object-cover" />
+                                <img width={64} height={64} loading="lazy" decoding="async" src={imageUrl} alt={product.name} class="w-full h-full object-cover" />
                                 {moreImages > 0 && (
                                   <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
                                     <span class="text-white text-[10px] font-bold">+{moreImages}</span>

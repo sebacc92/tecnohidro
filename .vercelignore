@@ -1,0 +1,25 @@
+# Nada de esto se necesita para construir ni ejecutar el sitio, pero se subía
+# en cada deploy y alargaba el build (que también se factura).
+
+# Base SQLite local de desarrollo.
+local.db
+local.db-journal
+local.db-wal
+
+# Scripts sueltos de pruebas manuales.
+scratch.ts
+test_cats.ts
+test_scroll.ts
+test_sync.ts
+tmp_insert.ts
+
+# Los índices se aplican a mano contra Turso, no forman parte del build.
+src/db/indexes.sql
+
+# Editor y herramientas.
+.vscode
+.idea
+.nx
+
+# Documentación.
+README.md

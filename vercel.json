@@ -17,6 +17,24 @@
           "value": "public, max-age=31536000, s-maxage=31536000, immutable"
         }
       ]
+    },
+    {
+      "source": "/(.*)\\.(png|jpg|jpeg|webp|svg|ico|avif|woff2)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800, s-maxage=2592000, stale-while-revalidate=604800"
+        }
+      ]
+    },
+    {
+      "source": "/(robots.txt|manifest.json)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=86400"
+        }
+      ]
     }
   ],
   "crons": [
@@ -26,7 +44,7 @@
     },
     {
       "path": "/api/cron/meli-refresh",
-      "schedule": "0 */4 * * *"
+      "schedule": "30 4 * * *"
     }
   ]
 }

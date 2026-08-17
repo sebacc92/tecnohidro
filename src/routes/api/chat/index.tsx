@@ -1,20 +1,78 @@
 import { type RequestHandler } from '@builder.io/qwik-city';
 import { getDb } from '../../../db/client';
 import { siteContent, categories, chatSessions, chatMessages, products } from '../../../db/schema';
+import { cached } from '../../../db/cache';
+import { eq, inArray } from 'drizzle-orm';
 import OpenAI from 'openai';
+
+/** Únicas claves de site_content que necesita el chatbot. */
+const AI_CONTENT_KEYS = [
+  'ai_enabled',
+  'ai_knowledge',
+  'ai_call_to_action',
+  'ai_tone',
+  'whatsapp_number',
+] as const;
+
+/** Tope de productos en el prompt: acota el gasto de tokens de OpenAI. */
+const CATALOG_LIMIT = 300;
+
+const CONTENT_TTL_MS = 60 * 1000; // los ajustes del admin se reflejan en ≤1 min
+const CATALOG_TTL_MS = 5 * 60 * 1000; // el catálogo cambia pocas veces por día
+
+type Db = ReturnType<typeof getDb>;
+
+/** Ajustes del chatbot: solo las 5 claves que se usan, no toda la tabla. */
+function loadAiSettings(db: Db) {
+  return cached('chat:settings', CONTENT_TTL_MS, async () => {
+    const rows = await db
+      .select({ key: siteContent.key, value: siteContent.value })
+      .from(siteContent)
+      .where(inArray(siteContent.key, AI_CONTENT_KEYS as unknown as string[]));
+
+    return rows.reduce(
+      (acc, curr) => {
+        acc[curr.key] = curr.value;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+  });
+}
+
+/**
+ * Contexto de catálogo ya renderizado como texto. Se cachea el string final
+ * para no rearmarlo en cada mensaje, y solo incluye nombre + rubro: el id de
+ * categoría era opaco para el modelo y el estado es siempre 'active' acá.
+ */
+function loadCatalogContext(db: Db) {
+  return cached('chat:catalog', CATALOG_TTL_MS, async () => {
+    const [cats, prods] = await Promise.all([
+      db.select({ name: categories.name }).from(categories),
+      db
+        .select({ name: products.name, categoryName: categories.name })
+        .from(products)
+        .leftJoin(categories, eq(products.category_id, categories.id))
+        .where(eq(products.status, 'active'))
+        .limit(CATALOG_LIMIT),
+    ]);
+
+    return {
+      categoryNames: cats.map((c) => c.name).join(', '),
+      catalogoDetallado: prods
+        .map((p) => (p.categoryName ? `- ${p.name} (${p.categoryName})` : `- ${p.name}`))
+        .join('\n'),
+    };
+  });
+}
 
 export const onPost: RequestHandler = async (requestEvent) => {
   try {
     const { request, env, json } = requestEvent;
 
     const db = getDb(env);
-    
-    // Fetch site content for settings
-    const contentData = await db.select().from(siteContent);
-    const contentMap = contentData.reduce((acc, curr) => {
-      acc[curr.key] = curr.value;
-      return acc;
-    }, {} as Record<string, string>);
+
+    const contentMap = await loadAiSettings(db);
 
     // Check if chatbot is enabled before processing
     // Default to true if not explicitly disabled
@@ -31,36 +89,7 @@ export const onPost: RequestHandler = async (requestEvent) => {
 
     const { messages, sessionId } = body;
 
-    if (sessionId) {
-      await db.insert(chatSessions).values({
-        id: sessionId,
-        createdAt: new Date(),
-        lastActive: new Date()
-      }).onConflictDoUpdate({
-        target: chatSessions.id,
-        set: { lastActive: new Date() }
-      });
-
-      const lastUserMessage = messages[messages.length - 1];
-      if (lastUserMessage && lastUserMessage.role === 'user') {
-        const idStr = 'msg-' + Date.now().toString() + Math.floor(Math.random() * 1000);
-        await db.insert(chatMessages).values({
-          id: idStr,
-          sessionId: sessionId,
-          role: 'user',
-          content: lastUserMessage.content,
-          createdAt: new Date()
-        });
-      }
-    }
-
-    // Fetch categories and products for context
-    const [allCategories, allProducts] = await Promise.all([
-      db.select().from(categories),
-      db.select().from(products)
-    ]);
-    const categoryNames = allCategories.map((c) => c.name).join(', ');
-    const catalogoDetallado = allProducts.map(p => `- ${p.name} (Categoría ID: ${p.category_id || 'N/A'}) - Estado: ${p.status}`).join('\n');
+    const { categoryNames, catalogoDetallado } = await loadCatalogContext(db);
 
     const whatsappNumber = contentMap['whatsapp_number'] || '+5492214636161';
     const aiKnowledge = contentMap['ai_knowledge'] || 'Ofrecemos la mejor calidad en insumos de infraestructura y domiciliarios.';
@@ -138,15 +167,52 @@ REGLAS DE COMPORTAMIENTO (CRÍTICAS):
       replyText = fallbackMessage;
     }
 
+    // Persistencia de la conversación en un solo viaje a Turso: antes eran tres
+    // inserts seriales (sesión, mensaje del usuario, respuesta), cada uno con su
+    // propio round-trip HTTP desde el Edge.
     if (sessionId) {
-      const idStr = 'msg-' + Date.now().toString() + Math.floor(Math.random() * 1000);
-      await db.insert(chatMessages).values({
-        id: idStr,
-        sessionId: sessionId,
-        role: 'assistant',
-        content: replyText,
-        createdAt: new Date()
-      });
+      const now = new Date();
+      const lastUserMessage = messages[messages.length - 1];
+      const newId = (suffix: string) =>
+        `msg-${now.getTime()}-${suffix}-${Math.floor(Math.random() * 1000)}`;
+
+      const writes: any[] = [
+        db
+          .insert(chatSessions)
+          .values({ id: sessionId, createdAt: now, lastActive: now })
+          .onConflictDoUpdate({ target: chatSessions.id, set: { lastActive: now } }),
+      ];
+
+      if (lastUserMessage && lastUserMessage.role === 'user') {
+        writes.push(
+          db.insert(chatMessages).values({
+            id: newId('u'),
+            sessionId,
+            role: 'user',
+            content: lastUserMessage.content,
+            createdAt: now,
+          }),
+        );
+      }
+
+      writes.push(
+        db.insert(chatMessages).values({
+          id: newId('a'),
+          sessionId,
+          role: 'assistant',
+          content: replyText,
+          // +1ms para que la auditoría, que ordena por createdAt, muestre la
+          // respuesta después de la pregunta y no en orden arbitrario.
+          createdAt: new Date(now.getTime() + 1),
+        }),
+      );
+
+      // El log no debe tumbar la respuesta al usuario si Turso falla.
+      try {
+        await db.batch(writes as [any, ...any[]]);
+      } catch (logErr) {
+        console.error('No se pudo registrar la conversación:', logErr);
+      }
     }
 
     json(200, { reply: { role: 'assistant', content: replyText } });

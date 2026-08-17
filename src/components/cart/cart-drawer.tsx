@@ -77,7 +77,7 @@ export const CartDrawer = component$((props: { whatsappNumber: string }) => {
                 <div key={item.id} class="flex gap-4 border-b border-slate-100 pb-6 last:border-0 last:pb-0">
                   <div class="w-20 h-20 shrink-0 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
                     {item.image ? (
-                      <img src={item.image} alt={item.name} class="w-full h-full object-cover" />
+                      <img src={item.image} alt={item.name} width={80} height={80} loading="lazy" decoding="async" class="w-full h-full object-cover" />
                     ) : (
                       <div class="w-full h-full flex items-center justify-center text-slate-300 text-xs font-medium">Sin foto</div>
                     )}

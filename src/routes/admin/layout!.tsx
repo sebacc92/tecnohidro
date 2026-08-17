@@ -1,6 +1,14 @@
 import { component$, Slot } from '@builder.io/qwik';
-import { Link, useLocation, routeLoader$ } from '@builder.io/qwik-city';
+import { Link, useLocation, routeLoader$, type RequestHandler } from '@builder.io/qwik-city';
 import { LuLayoutDashboard, LuPackage, LuSettings, LuLogOut, LuDroplets, LuTags, LuImage, LuBot, LuMessageSquare, LuUser } from '@qwikest/icons/lucide';
+
+// Ninguna respuesta del panel puede quedar cacheada: son privadas y dependen de
+// la sesión. Sin esto, el CDN de Vercel podía guardar el HTML del admin y
+// servírselo a un visitante anónimo.
+export const onGet: RequestHandler = async ({ cacheControl }) => {
+  cacheControl({ noCache: true, noStore: true, private: true, maxAge: 0 });
+  cacheControl({ noStore: true, maxAge: 0, sMaxAge: 0 }, 'Vercel-CDN-Cache-Control');
+};
 
 export const useAdminUser = routeLoader$(({ sharedMap }) => {
   return sharedMap.get('user') as { id: number, username: string, role: string } | undefined;

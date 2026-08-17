@@ -34,6 +34,9 @@ export const ProductImageCarousel = component$<ProductImageCarouselProps>(({ ima
       <img
         src={images[currentIndex.value]}
         alt={`${productName} - Imagen ${currentIndex.value + 1}`}
+        width={400}
+        height={400}
+        decoding="async"
         class="w-full h-full object-contain transition-opacity duration-300"
         loading={currentIndex.value === 0 ? "lazy" : "eager"}
       />

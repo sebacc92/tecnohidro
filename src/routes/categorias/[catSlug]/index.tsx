@@ -1,6 +1,7 @@
 import { component$, useSignal } from '@builder.io/qwik';
 import { type DocumentHead, routeLoader$, Link, useLocation } from '@builder.io/qwik-city';
 import { getDb } from '../../../db/client';
+import { getCategories, childCategories } from '../../../db/queries';
 import { products, categories } from '../../../db/schema';
 import { eq, and, inArray, desc, sql } from 'drizzle-orm';
 import { Breadcrumb } from '../../../components/ui/breadcrumb/breadcrumb';
@@ -13,11 +14,11 @@ export const useCategoryData = routeLoader$(async (requestEvent) => {
   const { catSlug } = requestEvent.params;
   const db = getDb(requestEvent.env);
   try {
-    const allCategories = await db.select().from(categories);
+    const allCategories = await getCategories(db);
     const category = allCategories.find((c) => c.slug === catSlug);
     if (!category) { requestEvent.status(404); return null; }
 
-    const subCats = allCategories.filter((c) => c.parent_id === category.id);
+    const subCats = childCategories(allCategories, category.id);
     const allIds = [category.id, ...subCats.map((c) => c.id)];
     const parentCat = category.parent_id
       ? (allCategories.find((c) => c.id === category.parent_id) ?? null)
@@ -29,24 +30,27 @@ export const useCategoryData = routeLoader$(async (requestEvent) => {
 
     const baseCondition = and(eq(products.status, 'active'), inArray(products.category_id, allIds));
 
-    const countQuery = db.select({ count: sql<number>`count(*)` }).from(products).where(baseCondition);
-    const countRes = await countQuery;
+    // Conteo y página de resultados en un solo viaje a Turso.
+    const [countRes, prods] = await db.batch([
+      db.select({ count: sql<number>`count(*)` }).from(products).where(baseCondition),
+
+      db
+        .select({
+          id: products.id, name: products.name, slug: products.slug,
+          price: products.price, stock: products.stock, images: products.images,
+          source: products.source, external_link: products.external_link,
+          categoryName: categories.name,
+        })
+        .from(products)
+        .leftJoin(categories, eq(products.category_id, categories.id))
+        .where(baseCondition)
+        .orderBy(desc(products.id))
+        .limit(limit)
+        .offset(offset),
+    ]);
+
     const totalCount = countRes[0]?.count || 0;
     const totalPages = Math.ceil(totalCount / limit);
-
-    const prods = await db
-      .select({
-        id: products.id, name: products.name, slug: products.slug,
-        price: products.price, stock: products.stock, images: products.images,
-        source: products.source, external_link: products.external_link,
-        categoryName: categories.name,
-      })
-      .from(products)
-      .leftJoin(categories, eq(products.category_id, categories.id))
-      .where(baseCondition)
-      .orderBy(desc(products.id))
-      .limit(limit)
-      .offset(offset);
 
     return {
       category: { id: category.id, name: category.name, slug: category.slug },
@@ -227,7 +231,7 @@ export default component$(() => {
                       <div class="mt-auto flex flex-col gap-2">
                         <div class="flex items-center gap-2">
                           <ContactButton productName={product.name} look="primary" size="sm" class="flex-1" />
-                          <ShareButton product={{ id: product.id, name: product.name }} />
+                          <ShareButton product={{ id: product.id, name: product.name, slug: product.slug }} />
                         </div>
                         {product.source === 'meli' && product.external_link && (
                           <a href={product.external_link} target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center gap-1.5 rounded-lg text-sm font-bold bg-yellow-400 text-yellow-900 hover:bg-yellow-500 h-9 px-4 w-full">

@@ -360,7 +360,7 @@ export default component$(() => {
                     <div class="relative aspect-[16/7] rounded-lg overflow-hidden border-2 border-dashed border-slate-200 bg-slate-50 group">
                       {slide.url ? (
                         <>
-                          <img src={slide.url} class="w-full h-full object-cover" />
+                          <img width={160} height={160} loading="lazy" decoding="async" src={slide.url} class="w-full h-full object-cover" />
                           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <label class="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-lg font-bold text-sm shadow-xl hover:scale-105 transition-transform">
                               Cambiar Imagen
@@ -452,7 +452,7 @@ export default component$(() => {
                   <div class="relative aspect-[21/9] rounded-xl overflow-hidden border-2 border-dashed border-slate-200 bg-slate-50 group max-w-2xl">
                     {weeklyOfferImage.value ? (
                       <>
-                        <img src={weeklyOfferImage.value} class="w-full h-full object-cover" />
+                        <img width={320} height={160} loading="lazy" decoding="async" src={weeklyOfferImage.value} class="w-full h-full object-cover" />
                         <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <label class="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-lg font-bold text-sm shadow-xl">
                             Cambiar Imagen
@@ -720,7 +720,7 @@ export default component$(() => {
                 <div class="relative aspect-[21/9] rounded-xl overflow-hidden border-2 border-dashed border-slate-200 bg-slate-50 group max-w-3xl">
                   {nosotrosHeroImage.value ? (
                     <>
-                      <img src={nosotrosHeroImage.value} class="w-full h-full object-cover" />
+                      <img width={320} height={160} loading="lazy" decoding="async" src={nosotrosHeroImage.value} class="w-full h-full object-cover" />
                       <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <label class="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-lg font-bold text-sm shadow-xl">
                           Cambiar Imagen
@@ -759,7 +759,7 @@ export default component$(() => {
                     <div key={i} class="relative aspect-square rounded-lg overflow-hidden border-2 border-dashed border-slate-200 bg-slate-50 group">
                       {url ? (
                         <>
-                          <img src={url} class="w-full h-full object-cover" />
+                          <img width={160} height={160} loading="lazy" decoding="async" src={url} class="w-full h-full object-cover" />
                           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                             <label class="cursor-pointer bg-white text-slate-900 p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
                               <LuImage class="w-4 h-4" />
@@ -842,7 +842,7 @@ export default component$(() => {
                     <div class="relative aspect-[9/16] w-full max-w-[250px] rounded-2xl overflow-hidden border-2 border-dashed border-slate-200 bg-slate-50 group">
                       {nosotrosVideoPreview.value ? (
                         <>
-                          <img src={nosotrosVideoPreview.value} class="w-full h-full object-cover" />
+                          <img width={160} height={160} loading="lazy" decoding="async" src={nosotrosVideoPreview.value} class="w-full h-full object-cover" />
                           <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                             <label class="cursor-pointer bg-white text-slate-900 px-4 py-2 rounded-lg font-bold text-sm shadow-xl hover:scale-105 transition-transform">
                               Cambiar Portada
